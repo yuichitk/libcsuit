@@ -4,6 +4,7 @@
 ## Overview
  - Implemented C-native data representation.
  - Using [QCBOR](https://github.com/laurencelundblade/QCBOR) for decoding CBOR binary data.
+ - This implementation is compliant with [draft-ietf-suit-manifest-07](https://tools.ietf.org/html/draft-ietf-suit-manifest-07).
  - There are a sample codes for interoperability testing.
    - Decoding a SUIT Manifest binary file.
 
