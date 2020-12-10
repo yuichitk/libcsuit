@@ -175,20 +175,12 @@ int32_t suit_set_sev_cmd_seq_from_bytes(QCBORDecodeContext *context,
     return SUIT_SUCCESS;
 }
 
-int32_t suit_set_cmp_id_from_bytes(QCBORDecodeContext *context,
-                                   QCBORItem *item,
-                                   QCBORError *error,
-                                   suit_components_t *components) {
-    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
-        printf("\nsuit_set_cmp_id_from_bytes : Error! uDataType = %d\n", item->uDataType);
-        return SUIT_INVALID_TYPE_OF_ARGUMENT;
-    }
-    QCBORDecodeContext comp_context;
-    QCBORDecode_Init(&comp_context,
-                     item->val.string,
-                     QCBOR_DECODE_MODE_NORMAL);
-
-    if (!qcbor_get_next(&comp_context, QCBOR_TYPE_ARRAY, item, error)) {
+int32_t suit_set_cmp_ids_from_array(QCBORDecodeContext *context,
+                                    QCBORItem *item,
+                                    QCBORError *error,
+                                    suit_components_t *components) {
+    if (item->uDataType != QCBOR_TYPE_ARRAY) {
+        suit_debug_print(context, item, error, "suit_set_cmp_ids_from_array", QCBOR_TYPE_ARRAY);
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
     components->len = item->val.uCount;
@@ -206,7 +198,6 @@ int32_t suit_set_cmp_id_from_bytes(QCBORDecodeContext *context,
         }
     }
 
-    QCBORDecode_Finish(&comp_context);
     return SUIT_SUCCESS;
 }
 
@@ -235,7 +226,7 @@ int32_t suit_set_common(QCBORDecodeContext *context,
         }
         switch (item->label.uint64) {
             case 2:
-                result = suit_set_cmp_id_from_bytes(&common_context,
+                result = suit_set_cmp_ids_from_array(&common_context,
                                                     item,
                                                     error,
                                                     &common->components);
