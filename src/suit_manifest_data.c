@@ -208,12 +208,12 @@ int32_t suit_set_sev_cmd_seq_from_bytes(QCBORDecodeContext *context,
     return SUIT_SUCCESS;
 }
 
-int32_t suit_set_cmp_ids_from_array(QCBORDecodeContext *context,
-                                    QCBORItem *item,
-                                    QCBORError *error,
-                                    suit_components_t *components) {
+int32_t suit_set_components(QCBORDecodeContext *context,
+                            QCBORItem *item,
+                            QCBORError *error,
+                            suit_components_t *components) {
     if (item->uDataType != QCBOR_TYPE_ARRAY) {
-        suit_debug_print(context, item, error, "suit_set_cmp_ids_from_array", QCBOR_TYPE_ARRAY);
+        suit_debug_print(context, item, error, "suit_set_components", QCBOR_TYPE_ARRAY);
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
     components->len = item->val.uCount;
@@ -259,10 +259,10 @@ int32_t suit_set_common(QCBORDecodeContext *context,
         }
         switch (item->label.uint64) {
             case SUIT_COMPONENTS:
-                result = suit_set_cmp_ids_from_array(&common_context,
-                                                    item,
-                                                    error,
-                                                    &common->components);
+                result = suit_set_components(&common_context,
+                                             item,
+                                             error,
+                                             &common->components);
                 if (result != SUIT_SUCCESS) {
                     return result;
                 }
