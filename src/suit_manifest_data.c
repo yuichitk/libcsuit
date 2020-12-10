@@ -34,9 +34,9 @@ void suit_debug_print(QCBORDecodeContext *message,
 }
 
 bool qcbor_get_next(QCBORDecodeContext *message,
-                    uint8_t data_type,
                     QCBORItem *item,
-                    QCBORError *error) {
+                    QCBORError *error,
+                    uint8_t data_type) {
     if ((*error = QCBORDecode_GetNext(message, item))) {
         suit_debug_print(message, item, error, "qcbor_get_next", QCBOR_TYPE_ANY);
         return false;
@@ -51,7 +51,7 @@ bool qcbor_get_next(QCBORDecodeContext *message,
 bool qcbor_get_next_uint(QCBORDecodeContext *message,
                          QCBORItem *item,
                          QCBORError *error) {
-    if (!qcbor_get_next(message, QCBOR_TYPE_ANY, item, error)) {
+    if (!qcbor_get_next(message, item, error, QCBOR_TYPE_ANY)) {
         suit_debug_print(message, item, error, "qcbor_get_next_uint", QCBOR_TYPE_UINT64);
         return false;
     }
@@ -66,17 +66,60 @@ bool qcbor_get_next_uint(QCBORDecodeContext *message,
     return true;
 }
 
+bool qcbor_skip_any(QCBORDecodeContext *message,
+                    QCBORItem *item,
+                    QCBORError *error);
+
+bool qcbor_skip_array_and_map(QCBORDecodeContext *message,
+                            QCBORItem *item,
+                            QCBORError *error) {
+    if (item->uDataType != QCBOR_TYPE_ARRAY && item->uDataType != QCBOR_TYPE_MAP) {
+        return false;
+    }
+    size_t array_size = item->val.uCount;
+    for (size_t i = 0; i < array_size; i++) {
+        if (!qcbor_get_next(message, item, error, QCBOR_TYPE_ANY)) {
+            return false;
+        }
+        if (!qcbor_skip_any(message, item, error)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool qcbor_skip_any(QCBORDecodeContext *message,
+                    QCBORItem *item,
+                    QCBORError *error) {
+    switch (item->uDataType) {
+        case QCBOR_TYPE_ARRAY:
+        case QCBOR_TYPE_MAP:
+            if (!qcbor_skip_array_and_map(message, item, error)) {
+                return false;
+            }
+            break;
+        case QCBOR_TYPE_INT64:
+        case QCBOR_TYPE_UINT64:
+        case QCBOR_TYPE_BYTE_STRING:
+        case QCBOR_TYPE_TEXT_STRING:
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
 int32_t suit_set_parameters_list(QCBORDecodeContext *context,
                                  QCBORItem *item,
                                  QCBORError *error,
                                  suit_parameters_list_t *params_list) {
-    if (!qcbor_get_next(context, QCBOR_TYPE_MAP, item, error)) {
+    if (!qcbor_get_next(context, item, error, QCBOR_TYPE_MAP)) {
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
     params_list->len = item->val.uCount;
     // printf("suit_set_parameters_list : len = %lu\n", params_list->len);
     for (size_t i = 0;i < params_list->len; i++) {
-        if (!qcbor_get_next(context, QCBOR_TYPE_ANY, item, error)) {
+        if (!qcbor_get_next(context, item, error, QCBOR_TYPE_ANY)) {
             return SUIT_INVALID_TYPE_OF_ARGUMENT;
         }
         params_list->params[i].label = item->label.uint64;
@@ -117,7 +160,7 @@ int32_t suit_set_cmd_seq(QCBORDecodeContext *context,
                          QCBORItem *item,
                          QCBORError *error,
                          suit_command_sequence_t *cmd_seq) {
-    if (!qcbor_get_next(context, QCBOR_TYPE_ARRAY, item, error)) {
+    if (!qcbor_get_next(context, item, error, QCBOR_TYPE_ARRAY)) {
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
     int32_t result = 0;
@@ -125,7 +168,7 @@ int32_t suit_set_cmd_seq(QCBORDecodeContext *context,
     // printf("suit_set_cmd_seq : array_count = %u\n", array_count);
     size_t commands_index = 0;
     for (size_t i = 0; i < array_count;) {
-        if (!qcbor_get_next(context, QCBOR_TYPE_INT64, item, error)) {
+        if (!qcbor_get_next(context, item, error, QCBOR_TYPE_INT64)) {
             return SUIT_INVALID_TYPE_OF_ARGUMENT;
         }
         cmd_seq->commands[commands_index].label = item->val.uint64;
@@ -149,6 +192,32 @@ int32_t suit_set_cmd_seq(QCBORDecodeContext *context,
                 if (result != SUIT_SUCCESS) {
                     return result;
                 }
+                break;
+            case SUIT_CONDITION_USE_BEFORE:
+            case SUIT_CONDITION_COMPONENT_OFFSET:
+            case SUIT_CONDITION_ABORT:
+            case SUIT_CONDITION_DEVICE_IDENTIFIER:
+            case SUIT_CONDITION_IMAGE_NOT_MATCH:
+            case SUIT_CONDITION_MINIMUM_BATTERY:
+            case SUIT_CONDITION_UPDATE_AUTHORIZED:
+            case SUIT_CONDITION_VERSION:
+            case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
+            case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
+            case SUIT_DIRECTIVE_TRY_EACH:
+            case SUIT_DIRECTIVE_DO_EACH:
+            case SUIT_DIRECTIVE_MAP_FILTER:
+            case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
+            case SUIT_DIRECTIVE_COPY:
+            case SUIT_DIRECTIVE_RUN:
+            case SUIT_DIRECTIVE_WAIT:
+            case SUIT_DIRECTIVE_FETCH_URI_LIST:
+            case SUIT_DIRECTIVE_SWAP:
+            case SUIT_DIRECTIVE_RUN_SEQUENCE:
+                // TODO
+                suit_debug_print(context, item, error,
+                                 "suit_set_command_seq(skipping)",
+                                 QCBOR_TYPE_ANY);
+                qcbor_skip_any(context, item, error);
                 break;
             default:
                 return SUIT_UNEXPECTED_ERROR;
@@ -218,12 +287,12 @@ int32_t suit_set_components(QCBORDecodeContext *context,
     }
     components->len = item->val.uCount;
     for (size_t i = 0; i < components->len; i++) {
-        if (!qcbor_get_next(context, QCBOR_TYPE_ARRAY, item, error)) {
+        if (!qcbor_get_next(context, item, error, QCBOR_TYPE_ARRAY)) {
             return SUIT_INVALID_TYPE_OF_ARGUMENT;
         }
         components->comp_id[i].len = item->val.uCount;
         for (size_t j = 0; j < components->comp_id[i].len; j++) {
-            if (!qcbor_get_next(context, QCBOR_TYPE_BYTE_STRING, item, error)) {
+            if (!qcbor_get_next(context, item, error, QCBOR_TYPE_BYTE_STRING)) {
                 return SUIT_INVALID_TYPE_OF_ARGUMENT;
             }
             components->comp_id[i].identifer[j].ptr = item->val.string.ptr;
@@ -248,16 +317,23 @@ int32_t suit_set_common(QCBORDecodeContext *context,
                      item->val.string,
                      QCBOR_DECODE_MODE_NORMAL);
 
-    if (!qcbor_get_next(&common_context, QCBOR_TYPE_MAP, item, error)) {
+    if (!qcbor_get_next(&common_context, item, error, QCBOR_TYPE_MAP)) {
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
     int32_t result = 0;
     uint16_t map_count = item->val.uCount;
     for (size_t i = 0; i < map_count; i++) {
-        if (!qcbor_get_next(&common_context, QCBOR_TYPE_ANY, item, error)) {
+        if (!qcbor_get_next(&common_context, item, error, QCBOR_TYPE_ANY)) {
             return SUIT_INVALID_TYPE_OF_ARGUMENT;
         }
         switch (item->label.uint64) {
+            case SUIT_DEPENDENCIES:
+                // TODO
+                suit_debug_print(&common_context, item, error,
+                                 "suit_set_dependencies(skipping)",
+                                 QCBOR_TYPE_ARRAY);
+                qcbor_skip_any(&common_context, item, error);
+                break;
             case SUIT_COMPONENTS:
                 result = suit_set_components(&common_context,
                                              item,
@@ -301,12 +377,12 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
                      item->val.string,
                      QCBOR_DECODE_MODE_NORMAL);
 
-    if (!qcbor_get_next(&manifest_context, QCBOR_TYPE_MAP, item, error)) {
+    if (!qcbor_get_next(&manifest_context, item, error, QCBOR_TYPE_MAP)) {
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
     uint16_t map_count = item->val.uCount;
     for (size_t i = 0; i < map_count; i++) {
-        if (!qcbor_get_next(&manifest_context, QCBOR_TYPE_ANY, item, error)) {
+        if (!qcbor_get_next(&manifest_context, item, error, QCBOR_TYPE_ANY)) {
             return SUIT_INVALID_TYPE_OF_ARGUMENT;
         }
         switch (item->label.uint64) {
@@ -328,15 +404,6 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
                     return result;
                 }
                 break;
-            case SUIT_REFERENCE_URI:
-                // TODO
-                break;
-            case SUIT_DEPENDENCY_RESOLUTION:
-                // TODO
-                break;
-            case SUIT_PAYLOAD_FETCH:
-                // TODO
-                break;
             case SUIT_INSTALL:
                 result = suit_set_sev_cmd_seq_from_bytes(&manifest_context, item, error, &manifest->install);
                 if (result != SUIT_SUCCESS) {
@@ -349,17 +416,18 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
                     return result;
                 }
                 break;
+            case SUIT_REFERENCE_URI:
+            case SUIT_DEPENDENCY_RESOLUTION:
+            case SUIT_PAYLOAD_FETCH:
             case SUIT_LOAD:
-                // TODO
-                break;
             case SUIT_RUN:
-                // TODO
-                break;
             case SUIT_TEXT:
-                // TODO
-                break;
             case SUIT_COSWID:
                 // TODO
+                suit_debug_print(&manifest_context, item, error,
+                                 "suit_set_manifest(skipping)",
+                                 QCBOR_TYPE_ANY);
+                qcbor_skip_any(&manifest_context, item, error);
                 break;
             default:
                 break;
@@ -384,12 +452,12 @@ int32_t suit_set_auth_wrapper(QCBORDecodeContext *context,
                      item->val.string,
                      QCBOR_DECODE_MODE_NORMAL);
 
-    if (!qcbor_get_next(&auth_wrapper_context, QCBOR_TYPE_ARRAY, item, error)) {
+    if (!qcbor_get_next(&auth_wrapper_context, item, error, QCBOR_TYPE_ARRAY)) {
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
     wrapper->len = item->val.uCount;
     for (size_t i = 0; i < wrapper->len; i++) {
-        if (!qcbor_get_next(&auth_wrapper_context, QCBOR_TYPE_BYTE_STRING, item, error)) {
+        if (!qcbor_get_next(&auth_wrapper_context, item, error, QCBOR_TYPE_BYTE_STRING)) {
             return SUIT_INVALID_TYPE_OF_ARGUMENT;
         }
         wrapper->auth_block[i].len = item->val.string.len;
@@ -405,17 +473,21 @@ int32_t suit_set_envelope(QCBORDecodeContext *context, suit_envelope_t *envelope
     QCBORError error;
     int32_t result = 0;
     envelope->wrapper.len = 0;
-    if (!qcbor_get_next(context, QCBOR_TYPE_MAP, &item, &error)) {
+    if (!qcbor_get_next(context, &item, &error, QCBOR_TYPE_MAP)) {
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
     uint16_t map_count = item.val.uCount;
     for (size_t i = 0; i < map_count; i++) {
-        if (!qcbor_get_next(context, QCBOR_TYPE_ANY, &item, &error)) {
+        if (!qcbor_get_next(context, &item, &error, QCBOR_TYPE_ANY)) {
             return SUIT_INVALID_TYPE_OF_ARGUMENT;
         }
         switch (item.label.uint64) {
             case SUIT_DELEGATION:
                 // TODO
+                suit_debug_print(context, &item, &error,
+                                 "suit_set_delegation(skipping)",
+                                 QCBOR_TYPE_BYTE_STRING);
+                qcbor_skip_any(context, &item, &error);
                 break;
             case SUIT_AUTHENTICATION:
                 result = suit_set_auth_wrapper(context, &item, &error, &envelope->wrapper);
