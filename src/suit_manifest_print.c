@@ -46,16 +46,14 @@ void suit_print_cmd_seq(const suit_command_sequence_t *cmd_seq, const uint32_t i
         }
         printf("label %u : ", cmd_seq->commands[i].label);
         switch (cmd_seq->commands[i].label) {
-            case 1:
-            case 2:
-            case 3:
-            case 21:
-                if (cmd_seq->commands[i].value.isNull) {
-                    printf("null\n");
-                }
+            case SUIT_CONDITION_VENDOR_IDENTIFIER:
+            case SUIT_CONDITION_CLASS_IDENTIFIER:
+            case SUIT_CONDITION_IMAGE_MATCH:
+            case SUIT_DIRECTIVE_FETCH:
+                printf("%lu(0x%lx)\n", cmd_seq->commands[i].value.uint64, cmd_seq->commands[i].value.uint64);
                 break;
-            case 19:
-            case 20:
+            case SUIT_DIRECTIVE_SET_PARAMETERS:
+            case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
                 if (cmd_seq->commands[i].value.params_list.len > 0) {
                     printf("SUIT_Parameters\n");
                     suit_print_suit_parameters_list(&cmd_seq->commands[i].value.params_list, indent_space + 2);

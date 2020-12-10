@@ -126,17 +126,17 @@ int32_t suit_set_cmd_seq(QCBORDecodeContext *context,
         cmd_seq->commands[commands_index].label = item->val.uint64;
         // printf("suit_set_cmd_seq : label = %u\n", cmd_seq->commands[commands_index].label);
         switch (cmd_seq->commands[commands_index].label) {
-            case 1:
-            case 2:
-            case 3:
-            case 21:
+            case SUIT_CONDITION_VENDOR_IDENTIFIER:
+            case SUIT_CONDITION_CLASS_IDENTIFIER:
+            case SUIT_CONDITION_IMAGE_MATCH:
+            case SUIT_DIRECTIVE_FETCH:
                 if (!qcbor_get_next_uint(context, item, error)) {
                     return SUIT_INVALID_TYPE_OF_ARGUMENT;
                 }
-                cmd_seq->commands[commands_index].value.isNull = true;
+                cmd_seq->commands[commands_index].value.uint64 = item->val.uint64;
                 break;
-            case 19:
-            case 20:
+            case SUIT_DIRECTIVE_SET_PARAMETERS:
+            case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
                 result = suit_set_parameters_list(context,
                                                   item,
                                                   error,
@@ -253,7 +253,7 @@ int32_t suit_set_common(QCBORDecodeContext *context,
             return SUIT_INVALID_TYPE_OF_ARGUMENT;
         }
         switch (item->label.uint64) {
-            case 2:
+            case SUIT_COMPONENTS:
                 result = suit_set_cmp_ids_from_array(&common_context,
                                                     item,
                                                     error,
@@ -262,7 +262,7 @@ int32_t suit_set_common(QCBORDecodeContext *context,
                     return result;
                 }
                 break;
-            case 4:
+            case SUIT_COMMON_SEQUENCE:
                 result = suit_set_cmd_seq_from_bytes(&common_context,
                                                      item,
                                                      error,
@@ -409,6 +409,9 @@ int32_t suit_set_envelope(QCBORDecodeContext *context, suit_envelope_t *envelope
             return SUIT_INVALID_TYPE_OF_ARGUMENT;
         }
         switch (item.label.uint64) {
+            case SUIT_DELEGATION:
+                // TODO
+                break;
             case SUIT_AUTHENTICATION:
                 result = suit_set_auth_wrapper(context, &item, &error, &envelope->wrapper);
                 if (result != SUIT_SUCCESS) {
