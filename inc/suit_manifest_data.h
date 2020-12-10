@@ -19,9 +19,19 @@ typedef enum suit_envelope_key {
     SUIT_DELEGATION                     = 1,
     SUIT_AUTHENTICATION                 = 2,
     SUIT_MANIFEST                       = 3,
-    SUIT_MANIFEST_ENCRYPTION_INFO       = 4,
-    SUIT_MANIFEST_ENCRYPTED             = 5
 } suit_envelope_key_t;
+
+typedef enum suit_algorithm_id {
+    SUIT_INVALID_ALGORITHM_ID           = 0,
+    SUIT_ALGORITHM_ID_SHA224            = 1,
+    SUIT_ALGORITHM_ID_SHA256            = 2,
+    SUIT_ALGORITHM_ID_SHA384            = 3,
+    SUIT_ALGORITHM_ID_SHA512            = 4,
+    SUIT_ALGORITHM_ID_SHA3_224          = 5,
+    SUIT_ALGORITHM_ID_SHA3_256          = 6,
+    SUIT_ALGORITHM_ID_SHA3_384          = 7,
+    SUIT_ALGORITHM_ID_SHA3_512          = 8,
+} suit_algorithm_id_t;
 
 typedef enum suit_manifest_key {
     SUIT_INVALID_MANIFEST_KEY           = 0,
@@ -38,6 +48,51 @@ typedef enum suit_manifest_key {
     SUIT_TEXT                           = 13,
     SUIT_COSWID                         = 14
 } suit_manifest_key_t;
+
+typedef enum suit_common_key {
+    SUIT_INVALID_COMMON_KEY             = 0,
+    SUIT_DEPENDENCIES                   = 1,
+    SUIT_COMPONENTS                     = 2,
+    SUIT_COMMON_SEQUENCE                = 4,
+} suit_common_key_t;
+
+typedef enum suit_dependency_key {
+    SUIT_INVALID_DEPENDENCY             = 0,
+    SUIT_DEPENDENCY_DIGEST              = 1,
+    SUIT_DEPENDENCY_PREFIX              = 2,
+} suit_dependency_key_t;
+
+typedef enum suit_rep_policy_key {
+    SUIT_INVALID_CONDITION              = 0,
+    SUIT_CONDITION_VENDOR_IDENTIFIER    = 1,
+    SUIT_CONDITION_CLASS_IDENTIFIER     = 2,
+    SUIT_CONDITION_IMAGE_MATCH          = 3,
+    SUIT_CONDITION_USE_BEFORE           = 4,
+    SUIT_CONDITION_COMPONENT_OFFSET     = 5,
+    SUIT_CONDITION_ABORT                = 14,
+    SUIT_CONDITION_DEVICE_IDENTIFIER    = 24,
+    SUIT_CONDITION_IMAGE_NOT_MATCH      = 25,
+    SUIT_CONDITION_MINIMUM_BATTERY      = 26,
+    SUIT_CONDITION_UPDATE_AUTHORIZED    = 27,
+    SUIT_CONDITION_VERSION              = 28,
+
+    SUIT_DIRECTIVE_SET_COMPONENT_INDEX  = 12,
+    SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX = 13,
+    SUIT_DIRECTIVE_TRY_EACH             = 15,
+    SUIT_DIRECTIVE_DO_EACH              = 16,
+    SUIT_DIRECTIVE_MAP_FILTER           = 17,
+    SUIT_DIRECTIVE_PROCESS_DEPENDENCY   = 18,
+    SUIT_DIRECTIVE_SET_PARAMETERS       = 19,
+    SUIT_DIRECTIVE_OVERRIDE_PARAMETERS  = 20,
+    SUIT_DIRECTIVE_FETCH                = 21,
+    SUIT_DIRECTIVE_COPY                 = 22,
+    SUIT_DIRECTIVE_RUN                  = 23,
+    SUIT_DIRECTIVE_WAIT                 = 29,
+    SUIT_DIRECTIVE_FETCH_URI_LIST       = 30,
+    SUIT_DIRECTIVE_SWAP                 = 31,
+    SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
+} suit_rep_policy_key_t;
+
 
 /*
  * bstr
