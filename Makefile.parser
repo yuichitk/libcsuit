@@ -7,7 +7,7 @@
 CC		= gcc
 CFLAGS	= -Wall -g
 LDFLAGS	= -lt_cose -lqcbor
-INC   	= -I ./inc
+INC		= -I ./inc
 TARGET	= ./suit_manifest_parser
 SRCS	= examples/suit_manifest_parser_main.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_data.c
 OBJDIR	= ./obj
@@ -17,10 +17,15 @@ $(TARGET):	$(OBJS)
 			$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o:	%.c
-				-mkdir -p $(dir $@)
+				mkdir -p $(dir $@)
 				$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
+.PHONY:		all test clean
+
 all:		clean $(TARGET)
+
+test:		all
+			$(TARGET) ./testfiles/suit_manifest_exp1.cbor
 
 clean:
 			rm -f $(OBJS) $(TARGET)
