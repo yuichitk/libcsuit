@@ -15,17 +15,22 @@ void suit_debug_print(QCBORDecodeContext *message,
                       const char *func_name,
                       uint8_t expecting) {
     size_t cursor = UsefulInputBuf_Tell(&message->InBuf);
+    size_t len = UsefulInputBuf_GetBufferLength(&message->InBuf) - cursor;
     uint8_t *at = (uint8_t *)message->InBuf.UB.ptr + cursor;
 
-    printf("%s at msg[%ld]=%02x : ", func_name, cursor, *at);
-    print_hex(at, 16);
-    if (*error != 0) {
-        printf("Error! nCBORError = %d, ", *error);
-    }
-    if (expecting != QCBOR_TYPE_ANY) {
-        printf("item->uDataType %d != %d, ", item->uDataType, expecting);
-    }
+    len = (len > 12) ? 12 : len;
+
+    printf("DEBUG: %s\n", func_name);
+    printf("msg[%ld:%ld] = ", cursor, cursor + len);
+    print_hex(at, len);
     printf("\n");
+
+    if (*error != 0) {
+        printf("    Error! nCBORError = %d\n", *error);
+    }
+    if (expecting != QCBOR_TYPE_ANY && expecting != item->uDataType) {
+        printf("    item->uDataType %d != %d\n", item->uDataType, expecting);
+    }
 }
 
 bool qcbor_get_next(QCBORDecodeContext *message,
