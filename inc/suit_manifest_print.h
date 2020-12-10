@@ -16,5 +16,6 @@
 #define MAX_PRINT_BYTE_COUNT       5
 
 void suit_print_envelope(const suit_envelope_t *envelope);
+void suit_print_component_identifier(const suit_component_identifier_t *identifier);
 
 #endif  /* SUIT_MANIFEST_PRINT_H */

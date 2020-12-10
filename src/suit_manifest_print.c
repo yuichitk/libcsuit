@@ -65,6 +65,15 @@ void suit_print_cmd_seq(const suit_command_sequence_t *cmd_seq, const uint32_t i
     }
 }
 
+void suit_print_component_identifier(const suit_component_identifier_t *identifier) {
+    printf("[ ");
+    for (size_t j = 0; j < identifier->len; j++) {
+        suit_print_hex_in_max(identifier->identifier[j].ptr, identifier->identifier[j].len, MAX_PRINT_BYTE_COUNT);
+        printf(", ");
+    }
+    printf("]");
+}
+
 void suit_print_envelope(const suit_envelope_t *envelope) {
     printf("  SUIT Manifest Envelope :\n");
     // suit-authentication-wrapper
@@ -89,14 +98,8 @@ void suit_print_envelope(const suit_envelope_t *envelope) {
 
         for (size_t i = 0; i < envelope->manifest.common.components.len; i++) {
             printf("          ");
-            for (size_t j = 0; j < envelope->manifest.common.components.comp_id[i].len; j++) {
-                printf("No.%ld-%ld = ", i, j);
-                print_hex_in_max(envelope->manifest.common.components.comp_id[i].identifer[j].ptr,
-                                 envelope->manifest.common.components.comp_id[i].identifer[j].len,
-                                 MAX_PRINT_BYTE_COUNT);
-                 printf(", ");
-            }
-            printf("\n");
+            suit_print_component_identifier(&envelope->manifest.common.components.comp_id[i]);
+            printf(",\n");
         }
         printf("        ]\n");
     }

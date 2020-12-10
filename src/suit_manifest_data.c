@@ -253,10 +253,31 @@ int32_t suit_set_sev_cmd_seq_from_bytes(QCBORDecodeContext *context,
     return SUIT_SUCCESS;
 }
 
+int32_t suit_set_component_identifiers(QCBORDecodeContext *context,
+                                       QCBORItem *item,
+                                       QCBORError *error,
+                                       suit_component_identifier_t *identifier) {
+    if (item->uDataType != QCBOR_TYPE_ARRAY) {
+        suit_debug_print(context, item, error, "suit_set_component_identifiers", QCBOR_TYPE_ARRAY);
+        return SUIT_INVALID_TYPE_OF_ARGUMENT;
+    }
+    identifier->len = item->val.uCount;
+    for (size_t j = 0; j < identifier->len; j++) {
+        if (!suit_qcbor_get_next(context, item, error, QCBOR_TYPE_BYTE_STRING)) {
+            identifier->len = j;
+            return SUIT_INVALID_TYPE_OF_ARGUMENT;
+        }
+        identifier->identifier[j].ptr = item->val.string.ptr;
+        identifier->identifier[j].len = item->val.string.len;
+    }
+    return SUIT_SUCCESS;
+}
+
 int32_t suit_set_components(QCBORDecodeContext *context,
                             QCBORItem *item,
                             QCBORError *error,
                             suit_components_t *components) {
+    int32_t result = 0;
     if (item->uDataType != QCBOR_TYPE_ARRAY) {
         suit_debug_print(context, item, error, "suit_set_components", QCBOR_TYPE_ARRAY);
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
@@ -266,13 +287,10 @@ int32_t suit_set_components(QCBORDecodeContext *context,
         if (!suit_qcbor_get_next(context, item, error, QCBOR_TYPE_ARRAY)) {
             return SUIT_INVALID_TYPE_OF_ARGUMENT;
         }
-        components->comp_id[i].len = item->val.uCount;
-        for (size_t j = 0; j < components->comp_id[i].len; j++) {
-            if (!qcbor_get_next(context, item, error, QCBOR_TYPE_BYTE_STRING)) {
-                return SUIT_INVALID_TYPE_OF_ARGUMENT;
-            }
-            components->comp_id[i].identifer[j].ptr = item->val.string.ptr;
-            components->comp_id[i].identifer[j].len = item->val.string.len;
+        result = suit_set_component_identifiers(context, item, error, &components->comp_id[i]);
+        if (result != SUIT_SUCCESS) {
+            components->len = i;
+            return result;
         }
     }
 
