@@ -20,7 +20,7 @@ void suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, 
             case 1:
             case 2:
             case 3:
-                print_hex_in_max(params_list->params[i].value.string.ptr,
+                suit_print_hex_in_max(params_list->params[i].value.string.ptr,
                                  params_list->params[i].value.string.len,
                                  MAX_PRINT_BYTE_COUNT);
                 break;
@@ -72,7 +72,7 @@ void suit_print_envelope(const suit_envelope_t *envelope) {
         printf("    suit-authentication-wrapper : \n      ");
         for (size_t i = 0; i < envelope->wrapper.len; i++) {
             printf("No.%ld = ", i);
-            print_hex_in_max(envelope->wrapper.auth_block[i].ptr,
+            suit_print_hex_in_max(envelope->wrapper.auth_block[i].ptr,
                              envelope->wrapper.auth_block[i].len,
                              MAX_PRINT_BYTE_COUNT);
             printf(", ");
@@ -85,7 +85,8 @@ void suit_print_envelope(const suit_envelope_t *envelope) {
     printf("      suit-manifest-sequence-number : %u\n", envelope->manifest.sequence_number);
     printf("      suit-common :\n");
     if (envelope->manifest.common.components.len > 0) {
-        printf("        suit-components :\n");
+        printf("        suit-components : [\n");
+
         for (size_t i = 0; i < envelope->manifest.common.components.len; i++) {
             printf("          ");
             for (size_t j = 0; j < envelope->manifest.common.components.comp_id[i].len; j++) {
@@ -97,6 +98,7 @@ void suit_print_envelope(const suit_envelope_t *envelope) {
             }
             printf("\n");
         }
+        printf("        ]\n");
     }
     if (envelope->manifest.common.cmd_seq.len > 0) {
         printf("        suit-common-sequence :\n");

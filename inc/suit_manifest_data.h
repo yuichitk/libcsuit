@@ -116,7 +116,7 @@ typedef struct suit_digest {
  */
 typedef struct suit_component_identifier {
     size_t                          len;
-    suit_buf_t                      identifer[SUIT_MAX_ARRAY_LENGTH];
+    suit_buf_t                      identifier[SUIT_MAX_ARRAY_LENGTH];
 } suit_component_identifier_t;
 
 /*
@@ -223,6 +223,18 @@ typedef struct suit_envelope {
     // TODO :                       SUIT_Severed_Fields
 } suit_envelope_t;
 
-int32_t suit_set_envelope(QCBORDecodeContext *context, suit_envelope_t *envelope);
+bool suit_qcbor_get_next(QCBORDecodeContext *message,
+                    QCBORItem *item,
+                    QCBORError *error,
+                    uint8_t data_type);
+
+int32_t suit_set_envelope(QCBORDecodeContext *context,
+                          QCBORItem *item,
+                          QCBORError *error,
+                          suit_envelope_t *envelope);
+int32_t suit_set_component_identifiers(QCBORDecodeContext *context,
+                                       QCBORItem *item,
+                                       QCBORError *error,
+                                       suit_component_identifier_t *identifier);
 
 #endif  // SUIT_MANIFEST_DATA_H

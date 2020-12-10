@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
         printf("main : Can't read Manifest file.\n");
         return EXIT_FAILURE;
     }
-    print_hex(manifest_buf, manifest_len);
+    suit_print_hex(manifest_buf, manifest_len);
     printf("\n");
 
     // Decode manifest file.
@@ -47,8 +47,11 @@ int main(int argc, char *argv[]) {
     QCBORDecode_Init(&decode_context,
                      (UsefulBufC){manifest_buf, manifest_len},
                      QCBOR_DECODE_MODE_NORMAL);
+    QCBORItem  item;
+    QCBORError error;
+
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
-    int32_t result = suit_set_envelope(&decode_context, &envelope);
+    int32_t result = suit_set_envelope(&decode_context, &item, &error, &envelope);
     if (result) {
         printf("main : Can't parse Manifest file.\n");
         return EXIT_FAILURE;
