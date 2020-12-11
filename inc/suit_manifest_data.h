@@ -15,14 +15,14 @@
 #define SUIT_MAX_ARRAY_LENGTH           20
 
 typedef enum suit_envelope_key {
-    SUIT_INVALID_ENVELOPE_KEY           = 0,
+    SUIT_ENVELOPE_KEY_INVALID           = 0,
     SUIT_DELEGATION                     = 1,
     SUIT_AUTHENTICATION                 = 2,
     SUIT_MANIFEST                       = 3,
 } suit_envelope_key_t;
 
 typedef enum suit_algorithm_id {
-    SUIT_INVALID_ALGORITHM_ID           = 0,
+    SUIT_ALGORITHM_ID_INVALID           = 0,
     SUIT_ALGORITHM_ID_SHA224            = 1,
     SUIT_ALGORITHM_ID_SHA256            = 2,
     SUIT_ALGORITHM_ID_SHA384            = 3,
@@ -34,7 +34,7 @@ typedef enum suit_algorithm_id {
 } suit_algorithm_id_t;
 
 typedef enum suit_manifest_key {
-    SUIT_INVALID_MANIFEST_KEY           = 0,
+    SUIT_MANIFEST_KEY_INVALID           = 0,
     SUIT_MANIFEST_VERSION               = 1,
     SUIT_MANIFEST_SEQUENCE_NUMBER       = 2,
     SUIT_COMMON                         = 3,
@@ -46,24 +46,24 @@ typedef enum suit_manifest_key {
     SUIT_LOAD                           = 11,
     SUIT_RUN                            = 12,
     SUIT_TEXT                           = 13,
-    SUIT_COSWID                         = 14
+    SUIT_COSWID                         = 14,
 } suit_manifest_key_t;
 
 typedef enum suit_common_key {
-    SUIT_INVALID_COMMON_KEY             = 0,
+    SUIT_COMMON_KEY_INVALID             = 0,
     SUIT_DEPENDENCIES                   = 1,
     SUIT_COMPONENTS                     = 2,
     SUIT_COMMON_SEQUENCE                = 4,
 } suit_common_key_t;
 
 typedef enum suit_dependency_key {
-    SUIT_INVALID_DEPENDENCY             = 0,
+    SUIT_DEPENDENCY_INVALID             = 0,
     SUIT_DEPENDENCY_DIGEST              = 1,
     SUIT_DEPENDENCY_PREFIX              = 2,
 } suit_dependency_key_t;
 
 typedef enum suit_rep_policy_key {
-    SUIT_INVALID_CONDITION              = 0,
+    SUIT_CONDITION_INVALID              = 0,
     SUIT_CONDITION_VENDOR_IDENTIFIER    = 1,
     SUIT_CONDITION_CLASS_IDENTIFIER     = 2,
     SUIT_CONDITION_IMAGE_MATCH          = 3,
@@ -93,6 +93,85 @@ typedef enum suit_rep_policy_key {
     SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
 } suit_rep_policy_key_t;
 
+typedef enum suit_wait_event_key {
+    SUIT_WAIT_EVENT_AUTHORIZATION           = 1,
+    SUIT_WAIT_EVENT_POWER                   = 2,
+    SUIT_WAIT_EVENT_NETWORK                 = 3,
+    SUIT_WAIT_EVENT_OTHER_DEVICE_VERSION    = 4,
+    SUIT_WAIT_EVENT_TIME                    = 5,
+    SUIT_WAIT_EVENT_TIME_OF_DAY             = 6,
+    SUIT_WAIT_EVENT_DAY_OF_WEEK             = 7,
+} suit_wait_event_key_t;
+
+typedef enum suit_parameter_key {
+    SUIT_PARAMETER_INVALID              = 0,
+    SUIT_PARAMETER_VENDOR_IDENTIFIER    = 1,
+    SUIT_PARAMETER_CLASS_IDENTIFIER     = 2,
+    SUIT_PARAMETER_IMAGE_DIGEST         = 3,
+    SUIT_PARAMETER_USE_BEFORE           = 4,
+    SUIT_PARAMETER_COMPONENT_OFFSET     = 5,
+
+    SUIT_PARAMETER_STRICT_ORDER         = 12,
+    SUIT_PARAMETER_SOFT_FAILURE         = 13,
+    SUIT_PARAMETER_IMAGE_SIZE           = 14,
+
+    SUIT_PARAMETER_ENCRYPTION_INFO      = 18,
+    SUIT_PARAMETER_COMPRESSION_INFO     = 19,
+    SUIT_PARAMETER_UNPACK_INFO          = 20,
+    SUIT_PARAMETER_URI                  = 21,
+    SUIT_PARAMETER_SOURCE_COMPONENT     = 22,
+    SUIT_PARAMETER_RUN_ARGS             = 23,
+
+    SUIT_PARAMETER_DEVICE_IDENTIFIER    = 24,
+    SUIT_PARAMETER_MINIMUM_BATTERY      = 26,
+    SUIT_PARAMETER_UPDATE_PRIORITY      = 27,
+    SUIT_PARAMETER_VERSION              = 28,
+    SUIT_PARAMETER_WAIT_INFO            = 29,
+    SUIT_PARAMETER_URI_LIST             = 30,
+} suit_parameter_key_t;
+
+typedef enum suit_compression_info_key {
+    SUIT_COMPRESSION_INVALID    = 0,
+    SUIT_COMPRESSION_ALGORITHM  = 1,
+} suit_compression_info_key_t;
+
+typedef enum suit_compression_algorithm {
+    SUIT_COMPRESSION_ALGORITHM_INVALID  = 0,
+    SUIT_COMPRESSION_ALGORITHM_ZLIB     = 1,
+    SUIT_COMPRESSION_ALGORITHM_BROTLI   = 2,
+    SUIT_COMPRESSION_ALGORITHM_ZSTD     = 3,
+} suit_compression_algorithm_t;
+
+typedef enum suit_unpack_info_key {
+    SUIT_UNPACK_INVALID     = 0,
+    SUIT_UNPACK_ALGORITHM   = 1,
+} suit_unpack_info_key_t;
+
+typedef enum suit_unpack_algorithm {
+    SUIT_UNPACK_ALGORITHM_HEX   = 1,
+    SUIT_UNPACK_ALGORITHM_ELF   = 2,
+    SUIT_UNPACK_ALGORITHM_COFF  = 3,
+    SUIT_UNPACK_ALGORITHM_SREC  = 4,
+} suit_unpack_algorithm_t;
+
+typedef enum suit_text_key {
+    SUIT_TEXT_TYPE_INVALID          = 0,
+    SUIT_TEXT_MANIFEST_DESCRIPTION  = 1,
+    SUIT_TEXT_UPDATE_DESCRIPTION    = 2,
+    SUIT_TEXT_MANIFEST_JSON_SOURCE  = 3,
+    SUIT_TEXT_MANIFEST_YAML_SOURCE  = 4,
+} suit_text_key;
+
+typedef enum suit_text_component_key {
+    SUIT_TEXT_CONTENT_INVALID       = 0,
+    SUIT_TEXT_VENDOR_NAME           = 1,
+    SUIT_TEXT_MODEL_NAME            = 2,
+    SUIT_TEXT_VENDOR_DOMAIN         = 3,
+    SUIT_TEXT_MODEL_INFO            = 4,
+    SUIT_TEXT_COMPONENT_DESCRIPTION = 5,
+    SUIT_TEXT_COMPONENT_VERSION     = 6,
+    SUIT_TEXT_VERSION_REQUIRED      = 7,
+} suit_text_component_key_t;
 
 /*
  * bstr
