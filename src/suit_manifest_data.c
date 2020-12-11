@@ -429,10 +429,66 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
     return SUIT_SUCCESS;
 }
 
+int32_t suit_set_auth_block(QCBORDecodeContext *context,
+                            QCBORItem *item,
+                            QCBORError *error,
+                            suit_buf_t *block) {
+    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+        suit_debug_print(context, item, error, "suit_set_auth_block", QCBOR_TYPE_BYTE_STRING);
+        return SUIT_INVALID_TYPE_OF_ARGUMENT;
+    }
+    block->ptr = item->val.string.ptr;
+    block->len = item->val.string.len;
+
+    return SUIT_SUCCESS;
+}
+
+int32_t suit_set_digest(QCBORDecodeContext *context,
+                        QCBORItem *item,
+                        QCBORError *error,
+                        suit_digest_t *digest) {
+    size_t ext_len = 0;
+    digest->algorithm_id = SUIT_ALGORITHM_ID_INVALID;
+    digest->bytes.len = 0;
+    //digest->extension.len = 0;
+
+    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+        suit_debug_print(context, item, error, "suit_set_digest", QCBOR_TYPE_BYTE_STRING);
+        return SUIT_INVALID_TYPE_OF_ARGUMENT;
+    }
+
+    if (!suit_qcbor_get_next(context, item, error, QCBOR_TYPE_ARRAY)) {
+        suit_debug_print(context, item, error, "suit_set_digest", QCBOR_TYPE_ARRAY);
+        return SUIT_INVALID_TYPE_OF_ARGUMENT;
+    }
+    ext_len = (item->val.uCount > 2) ? item->val.uCount - 2 : 0;
+
+    if (!suit_qcbor_get_next_uint(context, item, error)) {
+        return SUIT_INVALID_TYPE_OF_ARGUMENT;
+    }
+    digest->algorithm_id = item->val.uint64;
+
+    if (!suit_qcbor_get_next(context, item, error, QCBOR_TYPE_BYTE_STRING)) {
+        return SUIT_INVALID_TYPE_OF_ARGUMENT;
+    }
+    digest->bytes.ptr = item->val.string.ptr;
+    digest->bytes.len = item->val.string.len;
+
+    for (size_t i = 0; i < ext_len; i++) {
+        // TODO
+        suit_debug_print(context, item, error, "suit_set_digest skipping SUIT_Digest-extensions", QCBOR_TYPE_ANY);
+        suit_qcbor_skip_any(context, item, error);
+    }
+    return SUIT_SUCCESS;
+}
+
 int32_t suit_set_auth_wrapper(QCBORDecodeContext *context,
                               QCBORItem *item,
                               QCBORError *error,
                               suit_authentication_wrapper_t *wrapper) {
+    int32_t result = SUIT_SUCCESS;
+    wrapper->digest.bytes.len = 0;
+
     // printf("suit_set_auth_wrapper\n");
     if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
         printf("\nsuit_set_auth_wrapper : Error! uDataType = %d\n", item->uDataType);
@@ -445,19 +501,37 @@ int32_t suit_set_auth_wrapper(QCBORDecodeContext *context,
                      QCBOR_DECODE_MODE_NORMAL);
 
     if (!suit_qcbor_get_next(&auth_wrapper_context, item, error, QCBOR_TYPE_ARRAY)) {
-        return SUIT_INVALID_TYPE_OF_ARGUMENT;
+        result = SUIT_INVALID_TYPE_OF_ARGUMENT;
+        wrapper->len = 0;
     }
-    wrapper->len = item->val.uCount;
+    else {
+        wrapper->len = item->val.uCount;
+    }
     for (size_t i = 0; i < wrapper->len; i++) {
         if (!suit_qcbor_get_next(&auth_wrapper_context, item, error, QCBOR_TYPE_BYTE_STRING)) {
-            return SUIT_INVALID_TYPE_OF_ARGUMENT;
+            wrapper->len = i;
+            result = SUIT_INVALID_TYPE_OF_ARGUMENT;
+            break;
         }
-        wrapper->auth_block[i].len = item->val.string.len;
-        wrapper->auth_block[i].ptr = item->val.string.ptr;
+        QCBORDecodeContext auth_context;
+        QCBORDecode_Init(&auth_context,
+                         (UsefulBufC){item->val.string.ptr, item->val.string.len},
+                         QCBOR_DECODE_MODE_NORMAL);
+        if (i == 0) {
+            result = suit_set_digest(&auth_context, item, error, &wrapper->digest);
+        }
+        else {
+            result = suit_set_auth_block(&auth_context, item, error, &wrapper->auth_block[i - 1]);
+        }
+        QCBORDecode_Finish(&auth_context);
+        if (result != SUIT_SUCCESS) {
+            wrapper->len = i;
+            break;
+        }
     }
 
     QCBORDecode_Finish(&auth_wrapper_context);
-    return SUIT_SUCCESS;
+    return result;
 }
 
 int32_t suit_set_envelope(QCBORDecodeContext *context, QCBORItem *item, QCBORError *error, suit_envelope_t *envelope) {

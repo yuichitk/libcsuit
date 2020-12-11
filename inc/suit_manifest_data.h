@@ -185,7 +185,7 @@ typedef struct suit_buf {
  * SUIT_Digest
  */
 typedef struct suit_digest {
-    uint32_t                        algorithm_id;
+    suit_algorithm_id_t             algorithm_id;
     suit_buf_t                      bytes;
     // TODO :                       suit-digest-parameters
 } suit_digest_t;
@@ -289,7 +289,8 @@ typedef struct suit_manifest {
  */
 typedef struct suit_authentication_wrapper {
     size_t                          len;
-    UsefulBufC                      auth_block[SUIT_MAX_ARRAY_LENGTH];
+    suit_digest_t                   digest;
+    suit_buf_t                      auth_block[SUIT_MAX_ARRAY_LENGTH];
 } suit_authentication_wrapper_t;
 
 /*

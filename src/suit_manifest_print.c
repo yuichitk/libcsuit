@@ -74,20 +74,32 @@ void suit_print_component_identifier(const suit_component_identifier_t *identifi
     printf("]");
 }
 
+void suit_print_digest(const suit_digest_t *digest, const uint32_t indent_space) {
+    if (digest->algorithm_id != SUIT_ALGORITHM_ID_INVALID) {
+        printf("%*ssuit-digest-algorithm-id : %u,\n", indent_space, "", digest->algorithm_id);
+    }
+    if (digest->bytes.len > 0) {
+        printf("%*ssuit-digest-bytes : ", indent_space, "");
+        suit_print_hex_in_max(digest->bytes.ptr, digest->bytes.len, MAX_PRINT_BYTE_COUNT);
+        printf("\n");
+    }
+}
+
 void suit_print_envelope(const suit_envelope_t *envelope) {
     printf("  SUIT Manifest Envelope :\n");
     // suit-authentication-wrapper
     if (envelope->wrapper.len > 0) {
-        printf("    suit-authentication-wrapper : \n      ");
-        for (size_t i = 0; i < envelope->wrapper.len; i++) {
-            printf("No.%ld = ", i);
-            suit_print_hex_in_max(envelope->wrapper.auth_block[i].ptr,
-                             envelope->wrapper.auth_block[i].len,
+        printf("    suit-authentication-wrapper : \n");
+        printf("      suit-digest : \n");
+        suit_print_digest(&envelope->wrapper.digest, 8);
+        for (size_t i = 1; i < envelope->wrapper.len; i++) {
+            printf("      suit-authentication-block No.%ld : ", i - 1);
+            suit_print_hex_in_max(envelope->wrapper.auth_block[i - 1].ptr,
+                             envelope->wrapper.auth_block[i - 1].len,
                              MAX_PRINT_BYTE_COUNT);
-            printf(", ");
+            printf(",\n");
         }
     }
-    printf("\n");
     // suit-manifest
     printf("    suit-manifest : \n");
     printf("      suit-manifest-version : %u\n", envelope->manifest.version);
