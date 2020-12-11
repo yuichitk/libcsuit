@@ -24,6 +24,18 @@ make -f Makefile.parser
 ./suit_manifest_parser testfiles/suit_manifest_exp1.cbor
 ```
 
+## Install
+```
+make install
+```
+
+## SUIT Protocol Message Examples
+The following description Markdown and CBOR files are compliant with [draft-ietf-suit-manifest-11](https://tools.ietf.org/html/draft-ietf-suit-manifest-11).
+- Example 1
+  - [suit_manifest_exp1.md](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp1.md)
+  - [suit_manifest_exp1.cbor](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp1.cbor)
+
+
 ## License and Copyright
 BSD 2-Clause License
 
