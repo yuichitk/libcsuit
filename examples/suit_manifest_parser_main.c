@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 
     // Print manifest.
     printf("\nmain : Print Manifest.\n");
-    suit_print_envelope(&envelope);
+    suit_print_envelope(&envelope, 2);
 
     return EXIT_SUCCESS;
 }

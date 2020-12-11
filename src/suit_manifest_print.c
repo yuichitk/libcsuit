@@ -12,10 +12,7 @@
 
 void suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, const uint32_t indent_space) {
     for (size_t i = 0; i < params_list->len; i++) {
-        for (size_t j = 0; j < indent_space; j++) {
-            putchar(' ');
-        }
-        printf("label %u : ", params_list->params[i].label);
+        printf("%*slabel %u : ", indent_space, "", params_list->params[i].label);
         switch (params_list->params[i].label) {
             case SUIT_PARAMETER_VENDOR_IDENTIFIER:
             case SUIT_PARAMETER_CLASS_IDENTIFIER:
@@ -41,10 +38,7 @@ void suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, 
 
 void suit_print_cmd_seq(const suit_command_sequence_t *cmd_seq, const uint32_t indent_space) {
     for (size_t i = 0; i < cmd_seq->len; i++) {
-        for (size_t j = 0; j < indent_space; j++) {
-            putchar(' ');
-        }
-        printf("label %u : ", cmd_seq->commands[i].label);
+        printf("%*slabel %u : ", indent_space, "", cmd_seq->commands[i].label);
         switch (cmd_seq->commands[i].label) {
             case SUIT_CONDITION_VENDOR_IDENTIFIER:
             case SUIT_CONDITION_CLASS_IDENTIFIER:
@@ -85,15 +79,15 @@ void suit_print_digest(const suit_digest_t *digest, const uint32_t indent_space)
     }
 }
 
-void suit_print_envelope(const suit_envelope_t *envelope) {
-    printf("  SUIT Manifest Envelope :\n");
+void suit_print_envelope(const suit_envelope_t *envelope, uint32_t indent_space) {
+    printf("%*sSUIT Manifest Envelope :\n", indent_space, "");
     // suit-authentication-wrapper
     if (envelope->wrapper.len > 0) {
-        printf("    suit-authentication-wrapper : \n");
-        printf("      suit-digest : \n");
-        suit_print_digest(&envelope->wrapper.digest, 8);
+        printf("%*ssuit-authentication-wrapper : \n", indent_space + 2, "");
+        printf("%*ssuit-digest : \n", indent_space + 4, "");
+        suit_print_digest(&envelope->wrapper.digest, indent_space + 6);
         for (size_t i = 1; i < envelope->wrapper.len; i++) {
-            printf("      suit-authentication-block No.%ld : ", i - 1);
+            printf("%*ssuit-authentication-block No.%ld : ", indent_space + 4, "", i - 1);
             suit_print_hex_in_max(envelope->wrapper.auth_block[i - 1].ptr,
                              envelope->wrapper.auth_block[i - 1].len,
                              MAX_PRINT_BYTE_COUNT);
@@ -101,31 +95,32 @@ void suit_print_envelope(const suit_envelope_t *envelope) {
         }
     }
     // suit-manifest
-    printf("    suit-manifest : \n");
-    printf("      suit-manifest-version : %u\n", envelope->manifest.version);
-    printf("      suit-manifest-sequence-number : %u\n", envelope->manifest.sequence_number);
-    printf("      suit-common :\n");
-    if (envelope->manifest.common.components.len > 0) {
-        printf("        suit-components : [\n");
+    printf("%*ssuit-manifest : \n", indent_space + 2, "");
+    printf("%*ssuit-manifest-version : %u\n", indent_space + 4, "", envelope->manifest.version);
+    printf("%*ssuit-manifest-sequence-number : %u\n", indent_space + 4, "", envelope->manifest.sequence_number);
 
+    printf("%*ssuit-common :\n", indent_space + 4, "");
+    if (envelope->manifest.common.components.len > 0) {
+        printf("%*ssuit-components : [\n", indent_space + 6, "");
         for (size_t i = 0; i < envelope->manifest.common.components.len; i++) {
-            printf("          ");
+            printf("%*s", indent_space + 8, "");
             suit_print_component_identifier(&envelope->manifest.common.components.comp_id[i]);
             printf(",\n");
         }
-        printf("        ]\n");
+        printf("%*s]\n", indent_space + 6, "");
     }
     if (envelope->manifest.common.cmd_seq.len > 0) {
-        printf("        suit-common-sequence :\n");
-        suit_print_cmd_seq(&envelope->manifest.common.cmd_seq, 10);
+        printf("%*ssuit-common-sequence :\n", indent_space + 6, "");
+        suit_print_cmd_seq(&envelope->manifest.common.cmd_seq, indent_space + 8);
     }
+
     if (envelope->manifest.install.value.cmd_seq.len > 0) {
-        printf("      suit-install :\n");
-        suit_print_cmd_seq(&envelope->manifest.install.value.cmd_seq, 8);
+        printf("%*ssuit-install :\n", indent_space + 4, "");
+        suit_print_cmd_seq(&envelope->manifest.install.value.cmd_seq, indent_space + 6);
     }
     if (envelope->manifest.validate.len > 0) {
-        printf("      suit-validate :\n");
-        suit_print_cmd_seq(&envelope->manifest.validate, 8);
+        printf("%*ssuit-validate :\n", indent_space + 4, "");
+        suit_print_cmd_seq(&envelope->manifest.validate, indent_space + 6);
     }
     printf("\n");
 }
