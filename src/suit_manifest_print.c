@@ -17,17 +17,17 @@ void suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, 
         }
         printf("label %u : ", params_list->params[i].label);
         switch (params_list->params[i].label) {
-            case 1:
-            case 2:
-            case 3:
+            case SUIT_PARAMETER_VENDOR_IDENTIFIER:
+            case SUIT_PARAMETER_CLASS_IDENTIFIER:
+            case SUIT_PARAMETER_IMAGE_DIGEST:
                 suit_print_hex_in_max(params_list->params[i].value.string.ptr,
                                  params_list->params[i].value.string.len,
                                  MAX_PRINT_BYTE_COUNT);
                 break;
-            case 14:
+            case SUIT_PARAMETER_IMAGE_SIZE:
                 printf("%lu", params_list->params[i].value.uint64);
                 break;
-            case 21:
+            case SUIT_PARAMETER_URI:
                 for (size_t j = 0; j < params_list->params[i].value.string.len; j++) {
                     putchar(params_list->params[i].value.string.ptr[j]);
                 }
