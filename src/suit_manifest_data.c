@@ -8,6 +8,7 @@
 #include "qcbor/qcbor.h"
 #include "suit_common.h"
 #include "suit_manifest_data.h"
+#include "suit_cose.h"
 
 bool suit_qcbor_get_next(QCBORDecodeContext *message,
                     QCBORItem *item,

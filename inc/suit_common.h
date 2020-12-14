@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include "qcbor/qcbor.h"
 
+#define SUIT_FAILED_TO_VERIFY               3
 #define SUIT_UNEXPECTED_ERROR               2
 #define SUIT_INVALID_TYPE_OF_ARGUMENT       1
 #define SUIT_SUCCESS                        0
