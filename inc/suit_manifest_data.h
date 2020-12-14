@@ -216,6 +216,7 @@ typedef struct suit_parameters {
         int64_t                     int64;
         uint64_t                    uint64;
         bool                        isNull;
+        suit_digest_t               digest;
     } value;
 } suit_parameters_t;
 
@@ -260,6 +261,76 @@ typedef struct suit_sev_command_sequence {
 } suit_sev_command_sequence_t;
 
 /*
+ * SUIT_Text_Component
+ */
+typedef struct suit_text_component {
+    suit_buf_t  vendor_name;
+    suit_buf_t  model_name;
+    suit_buf_t  vendor_domain;
+    suit_buf_t  model_info;
+    suit_buf_t  component_description;
+    suit_buf_t  component_version;
+    suit_buf_t  version_required;
+    // TODO :   $$suit-text-component-key-extensions
+} suit_text_component_t;
+
+typedef struct suit_text_component_pair {
+    suit_component_identifier_t     key;
+    suit_text_component_t           text_component;
+} suit_text_component_pair_t;
+
+/*
+ * SUIT_Text
+ */
+typedef struct suit_text {
+    size_t                      component_len;
+    suit_text_component_pair_t  component[SUIT_MAX_ARRAY_LENGTH];
+    suit_buf_t                  manifest_description;
+    suit_buf_t                  update_description;
+    suit_buf_t                  manifest_json_source;
+    suit_buf_t                  manifest_yaml_source;
+    // TODO :                   $$suit-text-key-extensions
+} suit_text_t;
+
+/*
+ * SUIT_Authentication_Wrapper
+ */
+typedef struct suit_authentication_wrapper {
+    size_t                          len;
+    suit_digest_t                   digest[SUIT_MAX_ARRAY_LENGTH];
+} suit_authentication_wrapper_t;
+
+/*
+ * SUIT_Severable_Manifest_Members
+ */
+typedef struct suit_severable_manifest_members {
+    suit_command_sequence_t         dependency_resolution;
+    suit_command_sequence_t         payload_fetch;
+    suit_command_sequence_t         install;
+    suit_text_t                     text;
+    suit_buf_t                      coswid;
+    // TODO :                       $$SUIT_severable-members-extension
+} suit_severable_manifest_members_t;
+
+/* SUIT_Severable_Members_Digests */
+typedef struct suit_severable_members_digests {
+    suit_digest_t                   dependency_resolution;
+    suit_digest_t                   payload_fetch;
+    suit_digest_t                   install;
+    suit_digest_t                   text;
+    suit_digest_t                   coswid;
+    // TODO :                       $$severable-manifest-members-digests-extensions
+} suit_severable_members_digests_t;
+
+/* SUIT_Unseverable_Members */
+typedef struct suit_unseverable_members {
+    suit_command_sequence_t         validate;
+    suit_command_sequence_t         load;
+    suit_command_sequence_t         run;
+    // TODO :                       $$unseverable-manifest-member-extensions
+} suit_unseverable_members_t;
+
+/*
  * SUIT_Common
  */
 typedef struct suit_common {
@@ -273,48 +344,40 @@ typedef struct suit_common {
  * SUIT_Manifest
  */
 typedef struct suit_manifest {
-    uint32_t                        version;
-    uint32_t                        sequence_number;
-    suit_common_t                   common;
-    // TODO :                       suit-reference-uri
-    // TODO :                       $$SUIT_Severable_Command_Sequences
-    suit_sev_command_sequence_t     install;
-    suit_command_sequence_t         validate;
-    // TODO :                       $$SUIT_Command_Sequences
-    // TODO :                       $$SUIT_Protected_Elements
+    uint32_t                            version;
+    uint32_t                            sequence_number;
+    suit_common_t                       common;
+    suit_buf_t                          reference_uri;
+    suit_severable_manifest_members_t   sev_man_mem;
+    suit_severable_members_digests_t    sev_mem_dig;
+    suit_unseverable_members_t          unsev_mem;
 } suit_manifest_t;
-
-/*
- * SUIT_Authentication_Wrapper
- */
-typedef struct suit_authentication_wrapper {
-    size_t                          len;
-    suit_digest_t                   digest;
-    suit_buf_t                      auth_block[SUIT_MAX_ARRAY_LENGTH];
-} suit_authentication_wrapper_t;
 
 /*
  * SUIT_Envelope
  */
 typedef struct suit_envelope {
-    // TODO :                       suit-delegation
-    suit_authentication_wrapper_t   wrapper;
-    suit_manifest_t                 manifest;
-    // TODO :                       SUIT_Severed_Fields
+    // TODO :                           suit-delegation
+    suit_authentication_wrapper_t       wrapper;
+    suit_manifest_t                     manifest;
+    // TODO :                           SUIT_Severed_Fields
+    /* SUIT_Severable_Manifest_Members */
+    suit_severable_manifest_members_t   sev_man_mem;
 } suit_envelope_t;
 
 bool suit_qcbor_get_next(QCBORDecodeContext *message,
                     QCBORItem *item,
                     QCBORError *error,
                     uint8_t data_type);
-
+size_t suit_qcbor_calc_rollback(QCBORItem *item);
 int32_t suit_set_envelope(QCBORDecodeContext *context,
                           QCBORItem *item,
                           QCBORError *error,
-                          suit_envelope_t *envelope);
+                          suit_envelope_t *envelope,
+                          const char *public_key);
 int32_t suit_set_component_identifiers(QCBORDecodeContext *context,
                                        QCBORItem *item,
                                        QCBORError *error,
                                        suit_component_identifier_t *identifier);
-
+int32_t suit_set_cmd_seq_from_buf(const suit_buf_t *buf, suit_command_sequence_t *cmd_seq);
 #endif  // SUIT_MANIFEST_DATA_H

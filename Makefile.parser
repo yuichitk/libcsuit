@@ -6,10 +6,10 @@
 
 CC		= gcc
 CFLAGS	= -Wall -g
-LDFLAGS	= -lt_cose -lqcbor
-INC		= -I ./inc
+LDFLAGS	= -lt_cose -lqcbor -lcrypto
+INC		= -I ./inc -I ./examples/inc
 TARGET	= ./suit_manifest_parser
-SRCS	= examples/suit_manifest_parser_main.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_data.c
+SRCS	= examples/suit_manifest_parser_main.c examples/suit_examples_common.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_data.c src/suit_cose.c
 OBJDIR	= ./obj
 OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
@@ -24,8 +24,19 @@ $(OBJDIR)/%.o:	%.c
 
 all:		clean $(TARGET)
 
+#define
+
+KEY			:= ./testfiles/key/trust_anchor_secp256r1_pub.der
+TEST_NUM	:= 1 2 3
+EXPS		:= $(foreach num,$(TEST_NUM),./testfiles/suit_manifest_exp$(num).cbor)
+define test-one
+	$(TARGET) $1 $2 || exit 1
+
+endef
+
 test:		all
-			$(TARGET) ./testfiles/suit_manifest_exp1.cbor
+			$(foreach exp,$(EXPS),$(call test-one,$(exp),$(KEY)))
+
 
 clean:
 			rm -f $(OBJS) $(TARGET)

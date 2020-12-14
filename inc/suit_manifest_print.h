@@ -13,7 +13,8 @@
 #include "qcbor/qcbor.h"
 #include "suit_manifest_data.h"
 
-#define MAX_PRINT_BYTE_COUNT       5
+#define MAX_PRINT_BYTE_COUNT        5
+#define MAX_PRINT_TEXT_COUNT        64
 
 void suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, const uint32_t indent_space);
 void suit_print_cmd_seq(const suit_command_sequence_t *cmd_seq, const uint32_t indent_space);

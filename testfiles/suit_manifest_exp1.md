@@ -5,6 +5,7 @@
 -->
 
 # SUIT Manifest
+    B.2.  Example 1: Simultaneous Download and Installation of Payload
     https://tools.ietf.org/html/draft-ietf-suit-manifest-11#appendix-B.2
 
 
@@ -87,8 +88,8 @@
           82                                # array(2)
              58 24                          # bytes(36)
                 # SUIT_Digest #
-                82                          # array(2) / SUIT_Digest /
-                   02                       # unsigned(2) / algorithm-id = "sha-256" /
+                82                          # array(2)
+                   02                       # unsigned(2) / algorithm-id = "sha256" /
                    58 20                    # bytes(32) / digest-bytes /
                       987EEC85FA99FD31D332381B9810F90B05C2E0D4F284A6F4211207ED00FFF750
              58 6F                          # bytes(111)
@@ -98,13 +99,13 @@
                       43                    # bytes(3)
                          # protected #
                          A1                 # map(1)
-                            01              # unsigned(1) / alg /
+                            01              # unsigned(1) / alg : /
                             26              # negative(6) / -7 /
                       A0                    # map(0) / unprotected /
                       58 24                 # bytes(36)
-                         # payload #
+                         # payload = SUIT_Digest #
                          82                 # array(2)
-                            02              # unsigned(2) / algorithm-id = "sha-256" /
+                            02              # unsigned(2) / algorithm-id = "sha256" /
                             58 20           # bytes(32)   / digest-bytes /
                                987EEC85FA99FD31D332381B9810F90B05C2E0D4F284A6F4211207ED00FFF750
                       58 40                 # bytes(64)   / signature /
@@ -119,7 +120,7 @@
              01                             # unsigned(1) / 1 /
              03                             # unsigned(3) / common : /
              58 5F                          # bytes(95)
-                # SUIT_Common #
+                # SUIT_Common_Sequence #
                 A2                          # map(2)
                    02                       # unsigned(2) / components : /
                    81                       # array(1)    / [[h'00']]
@@ -153,9 +154,9 @@
                          0F                 # unsigned(15)
              09                             # unsigned(9)  / install : /
              58 25                          # bytes(37)
-                # SUIT_Digest #
+                # SUIT_Common_Sequence #
                 86                          # array(6)
-                   13                       # unsigned(19)
+                   13                       # unsigned(19) / directive-set-parameters : /
                    A1                       # map(1)
                       15                    # unsigned(21) / uri : /
                       78 1B                 # text(27) / "http://example.com/file.bin" /
@@ -166,11 +167,11 @@
                    0F                       # unsigned(15)
              0A                             # unsigned(10) / validate : /
              43                             # bytes(3)
-                # SUIT_Command_Sequence #
-                82                          # array(2)     / condition-image-match : [3, 15]/
-                   03                       # unsigned(3)
+                # SUIT_Common_Sequence #
+                82                          # array(2)
+                   03                       # unsigned(3)  / condition-image-match : /
                    0F                       # unsigned(15)
 
 
 ## Command
-    echo -en "\xa2\x02\x58\x98\x82\x58\x24\x82\x02\x58\x20\x98\x7e\xec\x85\xfa\x99\xfd\x31\xd3\x32\x38\x1b\x98\x10\xf9\x0b\x05\xc2\xe0\xd4\xf2\x84\xa6\xf4\x21\x12\x07\xed\x00\xff\xf7\x50\x58\x6f\xd2\x84\x43\xa1\x01\x26\xa0\x58\x24\x82\x02\x58\x20\x98\x7e\xec\x85\xfa\x99\xfd\x31\xd3\x32\x38\x1b\x98\x10\xf9\x0b\x05\xc2\xe0\xd4\xf2\x84\xa6\xf4\x21\x12\x07\xed\x00\xff\xf7\x50\x58\x40\x75\x01\x41\xd6\x5b\x4f\x20\xa8\x8d\xc7\x0c\x67\x85\xa6\x7e\x0f\x4f\x08\x5a\xea\xd8\x3b\xa2\x28\x9d\x6e\x37\x27\x15\x08\xcc\x91\xe0\xa0\x59\x2f\x5c\x94\x0c\x22\x57\xc9\xc0\xb2\x64\x03\xc0\xba\x44\x77\xf2\xce\x37\xb6\x00\x89\xfe\x02\xcd\xe7\x91\x1d\x1c\x15\x03\x58\x94\xa5\x01\x01\x02\x01\x03\x58\x5f\xa2\x02\x81\x81\x41\x00\x04\x58\x56\x86\x14\xa4\x01\x50\xfa\x6b\x4a\x53\xd5\xad\x5f\xdf\xbe\x9d\xe6\x63\xe4\xd4\x1f\xfe\x02\x50\x14\x92\xaf\x14\x25\x69\x5e\x48\xbf\x42\x9b\x2d\x51\xf2\xab\x45\x03\x58\x24\x82\x02\x58\x20\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xaa\xbb\xcc\xdd\xee\xff\x01\x23\x45\x67\x89\xab\xcd\xef\xfe\xdc\xba\x98\x76\x54\x32\x10\x0e\x19\x87\xd0\x01\x0f\x02\x0f\x09\x58\x25\x86\x13\xa1\x15\x78\x1b\x68\x74\x74\x70\x3a\x2f\x2f\x65\x78\x61\x6d\x70\x6c\x65\x2e\x63\x6f\x6d\x2f\x66\x69\x6c\x65\x2e\x62\x69\x6e\x15\x02\x03\x0f\x0a\x43\x82\x03\x0f" > suit_manifest_exp1.cbor
+    echo -en "\xA2\x02\x58\x98\x82\x58\x24\x82\x02\x58\x20\x98\x7E\xEC\x85\xFA\x99\xFD\x31\xD3\x32\x38\x1B\x98\x10\xF9\x0B\x05\xC2\xE0\xD4\xF2\x84\xA6\xF4\x21\x12\x07\xED\x00\xFF\xF7\x50\x58\x6F\xD2\x84\x43\xA1\x01\x26\xA0\x58\x24\x82\x02\x58\x20\x98\x7E\xEC\x85\xFA\x99\xFD\x31\xD3\x32\x38\x1B\x98\x10\xF9\x0B\x05\xC2\xE0\xD4\xF2\x84\xA6\xF4\x21\x12\x07\xED\x00\xFF\xF7\x50\x58\x40\x75\x01\x41\xD6\x5B\x4F\x20\xA8\x8D\xC7\x0C\x67\x85\xA6\x7E\x0F\x4F\x08\x5A\xEA\xD8\x3B\xA2\x28\x9D\x6E\x37\x27\x15\x08\xCC\x91\xE0\xA0\x59\x2F\x5C\x94\x0C\x22\x57\xC9\xC0\xB2\x64\x03\xC0\xBA\x44\x77\xF2\xCE\x37\xB6\x00\x89\xFE\x02\xCD\xE7\x91\x1D\x1C\x15\x03\x58\x94\xA5\x01\x01\x02\x01\x03\x58\x5F\xA2\x02\x81\x81\x41\x00\x04\x58\x56\x86\x14\xA4\x01\x50\xFA\x6B\x4A\x53\xD5\xAD\x5F\xDF\xBE\x9D\xE6\x63\xE4\xD4\x1F\xFE\x02\x50\x14\x92\xAF\x14\x25\x69\x5E\x48\xBF\x42\x9B\x2D\x51\xF2\xAB\x45\x03\x58\x24\x82\x02\x58\x20\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF\x01\x23\x45\x67\x89\xAB\xCD\xEF\xFE\xDC\xBA\x98\x76\x54\x32\x10\x0E\x19\x87\xD0\x01\x0F\x02\x0F\x09\x58\x25\x86\x13\xA1\x15\x78\x1B\x68\x74\x74\x70\x3A\x2F\x2F\x65\x78\x61\x6D\x70\x6C\x65\x2E\x63\x6F\x6D\x2F\x66\x69\x6C\x65\x2E\x62\x69\x6E\x15\x02\x03\x0F\x0A\x43\x82\x03\x0F" > suit_manifest_exp1.cbor
