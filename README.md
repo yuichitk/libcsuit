@@ -20,13 +20,17 @@ Make and run sample codes you need.
 
 - suit_manifest_parser
 ```bash
-make -f Makefile.parser
-./suit_manifest_parser testfiles/suit_manifest_exp1.cbor
+make -f Makefile.parser test
 ```
 
-## Install
+## Install libcsuit.a
 ```
 make install
+```
+
+## Install libcsuit.so
+```
+make install_so
 ```
 
 ## SUIT Protocol Message Examples
@@ -34,7 +38,12 @@ The following description Markdown and CBOR files are compliant with [draft-ietf
 - Example 1
   - [suit_manifest_exp1.md](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp1.md)
   - [suit_manifest_exp1.cbor](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp1.cbor)
-
+- Example 2
+  - [suit_manifest_exp2.md](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp2.md)
+  - [suit_manifest_exp2.cbor](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp2.cbor)
+- Example 3
+  - [suit_manifest_exp3.md](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp3.md)
+  - [suit_manifest_exp3.cbor](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp3.cbor)
 
 ## License and Copyright
 BSD 2-Clause License
