@@ -27,7 +27,7 @@ all:		clean $(TARGET)
 #define
 
 KEY			:= ./testfiles/key/trust_anchor_secp256r1_pub.der
-TEST_NUM	:= 1 2 3
+TEST_NUM	:= 1 2 3 4 5
 EXPS		:= $(foreach num,$(TEST_NUM),./testfiles/suit_manifest_exp$(num).cbor)
 define test-one
 	$(TARGET) $1 $2 || exit 1

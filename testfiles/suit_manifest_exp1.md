@@ -89,7 +89,7 @@
              58 24                          # bytes(36)
                 # SUIT_Digest #
                 82                          # array(2)
-                   02                       # unsigned(2) / algorithm-id = "sha256" /
+                   02                       # unsigned(2) / algorithm-id : "sha256" /
                    58 20                    # bytes(32) / digest-bytes /
                       987EEC85FA99FD31D332381B9810F90B05C2E0D4F284A6F4211207ED00FFF750
              58 6F                          # bytes(111)
@@ -105,7 +105,7 @@
                       58 24                 # bytes(36)
                          # payload = SUIT_Digest #
                          82                 # array(2)
-                            02              # unsigned(2) / algorithm-id = "sha256" /
+                            02              # unsigned(2) / algorithm-id : "sha256" /
                             58 20           # bytes(32)   / digest-bytes /
                                987EEC85FA99FD31D332381B9810F90B05C2E0D4F284A6F4211207ED00FFF750
                       58 40                 # bytes(64)   / signature /
