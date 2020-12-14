@@ -9,8 +9,8 @@ CC					= gcc
 CFLAGS				= -Wall -g -fPIC
 LDFLAGS				= -lt_cose -lqcbor
 INC					= -I ./inc
-SRCS				= src/suit_common.c src/suit_manifest_data.c src/suit_manifest_print.c
-PUBLIC_INTERFACE	= inc/csuit.h inc/suit_common.h inc/suit_manifest_data.h inc/suit_manifest_print.h
+SRCS				= src/suit_common.c src/suit_manifest_data.c src/suit_manifest_print.c src/suit_cose.c
+PUBLIC_INTERFACE	= inc/csuit.h inc/suit_common.h inc/suit_manifest_data.h inc/suit_manifest_print.h inc/suit_cose.h
 OBJDIR				= ./obj
 OBJS				= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
