@@ -293,6 +293,8 @@ int32_t suit_set_parameters_list_current(QCBORDecodeContext *context,
                 break;
             case SUIT_PARAMETER_COMPONENT_OFFSET:
             case SUIT_PARAMETER_IMAGE_SIZE:
+            case SUIT_PARAMETER_COMPRESSION_INFO:
+            case SUIT_PARAMETER_SOURCE_COMPONENT:
                 if (!suit_qcbor_value_is_uint64(item)) {
                     suit_debug_print(context, item, error, "suit_set_parameters_list", QCBOR_TYPE_UINT64);
                     return SUIT_INVALID_TYPE_OF_ARGUMENT;
@@ -313,9 +315,7 @@ int32_t suit_set_parameters_list_current(QCBORDecodeContext *context,
             case SUIT_PARAMETER_SOFT_FAILURE:
 
             case SUIT_PARAMETER_ENCRYPTION_INFO:
-            case SUIT_PARAMETER_COMPRESSION_INFO:
             case SUIT_PARAMETER_UNPACK_INFO:
-            case SUIT_PARAMETER_SOURCE_COMPONENT:
             case SUIT_PARAMETER_RUN_ARGS:
 
             case SUIT_PARAMETER_DEVICE_IDENTIFIER:
@@ -369,7 +369,9 @@ int32_t suit_set_cmd_seq_current(QCBORDecodeContext *context,
             case SUIT_CONDITION_CLASS_IDENTIFIER:
             case SUIT_CONDITION_IMAGE_MATCH:
             case SUIT_CONDITION_COMPONENT_OFFSET:
+            case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
             case SUIT_DIRECTIVE_FETCH:
+            case SUIT_DIRECTIVE_COPY:
             case SUIT_DIRECTIVE_RUN:
                 if (!suit_qcbor_get_next_uint(context, item, error)) {
                     suit_debug_print(context, item, error, "suit_set_cmd_seq_current", QCBOR_TYPE_UINT64);
@@ -411,12 +413,10 @@ int32_t suit_set_cmd_seq_current(QCBORDecodeContext *context,
             case SUIT_CONDITION_MINIMUM_BATTERY:
             case SUIT_CONDITION_UPDATE_AUTHORIZED:
             case SUIT_CONDITION_VERSION:
-            case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
             case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
             case SUIT_DIRECTIVE_DO_EACH:
             case SUIT_DIRECTIVE_MAP_FILTER:
             case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
-            case SUIT_DIRECTIVE_COPY:
             case SUIT_DIRECTIVE_WAIT:
             case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:
@@ -853,6 +853,9 @@ int32_t suit_set_manifest_current(QCBORDecodeContext *context,
             case SUIT_COMMON:
                 result = suit_set_common_current(&manifest_context, item, error, &manifest->common);
                 break;
+            case SUIT_PAYLOAD_FETCH:
+                result = suit_set_cmd_seq_from_bytes_current(&manifest_context, item, error, &manifest->sev_man_mem.payload_fetch);
+                break;
             case SUIT_INSTALL:
                 if (item->uDataType == QCBOR_TYPE_ARRAY) {
                     /* SUIT_Digest */
@@ -891,7 +894,6 @@ int32_t suit_set_manifest_current(QCBORDecodeContext *context,
                 break;
             case SUIT_REFERENCE_URI:
             case SUIT_DEPENDENCY_RESOLUTION:
-            case SUIT_PAYLOAD_FETCH:
             case SUIT_COSWID:
                 // TODO
                 printf("skip label %lu\n", item->label.uint64);

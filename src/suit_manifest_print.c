@@ -39,6 +39,8 @@ void suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, 
                 break;
             case SUIT_PARAMETER_COMPONENT_OFFSET:
             case SUIT_PARAMETER_IMAGE_SIZE:
+            case SUIT_PARAMETER_COMPRESSION_INFO:
+            case SUIT_PARAMETER_SOURCE_COMPONENT:
                 printf("%lu\n", params_list->params[i].value.uint64);
                 break;
             case SUIT_PARAMETER_URI:
@@ -51,9 +53,7 @@ void suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, 
             case SUIT_PARAMETER_SOFT_FAILURE:
 
             case SUIT_PARAMETER_ENCRYPTION_INFO:
-            case SUIT_PARAMETER_COMPRESSION_INFO:
             case SUIT_PARAMETER_UNPACK_INFO:
-            case SUIT_PARAMETER_SOURCE_COMPONENT:
             case SUIT_PARAMETER_RUN_ARGS:
 
             case SUIT_PARAMETER_DEVICE_IDENTIFIER:
@@ -80,7 +80,9 @@ void suit_print_cmd_seq(const suit_command_sequence_t *cmd_seq, const uint32_t i
             case SUIT_CONDITION_CLASS_IDENTIFIER:
             case SUIT_CONDITION_IMAGE_MATCH:
             case SUIT_CONDITION_COMPONENT_OFFSET:
+            case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
             case SUIT_DIRECTIVE_FETCH:
+            case SUIT_DIRECTIVE_RUN:
                 printf("%lu(0x%lx)\n", cmd_seq->commands[i].value.uint64, cmd_seq->commands[i].value.uint64);
                 break;
             case SUIT_DIRECTIVE_SET_PARAMETERS:
@@ -110,13 +112,11 @@ void suit_print_cmd_seq(const suit_command_sequence_t *cmd_seq, const uint32_t i
             case SUIT_CONDITION_UPDATE_AUTHORIZED:
             case SUIT_CONDITION_VERSION:
 
-            case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
             case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
             case SUIT_DIRECTIVE_DO_EACH:
             case SUIT_DIRECTIVE_MAP_FILTER:
             case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
             case SUIT_DIRECTIVE_COPY:
-            case SUIT_DIRECTIVE_RUN:
             case SUIT_DIRECTIVE_WAIT:
             case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:
@@ -140,7 +140,7 @@ void suit_print_component_identifier(const suit_component_identifier_t *identifi
 
 void suit_print_digest(const suit_digest_t *digest, const uint32_t indent_space) {
     if (digest->algorithm_id != SUIT_ALGORITHM_ID_INVALID) {
-        printf("%*ssuit-digest-algorithm-id : %u,\n", indent_space, "", digest->algorithm_id);
+        printf("%*ssuit-digest-algorithm-id : %u\n", indent_space, "", digest->algorithm_id);
     }
     if (digest->bytes.len > 0) {
         printf("%*ssuit-digest-bytes : ", indent_space, "");
