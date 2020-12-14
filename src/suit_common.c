@@ -6,24 +6,26 @@
 
 #include "suit_common.h"
 
-void suit_print_hex_in_max(const uint8_t *array, const int32_t size, const int32_t max_print_size) {
+int32_t suit_print_hex_in_max(const uint8_t *array, const int32_t size, const int32_t max_print_size) {
+    int32_t result = SUIT_SUCCESS;
     if (size <= max_print_size) {
-        suit_print_hex(array, size);
+        result = suit_print_hex(array, size);
     }
     else {
-        suit_print_hex(array, max_print_size);
+        result = suit_print_hex(array, max_print_size);
         printf("..");
     }
+    return result;
 }
 
-void suit_print_hex(const uint8_t *array, int32_t size) {
+int32_t suit_print_hex(const uint8_t *array, int32_t size) {
+    if (array == NULL) {
+        return SUIT_UNEXPECTED_ERROR;
+    }
     for (int32_t i = 0; i < size; i++) {
-        if (array[i] == 0) {
-            printf("0x00 ");
-            continue;
-        }
         printf("%#04x ", (unsigned char)array[i]);
     }
+    return SUIT_SUCCESS;
 }
 
 void suit_debug_print(QCBORDecodeContext *message,
