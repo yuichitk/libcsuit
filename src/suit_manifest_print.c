@@ -14,7 +14,7 @@ int32_t suit_print_string(const suit_buf_t *string) {
     if (string == NULL) {
         return SUIT_UNEXPECTED_ERROR;
     }
-    size_t print_len = (SUIT_MAX_PRINT_TEXT_COUNT < string->len) ? string->len : SUIT_MAX_PRINT_TEXT_COUNT;
+    size_t print_len = (SUIT_MAX_PRINT_TEXT_COUNT < string->len) ? SUIT_MAX_PRINT_TEXT_COUNT : string->len;
     printf("\"");
     for (size_t j = 0; j < print_len; j++) {
         putchar(string->ptr[j]);
@@ -92,6 +92,7 @@ int32_t suit_print_cmd_seq(const suit_command_sequence_t *cmd_seq, const uint32_
             case SUIT_CONDITION_COMPONENT_OFFSET:
             case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
             case SUIT_DIRECTIVE_FETCH:
+            case SUIT_DIRECTIVE_COPY:
             case SUIT_DIRECTIVE_RUN:
                 printf("%lu(0x%lx)\n", cmd_seq->commands[i].value.uint64, cmd_seq->commands[i].value.uint64);
                 break;
@@ -124,7 +125,6 @@ int32_t suit_print_cmd_seq(const suit_command_sequence_t *cmd_seq, const uint32_
             case SUIT_DIRECTIVE_DO_EACH:
             case SUIT_DIRECTIVE_MAP_FILTER:
             case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
-            case SUIT_DIRECTIVE_COPY:
             case SUIT_DIRECTIVE_WAIT:
             case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:

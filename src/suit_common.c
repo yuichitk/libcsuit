@@ -23,7 +23,7 @@ int32_t suit_print_hex(const uint8_t *array, int32_t size) {
         return SUIT_UNEXPECTED_ERROR;
     }
     for (int32_t i = 0; i < size; i++) {
-        printf("%#04x ", (unsigned char)array[i]);
+        printf("0x%02x ", (unsigned char)array[i]);
     }
     return SUIT_SUCCESS;
 }
