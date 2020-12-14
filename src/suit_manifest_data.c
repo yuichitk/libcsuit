@@ -358,6 +358,9 @@ int32_t suit_set_cmd_seq_current(QCBORDecodeContext *context,
     size_t commands_index = 0;
     size_t try_index;
     for (size_t i = 0; i < array_count; i += 2) {
+        if (commands_index >= SUIT_MAX_ARRAY_LENGTH) {
+            return SUIT_NO_MEMORY;
+        }
         if (!suit_qcbor_get_next(context, item, error, QCBOR_TYPE_INT64)) {
             return SUIT_UNEXPECTED_ERROR;
         }
@@ -934,14 +937,16 @@ int32_t suit_set_auth_wrapper_current(QCBORDecodeContext *context,
 
     if (!suit_qcbor_get_next(&auth_wrapper_context, item, error, QCBOR_TYPE_ARRAY)) {
         result = SUIT_INVALID_TYPE_OF_ARGUMENT;
-        wrapper->len = 0;
+    }
+    else if (item->val.uCount >= SUIT_MAX_ARRAY_LENGTH) {
+        result = SUIT_NO_MEMORY;
     }
     else {
         wrapper->len = item->val.uCount;
     }
-    for (size_t i = 0; i < wrapper->len; i++) {
+    size_t i;
+    for (i = 0; i < wrapper->len; i++) {
         if (!suit_qcbor_get_next(&auth_wrapper_context, item, error, QCBOR_TYPE_BYTE_STRING)) {
-            wrapper->len = i;
             result = SUIT_INVALID_TYPE_OF_ARGUMENT;
             break;
         }
@@ -957,11 +962,10 @@ int32_t suit_set_auth_wrapper_current(QCBORDecodeContext *context,
         }
         QCBORDecode_Finish(&auth_context);
         if (result != SUIT_SUCCESS) {
-            wrapper->len = i;
             break;
         }
     }
-
+    wrapper->len = i;
     QCBORDecode_Finish(&auth_wrapper_context);
     return result;
 }
