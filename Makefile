@@ -6,7 +6,7 @@
 
 NAME				= libcsuit
 CC					= gcc
-CFLAGS				= -Wall -g -fPIC
+CFLAGS				= -Wall -fPIC
 LDFLAGS				= -lt_cose -lqcbor
 INC					= -I ./inc
 SRCS				= src/suit_common.c src/suit_manifest_data.c src/suit_manifest_print.c src/suit_cose.c
