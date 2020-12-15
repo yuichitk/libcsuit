@@ -232,7 +232,7 @@ typedef struct suit_parameters_list {
  * (SUIT_Condition // SUIT_Directive // SUIT_Command_Custom)
  */
 typedef struct suit_command_sequence_item {
-    uint32_t                        label;
+    int64_t                         label;
     union {
         suit_buf_t                  string;
         int64_t                     int64;
@@ -243,7 +243,7 @@ typedef struct suit_command_sequence_item {
 } suit_command_sequence_item_t;
 
 /*
- * SUIT_Command_Sequence
+ * SUIT_Command_Sequence or SUIT_Common_Sequence
  */
 typedef struct suit_command_sequence {
     size_t                          len;
@@ -373,11 +373,13 @@ size_t suit_qcbor_calc_rollback(QCBORItem *item);
 int32_t suit_set_envelope(QCBORDecodeContext *context,
                           QCBORItem *item,
                           QCBORError *error,
+                          bool next,
                           suit_envelope_t *envelope,
                           const char *public_key);
 int32_t suit_set_component_identifiers(QCBORDecodeContext *context,
                                        QCBORItem *item,
                                        QCBORError *error,
+                                       bool next,
                                        suit_component_identifier_t *identifier);
-int32_t suit_set_cmd_seq_from_buf(const suit_buf_t *buf, suit_command_sequence_t *cmd_seq);
+int32_t suit_set_command_sequence_from_buf(const suit_buf_t *buf, suit_command_sequence_t *cmd_seq);
 #endif  // SUIT_MANIFEST_DATA_H

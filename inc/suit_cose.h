@@ -28,11 +28,11 @@ typedef enum cose_tag_key {
 } cose_tag_key_t;
 
 int32_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key);
-cose_tag_key_t suit_judge_cose_tag(UsefulBufC *signed_cose);
-int32_t suit_verify_cose_sign(UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload);
-int32_t suit_verify_cose_sign1(UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload);
-int32_t suit_verify_cose_mac(UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload);
-int32_t suit_verify_cose_mac0(UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload);
+cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose);
+int32_t suit_verify_cose_sign(const UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload);
+int32_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload);
+int32_t suit_verify_cose_mac(const UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload);
+int32_t suit_verify_cose_mac0(const UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload);
 
 
 #endif  /* SUIT_COSE_H */

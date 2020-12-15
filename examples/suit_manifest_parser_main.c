@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
     QCBORError error;
 
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
-    int32_t result = suit_set_envelope(&decode_context, &item, &error, &envelope, key_buf);
+    int32_t result = suit_set_envelope(&decode_context, &item, &error, true, &envelope, key_buf);
     if (result) {
         printf("main : Can't parse Manifest file.\n");
         return EXIT_FAILURE;
@@ -84,7 +84,11 @@ int main(int argc, char *argv[]) {
 
     // Print manifest.
     printf("\nmain : Print Manifest.\n");
-    suit_print_envelope(&envelope, 2);
+    result = suit_print_envelope(&envelope, 2);
+    if (result != SUIT_SUCCESS) {
+        printf("main : Can't print Manifest file.\n");
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }

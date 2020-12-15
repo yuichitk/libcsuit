@@ -59,7 +59,7 @@ int32_t suit_create_es256_key_pair(const char *private_key, const char *public_k
 }
 
 
-cose_tag_key_t suit_judge_cose_tag(UsefulBufC *signed_cose) {
+cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose) {
     /* judge authentication object
      * [ COSE_Sign_Tagged, COSE_Sign1_Tagged, COSE_Mac_Tagged, COSE_Mac0_Tagged ]
      */
@@ -67,7 +67,6 @@ cose_tag_key_t suit_judge_cose_tag(UsefulBufC *signed_cose) {
     QCBORDecodeContext context;
     QCBORItem item;
     QCBORError error;
-    suit_print_hex(signed_cose->ptr, 16);
     QCBORDecode_Init(&context, *signed_cose, QCBOR_DECODE_MODE_NORMAL);
     uint64_t puTags[QCBOR_MAX_TAGS_PER_ITEM];
     QCBORTagListOut out = {0, QCBOR_MAX_TAGS_PER_ITEM, puTags};
@@ -129,7 +128,7 @@ int32_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *
     return SUIT_SUCCESS;
 }
 
-int32_t suit_verify_cose_sign1(UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload) {
+int32_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload) {
     struct t_cose_key   cose_public_key;
     int32_t             result = SUIT_SUCCESS;
     if (public_key == NULL) {
