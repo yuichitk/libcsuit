@@ -12,15 +12,15 @@
 ## CBOR Diagnostic
     / SUIT_Envelope = /
     {
-        / authentication-wrapper / 2:bstr .cbor ({
-            digest: bstr .cbor ([
+        / authentication-wrapper / 2 : bstr .cbor ({
+            digest : bstr .cbor ([
                 / algorithm-id / 2 / "sha256" /,
                 / digest-bytes / h'987eec85fa99fd31d332381b9810f90b05c2e0d4f284a6f4211207ed00fff750'
             ])
-            signatures: [
+            signatures : [
                 bstr .cbor (18([
                     / protected / bstr .cbor ({
-                        / alg / 1:-7 / "ES256" /,
+                        / alg / 1 : -7 / "ES256" /,
                     }),
                     / unprotected / {
                     },
@@ -33,26 +33,25 @@
             ]
         }),
         / manifest / 3:bstr .cbor ({
-            / manifest-version / 1:1,
-            / manifest-sequence-number / 2:1,
-            / common / 3:bstr .cbor ({
-                / components / 2:[
+            / manifest-version / 1 : 1,
+            / manifest-sequence-number / 2 : 1,
+            / common / 3 : bstr .cbor ({
+                / components / 2 : [
                     [h'00']
                 ],
-                / common-sequence / 4:bstr .cbor ([
+                / common-sequence / 4 : bstr .cbor ([
                     / directive-override-parameters / 20,
                     {
-                        / vendor-id / 1:h'fa6b4a53d5ad5fdfbe9de663e4d41ffe' / fa6b4a53-d5ad-5fdf-
-    be9d-e663e4d41ffe /,
-                        / class-id / 2:h'1492af1425695e48bf429b2d51f2ab45' / 1492af14-2569-5e48-bf42-9b2d51f2ab45 /,
-                        / image-digest / 3:bstr .cbor ([
+                        / vendor-id / 1 : h'fa6b4a53d5ad5fdfbe9de663e4d41ffe' / fa6b4a53-d5ad-5fdf-be9d-e663e4d41ffe /,
+                        / class-id / 2 : h'1492af1425695e48bf429b2d51f2ab45' / 1492af14-2569-5e48-bf42-9b2d51f2ab45 /,
+                        / image-digest / 3 : bstr .cbor ([
                             / algorithm-id / 2 / "sha256" /,
                             / digest-bytes / h'00112233445566778899aabbccddeeff0123456789abcdeffedcba9876543210'
                         ]),
-                        / image-size / 14:34768,
+                        / image-size / 14 : 34768,
                     },
-                    / condition-vendor-identifier / 1,15,
-                    / condition-class-identifier / 2,15
+                    / condition-vendor-identifier / 1, 15,
+                    / condition-class-identifier / 2, 15
                 ]),
             }),
             / install / 9:bstr .cbor ([
@@ -60,11 +59,11 @@
                 {
                     / uri / 21:'http://example.com/file.bin',
                 },
-                / directive-fetch / 21,2,
-                / condition-image-match / 3,15
+                / directive-fetch / 21, 2,
+                / condition-image-match / 3, 15
             ]),
             / validate / 10:bstr .cbor ([
-                / condition-image-match / 3,15
+                / condition-image-match / 3, 15
             ]),
         }),
     }
@@ -129,7 +128,7 @@
                             00              # "\x00"
                    04                       # unsigned(4) / common-sequence : /
                    58 56                    # bytes(86)
-                      # SUIT_Common_Sequence #
+                      # SUIT_Command_Sequence #
                       86                    # array(6)
                          14                 # unsigned(20) / directive-override-parameters /
                          A4                 # map(4)
@@ -154,20 +153,20 @@
                          0F                 # unsigned(15)
              09                             # unsigned(9)  / install : /
              58 25                          # bytes(37)
-                # SUIT_Common_Sequence #
+                # SUIT_Command_Sequence #
                 86                          # array(6)
                    13                       # unsigned(19) / directive-set-parameters : /
                    A1                       # map(1)
                       15                    # unsigned(21) / uri : /
                       78 1B                 # text(27) / "http://example.com/file.bin" /
                          687474703A2F2F6578616D706C652E636F6D2F66696C652E62696E
-                   15                       # unsigned(21) / directive-fetch : 2 /
+                   15                       # unsigned(21) / directive-fetch : /
                    02                       # unsigned(2)
-                   03                       # unsigned(3)  / condition-image-match : 15 /
+                   03                       # unsigned(3)  / condition-image-match : /
                    0F                       # unsigned(15)
              0A                             # unsigned(10) / validate : /
              43                             # bytes(3)
-                # SUIT_Common_Sequence #
+                # SUIT_Command_Sequence #
                 82                          # array(2)
                    03                       # unsigned(3)  / condition-image-match : /
                    0F                       # unsigned(15)

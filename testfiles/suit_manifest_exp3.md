@@ -42,8 +42,7 @@
                 / common-sequence / 4:bstr .cbor ([
                     / directive-override-parameters / 20,
                     {
-                      / vendor-id / 1 : h'fa6b4a53d5ad5fdfbe9de663e4d41ffe' / fa6b4a53-d5ad-5fdf-
-  be9d-e663e4d41ffe /,
+                      / vendor-id / 1 : h'fa6b4a53d5ad5fdfbe9de663e4d41ffe' / fa6b4a53-d5ad-5fdf-be9d-e663e4d41ffe /,
                       / class-id / 2 : h'1492af1425695e48bf429b2d51f2ab45' / 1492af14-2569-5e48-bf42-9b2d51f2ab45 /,
                     },
                     / directive-try-each / 15,
@@ -98,11 +97,13 @@
                         }
                     ]),
                     bstr .cbor ([
-                        / directive-set-parameters / 19,{
+                        / directive-set-parameters / 19,
+                        {
                             / offset / 5:541696,
                         },
                         / condition-component-offset / 5, 5,
-                        / directive-set-parameters / 19, {
+                        / directive-set-parameters / 19,
+                        {
                             / uri / 21 : 'http://example.com/file2.bin',
                         }
                     ])

@@ -42,8 +42,7 @@
                 / common-sequence / 4 : bstr .cbor ([
                     / directive-override-parameters / 20,
                     {
-                        / vendor-id / 1 : h'fa6b4a53d5ad5fdfbe9de663e4d41ffe' / fa6b4a53-d5ad-5fdf-
-  be9d-e663e4d41ffe /,
+                        / vendor-id / 1 : h'fa6b4a53d5ad5fdfbe9de663e4d41ffe' / fa6b4a53-d5ad-5fdf-be9d-e663e4d41ffe /,
                         / class-id / 2 : h'1492af1425695e48bf429b2d51f2ab45' / 1492af14-2569-5e48-bf42-9b2d51f2ab45 /,
                         / image-digest / 3 : bstr .cbor ([
                             / algorithm-id / 2 / "sha256" /,
@@ -182,13 +181,13 @@
                    3EE96DC79641970AE46B929CCF0B72BA9536DD846020DBDC9F949D84EA0E18D2
              0A                             # unsigned(10) / validate : /
              43                             # bytes(3)
-                # SUIT_Common_Sequence #
+                # SUIT_Command_Sequence #
                 82                          # array(2)
                    03                       # unsigned(3)  / condition-image-match : /
                    0F                       # unsigned(15)
              0C                             # unsigned(12) / run : /
              43                             # bytes(3)
-                # SUIT_Common_Sequence #
+                # SUIT_Command_Sequence #
                 82                          # array(2)
                    17                       # unsigned(23) / directive-run : /
                    02                       # unsigned(2)
@@ -199,7 +198,7 @@
                    23F48B2E2838650F43C144234AEE18401FFE3CCE4733B23881C3A8AE2D2B66E8
        09                                   # unsigned(9)  / install : /
        58 3C                                # bytes(60)
-          # SUIT_Common_Sequence #
+          # SUIT_Command_Sequence #
           86                                # array(6)
              13                             # unsigned(19) / directive-set-parameters : /
              A1                             # map(1)
