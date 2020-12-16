@@ -8,6 +8,8 @@
 #ifndef SUIT_DIGEST_H
 #define SUIT_DIGEST_H
 
+#include <stdio.h>
+#include <string.h>
 #include "openssl/sha.h"
 
 int32_t suit_verify_sha224(const uint8_t *tgt_ptr, const size_t tgt_len, const uint8_t *digest_bytes_ptr, const size_t digest_bytes_len);

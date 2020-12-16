@@ -5,6 +5,8 @@
  *
  */
 
+#include <stdio.h>
+#include <string.h>
 #include "suit_common.h"
 #include "suit_digest.h"
 #include "openssl/ecdsa.h"
@@ -18,11 +20,6 @@ int32_t suit_verify_sha256(const uint8_t *tgt_ptr, const size_t tgt_len, const u
     SHA256_Init(&sha256);
     SHA256_Update(&sha256, tgt_ptr, tgt_len);
     SHA256_Final(hash, &sha256);
-    for (size_t i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-        if (hash[i] != digest_bytes_ptr[i]) {
-            return SUIT_FAILED_TO_VERIFY;
-        }
-    }
-    return SUIT_SUCCESS;
+    return (memcmp(digest_bytes_ptr, hash, SHA256_DIGEST_LENGTH) == 0) ? SUIT_SUCCESS : SUIT_FAILED_TO_VERIFY;
 }
 
