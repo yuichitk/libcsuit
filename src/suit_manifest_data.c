@@ -559,31 +559,6 @@ int32_t suit_set_command_sequence_from_bytes(QCBORDecodeContext *context,
     return suit_set_command_sequence_from_buf(&buf, cmd_seq);
 }
 
-int32_t suit_set_sev_cmd_seq_from_bytes(QCBORDecodeContext *context,
-                                                QCBORItem *item,
-                                                QCBORError *error,
-                                                bool next,
-                                                suit_sev_command_sequence_t *sev_cmd_seq) {
-    if (next && !suit_qcbor_get_next(context, item, error, QCBOR_TYPE_BYTE_STRING)) {
-        return SUIT_INVALID_TYPE_OF_ARGUMENT;
-    }
-    else if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
-        suit_debug_print(context, item, error, "suit_set_sev_cmd_seq_from_bytes", QCBOR_TYPE_BYTE_STRING);
-        return SUIT_INVALID_TYPE_OF_ARGUMENT;
-   }
-    QCBORDecodeContext sev_cmd_seq_context;
-    QCBORDecode_Init(&sev_cmd_seq_context,
-                     item->val.string,
-                     QCBOR_DECODE_MODE_NORMAL);
-
-    // TODO : Check SUIT_Digest
-    int32_t result = suit_set_command_sequence(
-                        &sev_cmd_seq_context, item, error, true,
-                        &sev_cmd_seq->value.cmd_seq);
-    QCBORDecode_Finish(&sev_cmd_seq_context);
-    return result;
-}
-
 int32_t suit_set_component_identifiers(QCBORDecodeContext *context,
                                        QCBORItem *item,
                                        QCBORError *error,
@@ -902,14 +877,33 @@ int32_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
     return result;
 }
 
+int32_t suit_verify_item(QCBORItem *item, suit_digest_t *digest) {
+    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+        return SUIT_INVALID_TYPE_OF_ARGUMENT;
+    }
+    if (digest->bytes.ptr == NULL) {
+        return SUIT_FAILED_TO_VERIFY;
+    }
+    suit_buf_t buf;
+    size_t rollback = suit_qcbor_calc_rollback(item);
+    buf.ptr = item->val.string.ptr - rollback;
+    buf.len = item->val.string.len + rollback;
+    return suit_verify_digest(&buf, digest);
+}
+
 int32_t suit_set_manifest(QCBORDecodeContext *context,
                           QCBORItem *item,
                           QCBORError *error,
                           bool next,
                           suit_manifest_t *manifest,
                           suit_digest_t *digest) {
+    manifest->sev_man_mem.dependency_resolution_status = SUIT_SEVERABLE_MEMBER_NOT_EXISTS;
+    manifest->sev_man_mem.payload_fetch_status = SUIT_SEVERABLE_MEMBER_NOT_EXISTS;
+    manifest->sev_man_mem.install_status = SUIT_SEVERABLE_MEMBER_NOT_EXISTS;
+    manifest->sev_man_mem.text_status = SUIT_SEVERABLE_MEMBER_NOT_EXISTS;
+    manifest->sev_man_mem.coswid_status = SUIT_SEVERABLE_MEMBER_NOT_EXISTS;
+
     // printf("suit_set_manifest\n");
-    int32_t result = SUIT_SUCCESS;
     if (next && !suit_qcbor_get_next(context, item, error, QCBOR_TYPE_BYTE_STRING)) {
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
@@ -917,13 +911,10 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
         suit_debug_print(context, item, error, "suit_set_manifest", QCBOR_TYPE_BYTE_STRING);
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
+    int32_t result = SUIT_SUCCESS;
 
     /* verify the SUIT_Manifest with SUIT_Digest */
-    suit_buf_t buf;
-    size_t rollback = suit_qcbor_calc_rollback(item);
-    buf.ptr = item->val.string.ptr - rollback;
-    buf.len = item->val.string.len + rollback;
-    result = suit_verify_digest(&buf, digest);
+    result = suit_verify_item(item, digest);
     if (result != SUIT_SUCCESS) {
         suit_debug_print(context, item, error, "suit_set_manifest@verify-digest", QCBOR_TYPE_BYTE_STRING);
         return result;
@@ -971,6 +962,9 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
                 else if (item->uDataType == QCBOR_TYPE_BYTE_STRING) {
                     /* bstr .cbor SUIT_Command_Sequence */
                     result = suit_set_command_sequence_from_bytes(&manifest_context, item, error, false, &manifest->sev_man_mem.install);
+                    if (result == SUIT_SUCCESS) {
+                        manifest->sev_man_mem.install_status = SUIT_SEVERABLE_MEMBER_IN_MANIFEST_VERIFIED;
+                    }
                 }
                 else {
                     result = SUIT_INVALID_TYPE_OF_ARGUMENT;
@@ -984,6 +978,9 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
                 else if (item->uDataType == QCBOR_TYPE_BYTE_STRING) {
                     /* bstr .cbor SUIT_Text_Map */
                     result = suit_set_text_from_bytes(&manifest_context, item, error, false, &manifest->sev_man_mem.text);
+                    if (result == SUIT_SUCCESS) {
+                        manifest->sev_man_mem.text_status = SUIT_SEVERABLE_MEMBER_IN_MANIFEST_VERIFIED;
+                    }
                 }
                 else {
                     result = SUIT_INVALID_TYPE_OF_ARGUMENT;
@@ -1083,6 +1080,7 @@ int32_t suit_set_envelope(QCBORDecodeContext *context,
     int32_t result = SUIT_SUCCESS;
     uint16_t map_count = item->val.uCount;
     bool is_authentication_set = false;
+    bool is_manifest_set = false;
     suit_buf_t buf;
     for (size_t i = 0; i < map_count; i++) {
         if (!suit_qcbor_get_next(context, item, error, QCBOR_TYPE_ANY)) {
@@ -1105,29 +1103,60 @@ int32_t suit_set_envelope(QCBORDecodeContext *context,
                     return SUIT_FAILED_TO_VERIFY;
                 }
                 result = suit_set_manifest(context, item, error, false, &envelope->manifest, &envelope->wrapper.digest[envelope->wrapper.len - 1]);
+                if (result == SUIT_SUCCESS) {
+                    is_manifest_set = true;
+                }
                 break;
             /* SUIT_Severable_Manifest_members */
             case SUIT_INSTALL:
-                if (!is_authentication_set) {
+                if (!is_authentication_set || !is_manifest_set) {
                     return SUIT_FAILED_TO_VERIFY;
                 }
-                result = suit_set_command_sequence_from_bytes(context, item, error, false, &envelope->sev_man_mem.install);
+                result = suit_verify_item(item, &envelope->manifest.sev_mem_dig.install);
+                if (result == SUIT_SUCCESS) {
+                    envelope->manifest.sev_man_mem.install_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED;
+                }
+                else if (result == SUIT_FAILED_TO_VERIFY) {
+                    envelope->manifest.sev_man_mem.install_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED;
+                }
+                else {
+                    break;
+                }
+                result = suit_set_command_sequence_from_bytes(context, item, error, false, &envelope->manifest.sev_man_mem.install);
                 break;
             case SUIT_TEXT:
-                if (!is_authentication_set) {
+                if (!is_authentication_set || !is_manifest_set) {
                     return SUIT_FAILED_TO_VERIFY;
                 }
-                result = suit_set_text_from_bytes(context, item, error, false, &envelope->sev_man_mem.text);
+                result = suit_verify_item(item, &envelope->manifest.sev_mem_dig.text);
+                if (result == SUIT_SUCCESS) {
+                    envelope->manifest.sev_man_mem.text_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED;
+                }
+                else if (result == SUIT_FAILED_TO_VERIFY) {
+                    envelope->manifest.sev_man_mem.text_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED;
+                }
+                else {
+                    return result;
+                }
+                result = suit_set_text_from_bytes(context, item, error, false, &envelope->manifest.sev_man_mem.text);
                 break;
             case SUIT_COSWID:
-                if (!is_authentication_set) {
+                if (!is_authentication_set || !is_manifest_set) {
                     return SUIT_FAILED_TO_VERIFY;
                 }
-                if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
-                    return SUIT_INVALID_TYPE_OF_ARGUMENT;
+                result = suit_verify_item(item, &envelope->manifest.sev_mem_dig.coswid);
+                if (result == SUIT_SUCCESS) {
+                    envelope->manifest.sev_man_mem.coswid_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED;
                 }
-                envelope->sev_man_mem.coswid.ptr = item->val.string.ptr;
-                envelope->sev_man_mem.coswid.len = item->val.string.len;
+                else if (result == SUIT_FAILED_TO_VERIFY) {
+                    envelope->manifest.sev_man_mem.coswid_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED;
+                }
+                else {
+                    return result;
+                }
+                /* type check is already done above */
+                envelope->manifest.sev_man_mem.coswid.ptr = item->val.string.ptr;
+                envelope->manifest.sev_man_mem.coswid.len = item->val.string.len;
                 break;
             case SUIT_DELEGATION:
             case SUIT_DEPENDENCY_RESOLUTION:

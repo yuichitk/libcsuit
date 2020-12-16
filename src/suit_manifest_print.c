@@ -307,6 +307,21 @@ int32_t suit_print_text_component(const suit_text_component_t *text_component, c
     return SUIT_SUCCESS;
 }
 
+bool suit_whether_print_now(bool in_suit_manifest, suit_command_in_t status) {
+    return ((in_suit_manifest &&  status == SUIT_SEVERABLE_MEMBER_IN_MANIFEST_VERIFIED) ||
+           (!in_suit_manifest && (status == SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED ||
+                                  status == SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED)));
+}
+
+bool suit_is_severable_manifest_member_verified(suit_command_in_t status) {
+    return (status == SUIT_SEVERABLE_MEMBER_IN_MANIFEST_VERIFIED ||
+            status == SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED);
+}
+
+char *suit_member_is_verified(suit_command_in_t status) {
+    return (suit_is_severable_manifest_member_verified(status)) ? "verified" : "not verified";
+}
+
 bool suit_text_have_something_to_print(const suit_text_t *text) {
     return (text->manifest_description.ptr != NULL ||
             text->update_description.ptr != NULL ||
@@ -315,7 +330,7 @@ bool suit_text_have_something_to_print(const suit_text_t *text) {
             text->component_len > 0);
 }
 
-int32_t suit_print_text(const suit_text_t *text, const uint32_t indent_space) {
+int32_t suit_print_text(const suit_text_t *text, const suit_command_in_t status, const uint32_t indent_space) {
     if (text == NULL) {
         return SUIT_UNEXPECTED_ERROR;
     }
@@ -323,7 +338,7 @@ int32_t suit_print_text(const suit_text_t *text, const uint32_t indent_space) {
         return SUIT_SUCCESS;
     }
     int32_t result = SUIT_SUCCESS;
-    printf("%*stext : SUIT_Text_Map\n", indent_space, "");
+    printf("%*stext(%s) : SUIT_Text_Map\n", indent_space, "", suit_member_is_verified(status));
     if (text->manifest_description.ptr != NULL) {
         printf("%*stext-manifest-description : ", indent_space + 2, "");
         result = suit_print_string(&text->manifest_description);
@@ -443,38 +458,40 @@ int32_t suit_print_severable_members_digests(const suit_severable_members_digest
     return SUIT_SUCCESS;
 }
 
-int32_t suit_print_severable_manifest_members(const suit_severable_manifest_members_t *sev_man_mem, uint32_t indent_space) {
+int32_t suit_print_severable_manifest_members(const suit_severable_manifest_members_t *sev_man_mem, uint32_t indent_space, bool in_suit_manifest) {
     if (sev_man_mem == NULL) {
         return SUIT_UNEXPECTED_ERROR;
     }
     int32_t result = SUIT_SUCCESS;
-    if (sev_man_mem->dependency_resolution.len > 0) {
-        printf("%*sdependency-resolution : SUIT_Command_Sequence\n", indent_space, "");
+    if (suit_whether_print_now(in_suit_manifest, sev_man_mem->dependency_resolution_status)) {
+        printf("%*sdependency-resolution(%s) : SUIT_Command_Sequence\n", indent_space, "", suit_member_is_verified(sev_man_mem->dependency_resolution_status));
         result = suit_print_cmd_seq(&sev_man_mem->dependency_resolution, indent_space + 2);
         if (result != SUIT_SUCCESS) {
             return result;
         }
     }
-    if (sev_man_mem->payload_fetch.len > 0) {
-        printf("%*spayload-fetch : SUIT_Command_Sequence\n", indent_space, "");
+    if (suit_whether_print_now(in_suit_manifest, sev_man_mem->payload_fetch_status)) {
+        printf("%*spayload-fetch(%s) : SUIT_Command_Sequence\n", indent_space, "", suit_member_is_verified(sev_man_mem->payload_fetch_status));
         result = suit_print_cmd_seq(&sev_man_mem->payload_fetch, indent_space + 2);
         if (result != SUIT_SUCCESS) {
             return result;
         }
     }
-    if (sev_man_mem->install.len > 0) {
-        printf("%*sinstall : SUIT_Command_Sequence\n", indent_space, "");
+    if (suit_whether_print_now(in_suit_manifest, sev_man_mem->install_status)) {
+        printf("%*sinstall(%s) : SUIT_Command_Sequence\n", indent_space, "", suit_member_is_verified(sev_man_mem->install_status));
         result = suit_print_cmd_seq(&sev_man_mem->install, indent_space + 2);
         if (result != SUIT_SUCCESS) {
             return result;
         }
     }
-    result = suit_print_text(&sev_man_mem->text, indent_space);
-    if (result != SUIT_SUCCESS) {
-        return result;
+    if (suit_whether_print_now(in_suit_manifest, sev_man_mem->text_status)) {
+        result = suit_print_text(&sev_man_mem->text, sev_man_mem->text_status, indent_space);
+        if (result != SUIT_SUCCESS) {
+            return result;
+        }
     }
-    if (sev_man_mem->coswid.len > 0) {
-        printf("%*scoswid : ", indent_space, "");
+    if (suit_whether_print_now(in_suit_manifest, sev_man_mem->coswid_status)) {
+        printf("%*scoswid(%s) : ", indent_space, "", suit_member_is_verified(sev_man_mem->coswid_status));
         result = suit_print_hex_in_max(sev_man_mem->coswid.ptr, sev_man_mem->coswid.len, SUIT_MAX_PRINT_BYTE_COUNT);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -515,7 +532,7 @@ int32_t suit_print_manifest(const suit_manifest_t *manifest, uint32_t indent_spa
     }
 
     /* SUIT_Severable_Manifest_Members */
-    result = suit_print_severable_manifest_members(&manifest->sev_man_mem, indent_space + 2);
+    result = suit_print_severable_manifest_members(&manifest->sev_man_mem, indent_space + 2, true);
     if (result != SUIT_SUCCESS) {
         return result;
     }
@@ -552,7 +569,7 @@ int32_t suit_print_envelope(const suit_envelope_t *envelope, uint32_t indent_spa
         if (envelope->wrapper.len > 0) {
             printf("%*ssignatures : [\n", indent_space + 4, "");
             for (size_t i = 1; i < envelope->wrapper.len; i++) {
-                printf("%*sverified-payload : SUIT_Digest\n", indent_space + 6, "");
+                printf("%*sdigest(verified) : SUIT_Digest\n", indent_space + 6, "");
                 result = suit_print_digest(&envelope->wrapper.digest[i], indent_space + 8);
                 if (result != SUIT_SUCCESS) {
                     return result;
@@ -568,10 +585,7 @@ int32_t suit_print_envelope(const suit_envelope_t *envelope, uint32_t indent_spa
     }
 
     /* SUIT_Severable_Manifest_Members */
-    result = suit_print_severable_manifest_members(&envelope->sev_man_mem, indent_space + 2);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
+    result = suit_print_severable_manifest_members(&envelope->manifest.sev_man_mem, indent_space + 2, false);
 
     // TODO: SUIT_Integrated_Payload, SUIT_Integrated_Dependency, $$SUIT_Envelope_Extensions
     // TODO: (int => bstr)

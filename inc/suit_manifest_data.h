@@ -93,6 +93,16 @@ typedef enum suit_rep_policy_key {
     SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
 } suit_rep_policy_key_t;
 
+typedef enum suit_command_in {
+    SUIT_SEVERABLE_MEMBER_NOT_EXISTS                = 0,
+    // verified by SUIT_Digest in suit-authentication-wrapper
+    SUIT_SEVERABLE_MEMBER_IN_MANIFEST_VERIFIED      = 1,
+    // verified by SUIT_Digest in suit-manifest
+    SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED      = 2,
+    // not verified by any SUIT_Digests
+    SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED  = 3,
+} suit_command_in_t;
+
 typedef enum suit_wait_event_key {
     SUIT_WAIT_EVENT_AUTHORIZATION           = 1,
     SUIT_WAIT_EVENT_POWER                   = 2,
@@ -305,10 +315,15 @@ typedef struct suit_authentication_wrapper {
  */
 typedef struct suit_severable_manifest_members {
     suit_command_sequence_t         dependency_resolution;
+    suit_command_in_t               dependency_resolution_status;
     suit_command_sequence_t         payload_fetch;
+    suit_command_in_t               payload_fetch_status;
     suit_command_sequence_t         install;
+    suit_command_in_t               install_status;
     suit_text_t                     text;
+    suit_command_in_t               text_status;
     suit_buf_t                      coswid;
+    suit_command_in_t               coswid_status;
     // TODO :                       $$SUIT_severable-members-extension
 } suit_severable_manifest_members_t;
 
@@ -362,7 +377,7 @@ typedef struct suit_envelope {
     suit_manifest_t                     manifest;
     // TODO :                           SUIT_Severed_Fields
     /* SUIT_Severable_Manifest_Members */
-    suit_severable_manifest_members_t   sev_man_mem;
+    //suit_severable_manifest_members_t   sev_man_mem; //-> in manifest.sev_man_mem
 } suit_envelope_t;
 
 bool suit_qcbor_get_next(QCBORDecodeContext *message,
