@@ -318,8 +318,12 @@ bool suit_is_severable_manifest_member_verified(suit_command_in_t status) {
             status == SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED);
 }
 
-char *suit_member_is_verified(suit_command_in_t status) {
-    return (suit_is_severable_manifest_member_verified(status)) ? "verified" : "not verified";
+char *suit_str_verified(bool verified) {
+    return (verified) ? "verified" : "not verified";
+}
+
+char *suit_str_member_is_verified(suit_command_in_t status) {
+    return suit_str_verified(suit_is_severable_manifest_member_verified(status));
 }
 
 bool suit_text_have_something_to_print(const suit_text_t *text) {
@@ -338,7 +342,7 @@ int32_t suit_print_text(const suit_text_t *text, const suit_command_in_t status,
         return SUIT_SUCCESS;
     }
     int32_t result = SUIT_SUCCESS;
-    printf("%*stext(%s) : SUIT_Text_Map\n", indent_space, "", suit_member_is_verified(status));
+    printf("%*stext(%s) : SUIT_Text_Map\n", indent_space, "", suit_str_member_is_verified(status));
     if (text->manifest_description.ptr != NULL) {
         printf("%*stext-manifest-description : ", indent_space + 2, "");
         result = suit_print_string(&text->manifest_description);
@@ -464,21 +468,21 @@ int32_t suit_print_severable_manifest_members(const suit_severable_manifest_memb
     }
     int32_t result = SUIT_SUCCESS;
     if (suit_whether_print_now(in_suit_manifest, sev_man_mem->dependency_resolution_status)) {
-        printf("%*sdependency-resolution(%s) : SUIT_Command_Sequence\n", indent_space, "", suit_member_is_verified(sev_man_mem->dependency_resolution_status));
+        printf("%*sdependency-resolution(%s) : SUIT_Command_Sequence\n", indent_space, "", suit_str_member_is_verified(sev_man_mem->dependency_resolution_status));
         result = suit_print_cmd_seq(&sev_man_mem->dependency_resolution, indent_space + 2);
         if (result != SUIT_SUCCESS) {
             return result;
         }
     }
     if (suit_whether_print_now(in_suit_manifest, sev_man_mem->payload_fetch_status)) {
-        printf("%*spayload-fetch(%s) : SUIT_Command_Sequence\n", indent_space, "", suit_member_is_verified(sev_man_mem->payload_fetch_status));
+        printf("%*spayload-fetch(%s) : SUIT_Command_Sequence\n", indent_space, "", suit_str_member_is_verified(sev_man_mem->payload_fetch_status));
         result = suit_print_cmd_seq(&sev_man_mem->payload_fetch, indent_space + 2);
         if (result != SUIT_SUCCESS) {
             return result;
         }
     }
     if (suit_whether_print_now(in_suit_manifest, sev_man_mem->install_status)) {
-        printf("%*sinstall(%s) : SUIT_Command_Sequence\n", indent_space, "", suit_member_is_verified(sev_man_mem->install_status));
+        printf("%*sinstall(%s) : SUIT_Command_Sequence\n", indent_space, "", suit_str_member_is_verified(sev_man_mem->install_status));
         result = suit_print_cmd_seq(&sev_man_mem->install, indent_space + 2);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -491,7 +495,7 @@ int32_t suit_print_severable_manifest_members(const suit_severable_manifest_memb
         }
     }
     if (suit_whether_print_now(in_suit_manifest, sev_man_mem->coswid_status)) {
-        printf("%*scoswid(%s) : ", indent_space, "", suit_member_is_verified(sev_man_mem->coswid_status));
+        printf("%*scoswid(%s) : ", indent_space, "", suit_str_member_is_verified(sev_man_mem->coswid_status));
         result = suit_print_hex_in_max(sev_man_mem->coswid.ptr, sev_man_mem->coswid.len, SUIT_MAX_PRINT_BYTE_COUNT);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -506,7 +510,7 @@ int32_t suit_print_manifest(const suit_manifest_t *manifest, uint32_t indent_spa
         return SUIT_UNEXPECTED_ERROR;
     }
     int32_t result = SUIT_SUCCESS;
-    printf("%*smanifest : SUIT_Manifest\n", indent_space, "");
+    printf("%*smanifest(%s) : SUIT_Manifest\n", indent_space, "", suit_str_verified(manifest->is_verified));
     printf("%*smanifest-version : %u\n", indent_space + 2, "", manifest->version);
     printf("%*smanifest-sequence-number : %u\n", indent_space + 2, "", manifest->sequence_number);
 

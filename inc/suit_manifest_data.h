@@ -359,6 +359,7 @@ typedef struct suit_common {
  * SUIT_Manifest
  */
 typedef struct suit_manifest {
+    bool                                is_verified;
     uint32_t                            version;
     uint32_t                            sequence_number;
     suit_common_t                       common;

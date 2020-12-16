@@ -897,6 +897,7 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
                           bool next,
                           suit_manifest_t *manifest,
                           suit_digest_t *digest) {
+    manifest->is_verified = false;
     manifest->sev_man_mem.dependency_resolution_status = SUIT_SEVERABLE_MEMBER_NOT_EXISTS;
     manifest->sev_man_mem.payload_fetch_status = SUIT_SEVERABLE_MEMBER_NOT_EXISTS;
     manifest->sev_man_mem.install_status = SUIT_SEVERABLE_MEMBER_NOT_EXISTS;
@@ -911,13 +912,15 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
         suit_debug_print(context, item, error, "suit_set_manifest", QCBOR_TYPE_BYTE_STRING);
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
-    int32_t result = SUIT_SUCCESS;
 
     /* verify the SUIT_Manifest with SUIT_Digest */
-    result = suit_verify_item(item, digest);
-    if (result != SUIT_SUCCESS) {
+    int32_t result = suit_verify_item(item, digest);
+    if (result == SUIT_SUCCESS) {
+        manifest->is_verified = true;
+    }
+    else {
         suit_debug_print(context, item, error, "suit_set_manifest@verify-digest", QCBOR_TYPE_BYTE_STRING);
-        return result;
+        //return result;
     }
 
     QCBORDecodeContext manifest_context;
@@ -925,13 +928,17 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
                      (UsefulBufC){item->val.string.ptr, item->val.string.len},
                      QCBOR_DECODE_MODE_NORMAL);
 
+    size_t map_count = 0;
     if (!suit_qcbor_get_next(&manifest_context, item, error, QCBOR_TYPE_MAP)) {
-        return SUIT_INVALID_TYPE_OF_ARGUMENT;
+        result = SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
-    uint16_t map_count = item->val.uCount;
+    else {
+        map_count = item->val.uCount;
+    }
     for (size_t i = 0; i < map_count; i++) {
         if (!suit_qcbor_get_next(&manifest_context, item, error, QCBOR_TYPE_ANY)) {
-            return SUIT_INVALID_TYPE_OF_ARGUMENT;
+            result = SUIT_INVALID_TYPE_OF_ARGUMENT;
+            break;
         }
         switch (item->label.uint64) {
             case SUIT_MANIFEST_VERSION:
@@ -1005,7 +1012,7 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
                 return SUIT_UNEXPECTED_ERROR;
         }
         if (result != SUIT_SUCCESS) {
-            return result;
+            break;
         }
     }
     QCBORDecode_Finish(&manifest_context);
@@ -1114,7 +1121,7 @@ int32_t suit_set_envelope(QCBORDecodeContext *context,
                 }
                 result = suit_verify_item(item, &envelope->manifest.sev_mem_dig.install);
                 if (result == SUIT_SUCCESS) {
-                    envelope->manifest.sev_man_mem.install_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED;
+                    envelope->manifest.sev_man_mem.install_status = (envelope->manifest.is_verified) ? SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED : SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED;
                 }
                 else if (result == SUIT_FAILED_TO_VERIFY) {
                     envelope->manifest.sev_man_mem.install_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED;
@@ -1130,7 +1137,7 @@ int32_t suit_set_envelope(QCBORDecodeContext *context,
                 }
                 result = suit_verify_item(item, &envelope->manifest.sev_mem_dig.text);
                 if (result == SUIT_SUCCESS) {
-                    envelope->manifest.sev_man_mem.text_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED;
+                    envelope->manifest.sev_man_mem.text_status = (envelope->manifest.is_verified) ? SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED : SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED;
                 }
                 else if (result == SUIT_FAILED_TO_VERIFY) {
                     envelope->manifest.sev_man_mem.text_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED;
@@ -1146,7 +1153,7 @@ int32_t suit_set_envelope(QCBORDecodeContext *context,
                 }
                 result = suit_verify_item(item, &envelope->manifest.sev_mem_dig.coswid);
                 if (result == SUIT_SUCCESS) {
-                    envelope->manifest.sev_man_mem.coswid_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED;
+                    envelope->manifest.sev_man_mem.coswid_status = (envelope->manifest.is_verified) ? SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED : SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED;
                 }
                 else if (result == SUIT_FAILED_TO_VERIFY) {
                     envelope->manifest.sev_man_mem.coswid_status = SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED;
