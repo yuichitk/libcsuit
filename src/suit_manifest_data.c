@@ -9,6 +9,7 @@
 #include "suit_common.h"
 #include "suit_manifest_data.h"
 #include "suit_cose.h"
+#include "suit_digest.h"
 
 bool suit_qcbor_get_next(QCBORDecodeContext *message,
                     QCBORItem *item,
@@ -881,11 +882,32 @@ int32_t suit_set_text_from_bytes(QCBORDecodeContext *context,
     return result;
 }
 
+int32_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
+    int32_t result;
+    switch (digest->algorithm_id) {
+        case SUIT_ALGORITHM_ID_SHA256:
+            result = suit_verify_sha256(buf->ptr, buf->len, digest->bytes.ptr, digest->bytes.len);
+            break;
+        case SUIT_ALGORITHM_ID_SHA224:
+        case SUIT_ALGORITHM_ID_SHA384:
+        case SUIT_ALGORITHM_ID_SHA512:
+        case SUIT_ALGORITHM_ID_SHA3_224:
+        case SUIT_ALGORITHM_ID_SHA3_256:
+        case SUIT_ALGORITHM_ID_SHA3_384:
+        case SUIT_ALGORITHM_ID_SHA3_512:
+            printf("verification is not implemented for SUIT_Digest.algorithm_id=%d\n", digest->algorithm_id);
+        default:
+            result = SUIT_UNEXPECTED_ERROR;
+    }
+    return result;
+}
+
 int32_t suit_set_manifest(QCBORDecodeContext *context,
                           QCBORItem *item,
                           QCBORError *error,
                           bool next,
-                          suit_manifest_t *manifest) {
+                          suit_manifest_t *manifest,
+                          suit_digest_t *digest) {
     // printf("suit_set_manifest\n");
     int32_t result = SUIT_SUCCESS;
     if (next && !suit_qcbor_get_next(context, item, error, QCBOR_TYPE_BYTE_STRING)) {
@@ -894,6 +916,17 @@ int32_t suit_set_manifest(QCBORDecodeContext *context,
     else if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
         suit_debug_print(context, item, error, "suit_set_manifest", QCBOR_TYPE_BYTE_STRING);
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
+    }
+
+    /* verify the SUIT_Manifest with SUIT_Digest */
+    suit_buf_t buf;
+    size_t rollback = suit_qcbor_calc_rollback(item);
+    buf.ptr = item->val.string.ptr - rollback;
+    buf.len = item->val.string.len + rollback;
+    result = suit_verify_digest(&buf, digest);
+    if (result != SUIT_SUCCESS) {
+        suit_debug_print(context, item, error, "suit_set_manifest@verify-digest", QCBOR_TYPE_BYTE_STRING);
+        return result;
     }
 
     QCBORDecodeContext manifest_context;
@@ -1049,6 +1082,7 @@ int32_t suit_set_envelope(QCBORDecodeContext *context,
     }
     int32_t result = SUIT_SUCCESS;
     uint16_t map_count = item->val.uCount;
+    bool is_authentication_set = false;
     suit_buf_t buf;
     for (size_t i = 0; i < map_count; i++) {
         if (!suit_qcbor_get_next(context, item, error, QCBOR_TYPE_ANY)) {
@@ -1062,18 +1096,33 @@ int32_t suit_set_envelope(QCBORDecodeContext *context,
                 buf.ptr = item->val.string.ptr;
                 buf.len = item->val.string.len;
                 result = suit_set_authentication_wrapper_from_buf(&buf, &envelope->wrapper, public_key);
+                if (result == SUIT_SUCCESS) {
+                    is_authentication_set = true;
+                }
                 break;
             case SUIT_MANIFEST:
-                result = suit_set_manifest(context, item, error, false, &envelope->manifest);
+                if (!is_authentication_set) {
+                    return SUIT_FAILED_TO_VERIFY;
+                }
+                result = suit_set_manifest(context, item, error, false, &envelope->manifest, &envelope->wrapper.digest[envelope->wrapper.len - 1]);
                 break;
             /* SUIT_Severable_Manifest_members */
             case SUIT_INSTALL:
+                if (!is_authentication_set) {
+                    return SUIT_FAILED_TO_VERIFY;
+                }
                 result = suit_set_command_sequence_from_bytes(context, item, error, false, &envelope->sev_man_mem.install);
                 break;
             case SUIT_TEXT:
+                if (!is_authentication_set) {
+                    return SUIT_FAILED_TO_VERIFY;
+                }
                 result = suit_set_text_from_bytes(context, item, error, false, &envelope->sev_man_mem.text);
                 break;
             case SUIT_COSWID:
+                if (!is_authentication_set) {
+                    return SUIT_FAILED_TO_VERIFY;
+                }
                 if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
                     return SUIT_INVALID_TYPE_OF_ARGUMENT;
                 }
