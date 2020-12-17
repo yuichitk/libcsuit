@@ -17,40 +17,40 @@ int32_t suit_create_es256_key_pair(const char *private_key, const char *public_k
 
     ec_group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
     if (ec_group == NULL) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FATAL_ERROR;
     }
     ec_key = EC_KEY_new();
     if (ec_key == NULL) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FATAL_ERROR;
     }
     result = EC_KEY_set_group(ec_key, ec_group);
     if (!result) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FATAL_ERROR;
     }
     private_key_bn = BN_new();
     if (private_key_bn == NULL) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FATAL_ERROR;
     }
     BN_zero(private_key_bn);
     result = BN_hex2bn(&private_key_bn, private_key);
     if(private_key_bn == 0) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FATAL_ERROR;
     }
     result = EC_KEY_set_private_key(ec_key, private_key_bn);
     if (!result) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FATAL_ERROR;
     }
     pub_key_point = EC_POINT_new(ec_group);
     if (pub_key_point == NULL) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FATAL_ERROR;
     }
     pub_key_point = EC_POINT_hex2point(ec_group, public_key, pub_key_point, NULL);
     if (pub_key_point == NULL) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FATAL_ERROR;
     }
     result = EC_KEY_set_public_key(ec_key, pub_key_point);
     if (result == 0) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FATAL_ERROR;
     }
 
     cose_key_pair->k.key_ptr  = ec_key;
@@ -72,11 +72,11 @@ cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose) {
     QCBORTagListOut out = {0, QCBOR_MAX_TAGS_PER_ITEM, puTags};
     error = QCBORDecode_GetNextWithTags(&context, &item, &out);
     if (error != QCBOR_SUCCESS) {
-        suit_debug_print(&context, &item, &error, "suit_judge_cose_tag", QCBOR_TYPE_ANY);
+        suit_debug_print(&context, &item, "suit_judge_cose_tag", QCBOR_TYPE_ANY);
         goto out;
     }
     if (out.uNumUsed == 0) {
-        suit_debug_print(&context, &item, &error, "suit_judge_cose_tag(NO TAG FOUND)", QCBOR_TYPE_ANY);
+        suit_debug_print(&context, &item, "suit_judge_cose_tag(NO TAG FOUND)", QCBOR_TYPE_ANY);
         goto out;
     }
     switch (puTags[0]) {
@@ -100,27 +100,27 @@ int32_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *
 
     ec_group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
     if (ec_group == NULL) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FAILED_TO_VERIFY;
     }
     ec_key = EC_KEY_new();
     if (ec_key == NULL) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FAILED_TO_VERIFY;
     }
     result = EC_KEY_set_group(ec_key, ec_group);
     if (!result) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FAILED_TO_VERIFY;
     }
     ec_point = EC_POINT_new(ec_group);
     if (ec_point == NULL) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FAILED_TO_VERIFY;
     }
     ec_point = EC_POINT_hex2point(ec_group, public_key, ec_point, NULL);
     if (ec_point == NULL) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FAILED_TO_VERIFY;
     }
     result = EC_KEY_set_public_key(ec_key, ec_point);
     if (result == 0) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FAILED_TO_VERIFY;
     }
 
     cose_public_key->k.key_ptr  = ec_key;
@@ -137,7 +137,7 @@ int32_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const char *public
     result = suit_create_es256_public_key(public_key, &cose_public_key);
     if (result != SUIT_SUCCESS) {
         printf("Fail make_ossl_ecdsa_key_pair : result = %d\n", result);
-        return result;
+        return SUIT_FAILED_TO_VERIFY;
     }
 
     struct t_cose_sign1_verify_ctx  verify_ctx;

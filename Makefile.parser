@@ -13,6 +13,10 @@ SRCS	= examples/suit_manifest_parser_main.c examples/suit_examples_common.c src/
 OBJDIR	= ./obj
 OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
+ifdef debug
+    CFLAGS += -DSKIP_ERROR
+endif
+
 $(TARGET):	$(OBJS)
 			$(CC) -o $@ $^ $(LDFLAGS)
 
@@ -23,8 +27,6 @@ $(OBJDIR)/%.o:	%.c
 .PHONY:		all test clean
 
 all:		clean $(TARGET)
-
-#define
 
 KEY			:= ./testfiles/key/trust_anchor_secp256r1_pub.der
 TEST_NUM	:= 0 1 2 3 4 5

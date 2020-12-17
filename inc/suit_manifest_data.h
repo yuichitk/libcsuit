@@ -93,15 +93,11 @@ typedef enum suit_rep_policy_key {
     SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
 } suit_rep_policy_key_t;
 
-typedef enum suit_command_in {
-    SUIT_SEVERABLE_MEMBER_NOT_EXISTS                = 0,
-    // verified by SUIT_Digest in suit-authentication-wrapper
-    SUIT_SEVERABLE_MEMBER_IN_MANIFEST_VERIFIED      = 1,
-    // verified by SUIT_Digest in suit-manifest
-    SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_VERIFIED      = 2,
-    // not verified by any SUIT_Digests
-    SUIT_SEVERABLE_MEMBER_IN_ENVELOPE_NOT_VERIFIED  = 3,
-} suit_command_in_t;
+#define SUIT_SEVERABLE_INVALID                   0b00000000
+#define SUIT_SEVERABLE_IN_MANIFEST               0b00000001
+#define SUIT_SEVERABLE_IN_ENVELOPE               0b00000010
+#define SUIT_SEVERABLE_EXISTS                    0b01111111
+#define SUIT_SEVERABLE_IS_VERIFIED               0b10000000
 
 typedef enum suit_wait_event_key {
     SUIT_WAIT_EVENT_AUTHORIZATION           = 1,
@@ -315,15 +311,15 @@ typedef struct suit_authentication_wrapper {
  */
 typedef struct suit_severable_manifest_members {
     suit_command_sequence_t         dependency_resolution;
-    suit_command_in_t               dependency_resolution_status;
+    uint8_t                         dependency_resolution_status;
     suit_command_sequence_t         payload_fetch;
-    suit_command_in_t               payload_fetch_status;
+    uint8_t                         payload_fetch_status;
     suit_command_sequence_t         install;
-    suit_command_in_t               install_status;
+    uint8_t                         install_status;
     suit_text_t                     text;
-    suit_command_in_t               text_status;
+    uint8_t                         text_status;
     suit_buf_t                      coswid;
-    suit_command_in_t               coswid_status;
+    uint8_t                         coswid_status;
     // TODO :                       $$SUIT_severable-members-extension
 } suit_severable_manifest_members_t;
 
@@ -381,21 +377,19 @@ typedef struct suit_envelope {
     //suit_severable_manifest_members_t   sev_man_mem; //-> in manifest.sev_man_mem
 } suit_envelope_t;
 
-bool suit_qcbor_get_next(QCBORDecodeContext *message,
-                    QCBORItem *item,
-                    QCBORError *error,
-                    uint8_t data_type);
+int32_t suit_qcbor_get_next(QCBORDecodeContext *message, QCBORItem *item, uint8_t data_type);
+int32_t suit_qcbor_get(QCBORDecodeContext *message, QCBORItem *item, bool next, uint8_t data_type);
 size_t suit_qcbor_calc_rollback(QCBORItem *item);
-int32_t suit_set_envelope(QCBORDecodeContext *context,
+int32_t suit_set_envelope(uint8_t mode,
+                          QCBORDecodeContext *context,
                           QCBORItem *item,
-                          QCBORError *error,
                           bool next,
                           suit_envelope_t *envelope,
                           const char *public_key);
-int32_t suit_set_component_identifiers(QCBORDecodeContext *context,
+int32_t suit_set_component_identifiers(uint8_t mode,
+                                       QCBORDecodeContext *context,
                                        QCBORItem *item,
-                                       QCBORError *error,
                                        bool next,
                                        suit_component_identifier_t *identifier);
-int32_t suit_set_command_sequence_from_buf(const suit_buf_t *buf, suit_command_sequence_t *cmd_seq);
+int32_t suit_set_command_sequence_from_buf(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmd_seq);
 #endif  // SUIT_MANIFEST_DATA_H

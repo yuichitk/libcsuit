@@ -6,7 +6,7 @@
 
 #include "suit_common.h"
 
-int32_t suit_print_hex_in_max(const uint8_t *array, const int32_t size, const int32_t max_print_size) {
+int32_t suit_print_hex_in_max(const uint8_t *array, const size_t size, const size_t max_print_size) {
     int32_t result = SUIT_SUCCESS;
     if (size <= max_print_size) {
         result = suit_print_hex(array, size);
@@ -18,11 +18,11 @@ int32_t suit_print_hex_in_max(const uint8_t *array, const int32_t size, const in
     return result;
 }
 
-int32_t suit_print_hex(const uint8_t *array, int32_t size) {
+int32_t suit_print_hex(const uint8_t *array, size_t size) {
     if (array == NULL) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FATAL_ERROR;
     }
-    for (int32_t i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         printf("0x%02x ", (unsigned char)array[i]);
     }
     return SUIT_SUCCESS;
@@ -30,7 +30,6 @@ int32_t suit_print_hex(const uint8_t *array, int32_t size) {
 
 void suit_debug_print(QCBORDecodeContext *message,
                       QCBORItem *item,
-                      QCBORError *error,
                       const char *func_name,
                       uint8_t expecting) {
     size_t cursor = UsefulInputBuf_Tell(&message->InBuf);
@@ -44,10 +43,34 @@ void suit_debug_print(QCBORDecodeContext *message,
     suit_print_hex(at, len);
     printf("\n");
 
-    if (*error != 0) {
-        printf("    Error! nCBORError = %d\n", *error);
-    }
     if (expecting != QCBOR_TYPE_ANY && expecting != item->uDataType) {
         printf("    item->uDataType %d != %d\n", item->uDataType, expecting);
     }
+}
+
+bool suit_continue(uint8_t mode, int32_t result) {
+    bool ret = false;
+    switch (result) {
+        case SUIT_SUCCESS:
+            ret = true;
+            break;
+        case SUIT_FAILED_TO_VERIFY:
+            if (mode & SUIT_DECODE_MODE_SKIP_SIGN_FAILURE) {
+                ret = true;
+            }
+            break;
+        case SUIT_NOT_IMPLEMENTED:
+        case SUIT_INVALID_TYPE_OF_ARGUMENT:
+            if (mode & SUIT_DECODE_MODE_SKIP_UNKNOWN_ELEMENT) {
+                ret = true;
+            }
+        case SUIT_NO_MEMORY:
+        case SUIT_FATAL_ERROR:
+        default:
+            break;
+    }
+    if (ret == false) {
+        return false;
+    }
+    return true;
 }

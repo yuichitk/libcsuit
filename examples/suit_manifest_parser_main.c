@@ -72,10 +72,13 @@ int main(int argc, char *argv[]) {
                      (UsefulBufC){manifest_buf, manifest_len},
                      QCBOR_DECODE_MODE_NORMAL);
     QCBORItem  item;
-    QCBORError error;
 
+    uint8_t mode = SUIT_DECODE_MODE_STRICT;
+#ifdef SKIP_ERROR
+    mode = SUIT_DECODE_MODE_SKIP_ANY_ERROR;
+#endif
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
-    int32_t result = suit_set_envelope(&decode_context, &item, &error, true, &envelope, key_buf);
+    int32_t result = suit_set_envelope(mode, &decode_context, &item, true, &envelope, key_buf);
     if (result) {
         printf("main : Can't parse Manifest file.\n");
         return EXIT_FAILURE;
@@ -84,7 +87,7 @@ int main(int argc, char *argv[]) {
 
     // Print manifest.
     printf("\nmain : Print Manifest.\n");
-    result = suit_print_envelope(&envelope, 2);
+    result = suit_print_envelope(mode, &envelope, 2);
     if (result != SUIT_SUCCESS) {
         printf("main : Can't print Manifest file.\n");
         return EXIT_FAILURE;

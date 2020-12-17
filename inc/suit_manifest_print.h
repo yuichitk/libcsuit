@@ -20,8 +20,8 @@ extern const char* SUIT_COMMAND_SEQUENCE_NUM_TO_STRING[];
 extern const char* SUIT_PARAMETER_NUM_TO_STRING[];
 
 int32_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, const uint32_t indent_space);
-int32_t suit_print_cmd_seq(const suit_command_sequence_t *cmd_seq, const uint32_t indent_space);
+int32_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_seq, const uint32_t indent_space);
 int32_t suit_print_component_identifier(const suit_component_identifier_t *identifier);
 int32_t suit_print_digest(const suit_digest_t *digest, const uint32_t indent_space);
-int32_t suit_print_envelope(const suit_envelope_t *envelope, uint32_t indent_space);
+int32_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, uint32_t indent_space);
 #endif  /* SUIT_MANIFEST_PRINT_H */

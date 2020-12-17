@@ -13,7 +13,7 @@
 
 int32_t suit_verify_sha256(const uint8_t *tgt_ptr, const size_t tgt_len, const uint8_t *digest_bytes_ptr, const size_t digest_bytes_len) {
     if (digest_bytes_len != SHA256_DIGEST_LENGTH) {
-        return SUIT_UNEXPECTED_ERROR;
+        return SUIT_FATAL_ERROR;
     }
     uint8_t hash[SHA256_DIGEST_LENGTH];
     SHA256_CTX sha256;
