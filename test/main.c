@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2020 SECOM CO., LTD. All Rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 #include <stdlib.h>
 #include "csuit/csuit.h"
 #include <CUnit/CUnit.h>

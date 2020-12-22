@@ -35,6 +35,9 @@ make install_so
 
 ## SUIT Protocol Message Examples
 The following description Markdown and CBOR files are compliant with [draft-ietf-suit-manifest-11](https://tools.ietf.org/html/draft-ietf-suit-manifest-11).
+- Example 0
+  - [suit_manifest_exp0.md](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp0.md)
+  - [suit_manifest_exp0.cbor](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp0.cbor)
 - Example 1
   - [suit_manifest_exp1.md](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp1.md)
   - [suit_manifest_exp1.cbor](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp1.cbor)
@@ -44,6 +47,12 @@ The following description Markdown and CBOR files are compliant with [draft-ietf
 - Example 3
   - [suit_manifest_exp3.md](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp3.md)
   - [suit_manifest_exp3.cbor](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp3.cbor)
+- Example 4
+  - [suit_manifest_exp4.md](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp4.md)
+  - [suit_manifest_exp4.cbor](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp4.cbor)
+- Example 5
+  - [suit_manifest_exp5.md](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp5.md)
+  - [suit_manifest_exp5.cbor](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp5.cbor)
 
 ## License and Copyright
 BSD 2-Clause License
