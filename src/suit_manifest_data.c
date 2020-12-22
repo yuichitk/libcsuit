@@ -80,6 +80,14 @@ int32_t suit_qcbor_get_next_uint(QCBORDecodeContext *message,
     return (suit_qcbor_value_is_uint64(item)) ? SUIT_SUCCESS : SUIT_INVALID_TYPE_OF_ARGUMENT;
 }
 
+/*
+ * counts the CBOR binary offset between the CBOR type and length declaration
+ * and current cursor = UsefulInputBuf_Tell(&context.InBuf)
+ * note that with INT64, UINT64, TEXT_STRING, and BYTE_STRING,
+ * the current cursor is tail of the value,
+ * but with ARRAY, MAP, MAP_AS_ARRAY,
+ * the current cursor is tail of the type and length declaration.
+ */
 size_t suit_qcbor_calc_rollback(QCBORItem *item) {
     uint8_t type = item->uDataType;
     if (item->uDataType == QCBOR_TYPE_INT64 && suit_qcbor_value_is_uint64(item)) {
@@ -88,51 +96,50 @@ size_t suit_qcbor_calc_rollback(QCBORItem *item) {
 
     switch (type) {
         case QCBOR_TYPE_UINT64:
-            if (item->val.uint64 < 23) {
+            if (item->val.uint64 <= 23) {
                 return 1;
             }
-            else if (item->val.uint64 < UINT8_MAX) {
+            else if (item->val.uint64 <= UINT8_MAX) {
                 return 2;
             }
-            else if (item->val.uint64 < UINT16_MAX) {
+            else if (item->val.uint64 <= UINT16_MAX) {
                 return 3;
             }
-            else if (item->val.uint64 < UINT32_MAX) {
-                return 4;
+            else if (item->val.uint64 <= UINT32_MAX) {
+                return 5;
             }
-            return 5;
+            return 9;
         case QCBOR_TYPE_INT64:
-            if (item->val.int64 > -25) {
+            if (item->val.int64 + 1 + 23 >= 0) {
                 return 1;
             }
-            else if (item->val.int64 > -1 - UINT8_MAX) {
+            else if (item->val.int64 + 1 + UINT8_MAX >= 0) {
                 return 2;
             }
-            else if (item->val.int64 > -1 - UINT16_MAX) {
+            else if (item->val.int64 + 1 + UINT16_MAX >= 0) {
                 return 3;
             }
-            else if (item->val.int64 > -1 - UINT32_MAX) {
-                return 4;
+            else if (item->val.int64 + 1 + UINT32_MAX >= 0) {
+                return 5;
             }
-            return 5;
+            return 9;
         case QCBOR_TYPE_BYTE_STRING:
         case QCBOR_TYPE_TEXT_STRING:
             if (item->val.string.len < 24) {
-                return 1;
+                return 1 + item->val.string.len;
             }
-            else if (item->val.string.len < UINT8_MAX) {
-                return 2;
+            else if (item->val.string.len <= UINT8_MAX) {
+                return 2 + item->val.string.len;
             }
-            else if (item->val.string.len < UINT16_MAX) {
-                return 3;
+            else if (item->val.string.len <= UINT16_MAX) {
+                return 3 + item->val.string.len;
             }
-            else if (item->val.string.len < UINT32_MAX) {
-                return 4;
+            else if (item->val.string.len <= UINT32_MAX) {
+                return 5 + item->val.string.len;
             }
-            return 5;
+            return 9 + item->val.string.len;
         case QCBOR_TYPE_ARRAY:
         case QCBOR_TYPE_MAP:
-            // TODO count each item
             if (item->val.uCount < 24) {
                 return 1;
             }
@@ -143,9 +150,9 @@ size_t suit_qcbor_calc_rollback(QCBORItem *item) {
                 return 3;
             }
             else if (item->val.uCount < UINT32_MAX) {
-                return 4;
+                return 5;
             }
-            return 5;
+            return 9;
     }
     return 0;
 }
@@ -547,7 +554,6 @@ int32_t suit_set_common_sequence_from_bytes(uint8_t mode,
     buf.ptr = item->val.string.ptr;
     return suit_set_command_sequence_from_buf(mode, &buf, cmn_seq);
 }
-
 
 int32_t suit_set_command_sequence(uint8_t mode,
                                   QCBORDecodeContext *context,
