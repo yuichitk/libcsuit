@@ -162,7 +162,7 @@ int32_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_seq,
                 break;
             case SUIT_DIRECTIVE_TRY_EACH:
                 printf("SUIT_Command_Sequence\n");
-                result = suit_set_command_sequence_from_buf(mode, &cmd_seq->commands[i].value.string, &tmp_cmd_seq);
+                result = suit_set_command_sequence(mode, &cmd_seq->commands[i].value.string, &tmp_cmd_seq);
                 if (result == SUIT_SUCCESS) {
                     result = suit_print_cmd_seq(mode, &tmp_cmd_seq, indent_space + 2);
                 }
