@@ -27,6 +27,7 @@
 #define SUIT_DECODE_MODE_PRESERVE_ON_ERROR      0b00000100 // preserve successfully parsed elements on error in Map/Array
 #define SUIT_DECODE_MODE_SKIP_ANY_ERROR         0b11111111 // through excepting fatal error
 
+int32_t suit_error_from_qcbor_error(QCBORError error);
 int32_t suit_print_hex_in_max(const uint8_t *array, const size_t size, const size_t max_print_size);
 int32_t suit_print_hex(const uint8_t *array, size_t size);
 void suit_debug_print(QCBORDecodeContext *message, QCBORItem *item, const char *func_name, uint8_t expecting);

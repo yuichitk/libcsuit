@@ -6,6 +6,17 @@
 
 #include "suit_common.h"
 
+int32_t suit_error_from_qcbor_error(QCBORError error) {
+    switch (error) {
+        case QCBOR_SUCCESS:
+            return SUIT_SUCCESS;
+        case QCBOR_ERR_BUFFER_TOO_SMALL:
+            return SUIT_NO_MEMORY;
+        default:
+            return SUIT_FATAL_ERROR;
+    }
+}
+
 int32_t suit_print_hex_in_max(const uint8_t *array, const size_t size, const size_t max_print_size) {
     int32_t result = SUIT_SUCCESS;
     if (size <= max_print_size) {

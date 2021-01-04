@@ -88,7 +88,10 @@ cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose) {
             break;
     }
 out:
-    QCBORDecode_Finish(&context);
+    error = QCBORDecode_Finish(&context);
+    if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
+        result = suit_error_from_qcbor_error(error);
+    }
     return result;
 }
 
