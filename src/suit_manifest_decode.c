@@ -267,18 +267,6 @@ int32_t suit_set_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *con
         }
         params_list->params[i].label = item->label.uint64;
         switch (params_list->params[i].label) {
-            case SUIT_PARAMETER_VENDOR_IDENTIFIER:
-            case SUIT_PARAMETER_CLASS_IDENTIFIER:
-                if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
-                    result = SUIT_INVALID_TYPE_OF_ARGUMENT;
-                    break;
-                }
-                params_list->params[i].value.string.ptr = item->val.string.ptr;
-                params_list->params[i].value.string.len = item->val.string.len;
-                break;
-            case SUIT_PARAMETER_IMAGE_DIGEST:
-                result = suit_set_digest_from_bstr(mode, context, item, false, &params_list->params[i].value.digest);
-                break;
             case SUIT_PARAMETER_COMPONENT_OFFSET:
             case SUIT_PARAMETER_IMAGE_SIZE:
             case SUIT_PARAMETER_COMPRESSION_INFO:
@@ -297,6 +285,19 @@ int32_t suit_set_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *con
                 params_list->params[i].value.string.ptr = item->val.string.ptr;
                 params_list->params[i].value.string.len = item->val.string.len;
                 break;
+            case SUIT_PARAMETER_VENDOR_IDENTIFIER:
+            case SUIT_PARAMETER_CLASS_IDENTIFIER:
+                if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+                    result = SUIT_INVALID_TYPE_OF_ARGUMENT;
+                    break;
+                }
+                params_list->params[i].value.string.ptr = item->val.string.ptr;
+                params_list->params[i].value.string.len = item->val.string.len;
+                break;
+            case SUIT_PARAMETER_IMAGE_DIGEST:
+                result = suit_set_digest_from_bstr(mode, context, item, false, &params_list->params[i].value.digest);
+                break;
+
             case SUIT_PARAMETER_USE_BEFORE:
 
             case SUIT_PARAMETER_STRICT_ORDER:
@@ -926,7 +927,22 @@ int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, Q
                 result = suit_set_common_from_bstr(mode, context, item, false, &manifest->common);
                 break;
             case SUIT_PAYLOAD_FETCH:
-                result = suit_set_command_sequence_from_bstr(mode, context, item, false, &manifest->sev_man_mem.payload_fetch);
+                if (item->uDataType == QCBOR_TYPE_ARRAY) {
+                    /* SUIT_Digest */
+                    result = suit_set_digest_from_item(mode, context, item, false, &manifest->sev_mem_dig.payload_fetch);
+                }
+                else if (item->uDataType == QCBOR_TYPE_BYTE_STRING) {
+                    result = suit_set_command_sequence_from_bstr(mode, context, item, false, &manifest->sev_man_mem.payload_fetch);
+                    if (result == SUIT_SUCCESS) {
+                        manifest->sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IN_MANIFEST;
+                        if (manifest->is_verified) {
+                            manifest->sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IS_VERIFIED;
+                        }
+                    }
+                }
+                else {
+                    result = SUIT_INVALID_TYPE_OF_ARGUMENT;
+                }
                 break;
             case SUIT_INSTALL:
                 if (item->uDataType == QCBOR_TYPE_ARRAY) {
@@ -1131,6 +1147,25 @@ int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, Q
                 }
                 break;
             /* SUIT_Severable_Manifest_members */
+            case SUIT_PAYLOAD_FETCH:
+                if (!is_authentication_set || !is_manifest_set) {
+                    result = SUIT_FAILED_TO_VERIFY;
+                    if (!suit_continue(mode, result)) {
+                        break;
+                    }
+                }
+                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.payload_fetch, true);
+                if (!suit_continue(mode, result)) {
+                    break;
+                }
+                else if (is_authentication_set && result == SUIT_SUCCESS) {
+                    envelope->manifest.sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IS_VERIFIED;
+                }
+                result = suit_set_command_sequence_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.payload_fetch);
+                if (result == SUIT_SUCCESS) {
+                    envelope->manifest.sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IN_ENVELOPE;
+                }
+                break;
             case SUIT_INSTALL:
                 if (!is_authentication_set || !is_manifest_set) {
                     result = SUIT_FAILED_TO_VERIFY;
@@ -1192,7 +1227,6 @@ int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, Q
                 break;
             case SUIT_DELEGATION:
             case SUIT_DEPENDENCY_RESOLUTION:
-            case SUIT_PAYLOAD_FETCH:
             default:
                 // TODO
                 printf("SUIT_Envelope label %ld is not implemented", item->label.int64);
