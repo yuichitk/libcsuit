@@ -890,7 +890,6 @@ int32_t suit_verify_item(QCBORDecodeContext *context, QCBORItem *item, suit_dige
 }
 
 int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_manifest_t *manifest) {
-    manifest->is_verified = false;
     manifest->sev_man_mem.dependency_resolution_status = SUIT_SEVERABLE_INVALID;
     manifest->sev_man_mem.payload_fetch_status = SUIT_SEVERABLE_INVALID;
     manifest->sev_man_mem.install_status = SUIT_SEVERABLE_INVALID;
