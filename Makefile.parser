@@ -9,7 +9,7 @@ CFLAGS	= -Wall -g
 LDFLAGS	= -lt_cose -lqcbor -lcrypto
 INC		= -I ./inc -I ./examples/inc
 TARGET	= ./suit_manifest_parser
-SRCS	= examples/suit_manifest_parser_main.c examples/suit_examples_common.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_data.c src/suit_cose.c src/suit_digest.c
+SRCS	= examples/suit_manifest_parser_main.c examples/suit_examples_common.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_decode.c src/suit_manifest_encode.c src/suit_cose.c src/suit_digest.c
 OBJDIR	= ./obj
 OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
@@ -18,27 +18,28 @@ ifdef debug
 endif
 
 $(TARGET):	$(OBJS)
-			$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o:	%.c
-				mkdir -p $(dir $@)
-				$(CC) $(CFLAGS) $(INC) -o $@ -c $<
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
-.PHONY:		all test clean
+.PHONY: all test clean
 
-all:		clean $(TARGET)
+all: clean $(TARGET)
 
-KEY			:= ./testfiles/key/trust_anchor_secp256r1_pub.der
+PUB_KEY		:= ./testfiles/key/trust_anchor_secp256r1_pub.der
+PRIV_KEY	:= ./testfiles/key/trust_anchor_secp256r1.der
 TEST_NUM	:= 0 1 2 3 4 5
 EXPS		:= $(foreach num,$(TEST_NUM),./testfiles/suit_manifest_exp$(num).cbor)
 define test-one
-	$(TARGET) $1 $2 || exit 1
+	$(TARGET) $1 $2 $3 || exit 1
 
 endef
 
-test:		all
-			$(foreach exp,$(EXPS),$(call test-one,$(exp),$(KEY)))
+test: all
+	$(foreach exp,$(EXPS),$(call test-one,$(exp),$(PUB_KEY),$(PRIV_KEY)))
 
 
 clean:
-			rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(TARGET)

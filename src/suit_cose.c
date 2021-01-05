@@ -131,6 +131,34 @@ int32_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *
     return SUIT_SUCCESS;
 }
 
+int32_t suit_sign_cose_sign1(const UsefulBufC *raw_cbor, const char *private_key, const char *public_key, UsefulBuf *returned_payload) {
+    // Create cose signed file.
+    struct t_cose_key cose_key_pair;
+    struct t_cose_sign1_sign_ctx sign_ctx;
+    enum t_cose_err_t cose_result;
+    UsefulBufC tmp_signed_cose;
+    UsefulBuf_MAKE_STACK_UB(signed_cose_buffer, 1024);
+
+    int32_t result = suit_create_es256_key_pair(private_key, public_key, &cose_key_pair);
+    if (result != SUIT_SUCCESS) {
+        printf("Fail make_ossl_ecdsa_key_pair : result = %d\n", result);
+        return result;
+    }
+
+    t_cose_sign1_sign_init(&sign_ctx, 0, T_COSE_ALGORITHM_ES256);
+    t_cose_sign1_set_signing_key(&sign_ctx, cose_key_pair, NULL_Q_USEFUL_BUF_C);
+    cose_result = t_cose_sign1_sign(&sign_ctx, *raw_cbor, signed_cose_buffer, &tmp_signed_cose);
+    EC_KEY_free(cose_key_pair.k.key_ptr);
+
+    if (cose_result != T_COSE_SUCCESS) {
+        printf("Fail t_cose_sign1_sign : result = %d\n", cose_result);
+        return SUIT_FATAL_ERROR;
+    }
+    memcpy(returned_payload->ptr, tmp_signed_cose.ptr, tmp_signed_cose.len);
+    returned_payload->len = tmp_signed_cose.len;
+    return SUIT_SUCCESS;
+}
+
 int32_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload) {
     struct t_cose_key   cose_public_key;
     int32_t             result = SUIT_SUCCESS;

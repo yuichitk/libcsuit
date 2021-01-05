@@ -377,6 +377,20 @@ typedef struct suit_envelope {
     //suit_severable_manifest_members_t   sev_man_mem; //-> in manifest.sev_man_mem
 } suit_envelope_t;
 
+typedef struct suit_encode {
+    UsefulBufC manifest;
+    // SUIT_SeverableMembers
+    UsefulBufC dependency_resolution;
+    UsefulBufC payload_fetch;
+    UsefulBufC install;
+    UsefulBufC text;
+    UsefulBufC coswid;
+
+    uint8_t *buf;
+    size_t pos;
+    const size_t max_pos;
+} suit_encode_t;
+
 int32_t suit_qcbor_get_next(QCBORDecodeContext *message, QCBORItem *item, uint8_t data_type);
 int32_t suit_qcbor_get(QCBORDecodeContext *message, QCBORItem *item, bool next, uint8_t data_type);
 size_t suit_qcbor_calc_rollback(QCBORItem *item);
@@ -393,5 +407,6 @@ int32_t suit_set_component_identifiers_from_item(uint8_t mode, QCBORDecodeContex
 int32_t suit_set_command_sequence(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmd_seq);
 int32_t suit_set_command_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq);
 
+int32_t suit_encode_envelope(const suit_envelope_t *envelope, char *private_key, char *public_key, uint8_t *buf, size_t *len);
 
 #endif  // SUIT_MANIFEST_DATA_H
