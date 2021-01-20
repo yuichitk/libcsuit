@@ -159,6 +159,9 @@ int32_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_seq,
                     printf("SUIT_Parameters\n");
                     result = suit_print_suit_parameters_list(&cmd_seq->commands[i].value.params_list, indent_space + 2);
                 }
+                else {
+                    printf("\n");
+                }
                 break;
             case SUIT_DIRECTIVE_TRY_EACH:
                 printf("SUIT_Command_Sequence\n");

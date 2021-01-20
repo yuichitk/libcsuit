@@ -23,6 +23,12 @@ Make and run sample codes you need.
 make -f Makefile.parser test
 ```
 
+- suit_manifest_encoder
+```bash
+make -f Makefile.encode test
+# generates ./testfiles/suit_manifest_expX.cbor
+```
+
 ## Install libcsuit.a
 ```
 make install
