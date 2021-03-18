@@ -5,6 +5,8 @@
  *
  */
 
+#if !defined(LIBCSUIT_PSA_CRYPTO_C)
+
 #include <stdio.h>
 #include <string.h>
 #include "suit_common.h"
@@ -38,3 +40,4 @@ int32_t suit_verify_sha256(const uint8_t *tgt_ptr, const size_t tgt_len, const u
     return (memcmp(digest_bytes_ptr, hash, SHA256_DIGEST_LENGTH) == 0) ? SUIT_SUCCESS : SUIT_FAILED_TO_VERIFY;
 }
 
+#endif /* MBEDTLS_PSA_CRYPTO_C */

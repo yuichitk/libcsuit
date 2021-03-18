@@ -9,6 +9,7 @@
 #include <assert.h>
 #include "suit_common.h"
 #include "suit_manifest_print.h"
+#include <inttypes.h>
 
 const char* SUIT_COMMAND_SEQUENCE_NUM_TO_STRING[] = {
     NULL,                               //SUIT_CONDITION_INVALID              = 0,
@@ -103,7 +104,7 @@ int32_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_lis
             case SUIT_PARAMETER_IMAGE_SIZE:
             case SUIT_PARAMETER_COMPRESSION_INFO:
             case SUIT_PARAMETER_SOURCE_COMPONENT:
-                printf("%lu\n", params_list->params[i].value.uint64);
+                printf("%" PRId64 "\n", params_list->params[i].value.uint64);
                 break;
             case SUIT_PARAMETER_URI:
                 result = suit_print_string(&params_list->params[i].value.string);
@@ -151,7 +152,7 @@ int32_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_seq,
             case SUIT_DIRECTIVE_FETCH:
             case SUIT_DIRECTIVE_COPY:
             case SUIT_DIRECTIVE_RUN:
-                printf("%lu\n", cmd_seq->commands[i].value.uint64);
+                printf("%" PRId64 "\n", cmd_seq->commands[i].value.uint64);
                 break;
             case SUIT_DIRECTIVE_SET_PARAMETERS:
             case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:

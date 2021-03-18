@@ -39,6 +39,18 @@ int32_t suit_print_hex(const uint8_t *array, size_t size) {
     return SUIT_SUCCESS;
 }
 
+int32_t suit_print_bytestr(const uint8_t *bytes, size_t len)
+{
+    if (bytes == NULL)
+        return( SUIT_FATAL_ERROR );
+
+    for(unsigned int idx=0; idx < len; idx++)
+    {
+        printf("%02X", bytes[idx]);
+    }
+    return( SUIT_FATAL_ERROR );
+}
+
 void suit_debug_print(QCBORDecodeContext *message,
                       QCBORItem *item,
                       const char *func_name,

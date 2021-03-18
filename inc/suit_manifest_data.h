@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "qcbor/qcbor.h"
+#include "t_cose/t_cose_common.h"
 
 #define SUIT_MAX_ARRAY_LENGTH           20
 
@@ -93,11 +94,11 @@ typedef enum suit_rep_policy_key {
     SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
 } suit_rep_policy_key_t;
 
-#define SUIT_SEVERABLE_INVALID                   0b00000000
-#define SUIT_SEVERABLE_IN_MANIFEST               0b00000001
-#define SUIT_SEVERABLE_IN_ENVELOPE               0b00000010
-#define SUIT_SEVERABLE_EXISTS                    0b01111111
-#define SUIT_SEVERABLE_IS_VERIFIED               0b10000000
+#define SUIT_SEVERABLE_INVALID               0 // 0b00000000
+#define SUIT_SEVERABLE_IN_MANIFEST           1 // 0b00000001
+#define SUIT_SEVERABLE_IN_ENVELOPE           2 // 0b00000010
+#define SUIT_SEVERABLE_EXISTS              127 // 0b01111111
+#define SUIT_SEVERABLE_IS_VERIFIED         128 // 0b10000000
 
 typedef enum suit_wait_event_key {
     SUIT_WAIT_EVENT_AUTHORIZATION           = 1,
@@ -216,7 +217,7 @@ typedef struct suit_components {
  * SUIT_Parameters
  */
 typedef struct suit_parameters {
-    uint32_t                        label;
+    uint64_t                        label;
     union {
         suit_buf_t                  string;
         int64_t                     int64;
@@ -391,6 +392,8 @@ typedef struct suit_encode {
     const size_t max_pos;
 } suit_encode_t;
 
+typedef struct t_cose_key t_cose_key;
+
 int32_t suit_qcbor_get_next(QCBORDecodeContext *message, QCBORItem *item, uint8_t data_type);
 int32_t suit_qcbor_get(QCBORDecodeContext *message, QCBORItem *item, bool next, uint8_t data_type);
 size_t suit_qcbor_calc_rollback(QCBORItem *item);
@@ -407,6 +410,10 @@ int32_t suit_set_component_identifiers_from_item(uint8_t mode, QCBORDecodeContex
 int32_t suit_set_command_sequence(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmd_seq);
 int32_t suit_set_command_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq);
 
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+int32_t suit_encode_envelope(const suit_envelope_t *envelope, t_cose_key *signing_key, uint8_t *buf, size_t *len);
+#else
 int32_t suit_encode_envelope(const suit_envelope_t *envelope, char *private_key, char *public_key, uint8_t *buf, size_t *len);
+#endif /* LIBCSUIT_PSA_CRYPTO_C */
 
 #endif  // SUIT_MANIFEST_DATA_H
