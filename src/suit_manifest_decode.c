@@ -12,6 +12,10 @@
 #include "suit_digest.h"
 #include <inttypes.h>
 
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+#include "mbedtls/md.h"
+#endif /* LIBCSUIT_PSA_CRYPTO_C */
+
 int32_t suit_qcbor_get_next(QCBORDecodeContext *message, QCBORItem *item, uint8_t data_type) {
     QCBORError error;
     error = QCBORDecode_GetNext(message, item);

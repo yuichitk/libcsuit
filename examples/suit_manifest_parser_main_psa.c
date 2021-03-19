@@ -32,7 +32,7 @@ static const uint8_t public_key[] =
     0x45
     };
 
-static const size_t public_key_len = sizeof(public_key);
+//static const size_t public_key_len = sizeof(public_key);
 
 static const uint8_t manifest[] =
 {0xa2, 0x02, 0x58, 0x98, 0x82, 0x58, 0x24, 0x82, 0x02,
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
     suit_buf_t buf = {.ptr = manifest, .len = manifest_len};
 
-    result = suit_set_envelope(mode, &buf, &envelope, public_key);
+    result = suit_set_envelope(mode, &buf, &envelope, (const char *) public_key);
 
     if (result != SUIT_SUCCESS) {
         printf("Can't parse Manifest.\n");

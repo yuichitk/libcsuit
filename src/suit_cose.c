@@ -74,7 +74,7 @@ int32_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *
     */
 
     result = psa_import_key(&key_attributes,
-                            public_key,
+                            (const unsigned char*) public_key,
                             public_key_len,
                             &key_handle);
 
