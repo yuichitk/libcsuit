@@ -138,6 +138,42 @@ int32_t suit_create_es256_key_pair(const char *private_key, const char *public_k
     return SUIT_SUCCESS;
 }
 
+cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose) {
+    /* judge authentication object
+     * [ COSE_Sign_Tagged, COSE_Sign1_Tagged, COSE_Mac_Tagged, COSE_Mac0_Tagged ]
+     */
+    cose_tag_key_t result = COSE_TAG_INVALID;
+    QCBORDecodeContext context;
+    QCBORItem item;
+    QCBORError error;
+    QCBORDecode_Init(&context, *signed_cose, QCBOR_DECODE_MODE_NORMAL);
+    uint64_t puTags[QCBOR_MAX_TAGS_PER_ITEM];
+    QCBORTagListOut out = {0, QCBOR_MAX_TAGS_PER_ITEM, puTags};
+    error = QCBORDecode_GetNextWithTags(&context, &item, &out);
+    if (error != QCBOR_SUCCESS) {
+        suit_debug_print(&context, &item, "suit_judge_cose_tag", QCBOR_TYPE_ANY);
+        goto out;
+    }
+    if (out.uNumUsed == 0) {
+        suit_debug_print(&context, &item, "suit_judge_cose_tag(NO TAG FOUND)", QCBOR_TYPE_ANY);
+        goto out;
+    }
+    switch (puTags[0]) {
+        case COSE_SIGN_TAGGED:
+        case COSE_SIGN1_TAGGED:
+        case COSE_MAC_TAGGED:
+        case COSE_MAC0_TAGGED:
+            result = puTags[0];
+            break;
+    }
+out:
+    error = QCBORDecode_Finish(&context);
+    if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
+        result = suit_error_from_qcbor_error(error);
+    }
+    return result;
+}
+
 int32_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
     EC_GROUP    *ec_group = NULL;
     EC_KEY      *ec_key = NULL;
@@ -230,9 +266,9 @@ int32_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const char *public
          return SUIT_FAILED_TO_VERIFY;
      }
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
-//  Destroy key 
+     //  Destroy key 
 #else
-EC_KEY_free(cose_public_key.k.key_ptr);
+     EC_KEY_free(cose_public_key.k.key_ptr);
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
      return SUIT_SUCCESS;
 }
