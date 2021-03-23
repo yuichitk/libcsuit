@@ -132,7 +132,6 @@ int32_t suit_generate_encoded_digest(const uint8_t *ptr, const size_t len, Usefu
     return result;
 }
 
-#if defined(LIBCSUIT_PSA_CRYPTO_C)
 int32_t suit_encode_append_authentication_wrapper(const UsefulBufC *manifest, const struct t_cose_key signing_key, QCBOREncodeContext *context)
 {
     int32_t result;
@@ -165,7 +164,7 @@ int32_t suit_encode_append_authentication_wrapper(const UsefulBufC *manifest, co
                         &signed_cose);
 
     QCBOREncode_AddBytes(&t_context, (UsefulBufC){.ptr = signed_cose.ptr, .len = signed_cose.len});
-    
+
     QCBOREncode_CloseArray(&t_context);
 
     UsefulBufC buf;
@@ -178,52 +177,6 @@ int32_t suit_encode_append_authentication_wrapper(const UsefulBufC *manifest, co
     QCBOREncode_AddBytesToMapN(context, SUIT_AUTHENTICATION, buf);
     return result;
 }
-#else
-int32_t suit_encode_append_authentication_wrapper(const UsefulBufC *manifest, const struct t_cose_key signing_key, QCBOREncodeContext *context)
-{
-    int32_t result;
-    UsefulBuf_MAKE_STACK_UB(digest, SUIT_ENCODE_MAX_BUFFER_SIZE);
-    UsefulBufC signed_cose;
-    struct t_cose_sign1_sign_ctx   sign_ctx;
-
-    t_cose_sign1_sign_init(&sign_ctx, 0, T_COSE_ALGORITHM_ES256);
-
-
-    result = suit_generate_encoded_digest(manifest->ptr, manifest->len, &digest);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
-    UsefulBufC c_digest = (UsefulBufC){.ptr = digest.ptr, .len = digest.len};
-
-    QCBOREncodeContext t_context;
-    UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
-    QCBOREncode_Init(&t_context, tmp_buf);
-    QCBOREncode_OpenArray(&t_context);
-    QCBOREncode_AddBytes(&t_context, c_digest);
-
-    UsefulBuf_MAKE_STACK_UB(signature, SUIT_ENCODE_MAX_BUFFER_SIZE);
-
-    t_cose_sign1_set_signing_key(&sign_ctx, signing_key, NULL_Q_USEFUL_BUF_C);
-
-    result = t_cose_sign1_sign(&sign_ctx,
-                      c_digest,
-                      signature,
-                      &signed_cose);
-
-    QCBOREncode_AddBytes(&t_context, (UsefulBufC){.ptr = signature.ptr, .len = signature.len});
-
-    QCBOREncode_CloseArray(&t_context);
-
-    UsefulBufC buf;
-    QCBORError error = QCBOREncode_Finish(&t_context, &buf);
-    if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
-        return suit_error_from_qcbor_error(error);
-    }
-
-    QCBOREncode_AddBytesToMapN(context, SUIT_AUTHENTICATION, buf);
-    return result;
-}
-#endif /* LIBCSUIT_PSA_CRYPTO_C */
 
 int32_t suit_append_directive_override_parameters(const suit_parameters_list_t *params_list, QCBOREncodeContext *context) {
     uint8_t tmp_buf[SUIT_ENCODE_MAX_BUFFER_SIZE];

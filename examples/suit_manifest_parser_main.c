@@ -35,11 +35,13 @@ int main(int argc, char *argv[]) {
         printf("suit_manifest_parser <manifest file path> <public key path> [<private key path>]");
         return EXIT_FAILURE;
     }
+    int32_t result = 0;
     char *manifest_file = argv[1];
     char *public_key_file = argv[2];
     char *private_key_file = (argc == 3) ? NULL : argv[3];
     char public_key[PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
     char private_key[PRIME256V1_PRIVATE_KEY_CHAR_SIZE + 1];
+    t_cose_key cose_key;
 
     // Read der file.
     if (private_key_file != NULL) {
@@ -57,6 +59,7 @@ int main(int argc, char *argv[]) {
         read_prime256v1_key_pair(der_buf, private_key, public_key);
         printf("Private Key : %s\n", private_key);
         printf("Public Key : %s\n", public_key);
+        result = suit_create_es256_key_pair(private_key, public_key, &cose_key);
     }
     else {
         printf("\nmain : Read DER file.\n");
@@ -74,6 +77,7 @@ int main(int argc, char *argv[]) {
         printf("\nmain : Read public key from DER file.\n");
         read_prime256v1_public_key(der_buf, public_key);
         printf("%s\n", public_key);
+        result = suit_create_es256_public_key(public_key, &cose_key);
     }
 
     // Read manifest file.
@@ -95,7 +99,7 @@ int main(int argc, char *argv[]) {
 #endif
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
     suit_buf_t buf = {.ptr = manifest_buf, .len = manifest_len};
-    int32_t result = suit_set_envelope(mode, &buf, &envelope, public_key);
+    result = suit_set_envelope(mode, &buf, &envelope, public_key);
     if (result != SUIT_SUCCESS) {
         printf("main : Can't parse Manifest file.\n");
         return EXIT_FAILURE;
@@ -113,7 +117,7 @@ int main(int argc, char *argv[]) {
     uint8_t encode_buf[MAX_FILE_BUFFER_SIZE];
     size_t encode_len = MAX_FILE_BUFFER_SIZE;
     printf("\nmain : Encode Manifest.\n");
-    result = suit_encode_envelope(&envelope, (private_key_file == NULL) ? NULL : private_key, public_key, encode_buf, &encode_len);
+    result = suit_encode_envelope(&envelope, &cose_key, encode_buf, &encode_len);
     if (result != SUIT_SUCCESS) {
         printf("main : Fail to encode. %d\n", result);
         return EXIT_FAILURE;
