@@ -410,10 +410,6 @@ int32_t suit_set_component_identifiers_from_item(uint8_t mode, QCBORDecodeContex
 int32_t suit_set_command_sequence(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmd_seq);
 int32_t suit_set_command_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq);
 
-#if defined(LIBCSUIT_PSA_CRYPTO_C)
 int32_t suit_encode_envelope(const suit_envelope_t *envelope, t_cose_key *signing_key, uint8_t *buf, size_t *len);
-#else
-int32_t suit_encode_envelope(const suit_envelope_t *envelope, char *private_key, char *public_key, uint8_t *buf, size_t *len);
-#endif /* LIBCSUIT_PSA_CRYPTO_C */
 
 #endif  // SUIT_MANIFEST_DATA_H
