@@ -1,5 +1,9 @@
 # Output files
 suit_manifest_parser
+suit_manifest_parser_main_psa
+
+# Build directory
+build/
 
 # Prerequisites
 *.d
