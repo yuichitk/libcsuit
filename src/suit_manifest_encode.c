@@ -6,13 +6,20 @@
 
 #include <stdlib.h>
 #include "qcbor/qcbor.h"
+#include "t_cose/t_cose_common.h"
 #include "suit_common.h"
 #include "suit_manifest_data.h"
 #include "suit_cose.h"
 #include "suit_digest.h"
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+#include "psa/crypto.h"
+#define SHA256_DIGEST_LENGTH 32
+#else
 #include "openssl/ecdsa.h"
+#endif /* LIBCSUIT_PSA_CRYPTO_C */
 
-#define SUIT_ENCODE_MAX_BUFFER_SIZE 1024
+
+#define SUIT_ENCODE_MAX_BUFFER_SIZE 2048
 
 int32_t suit_encode_append_severable_manifest_members(const suit_encode_t *suit_encode, QCBOREncodeContext *context) {
     if (suit_encode->dependency_resolution.len > 0) {
@@ -55,6 +62,38 @@ int32_t suit_encode_digest(const suit_digest_t *digest, UsefulBuf *buf) {
     *buf = (UsefulBuf){.ptr = (void *)t_buf.ptr, .len = t_buf.len};
     return SUIT_SUCCESS;
 }
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+int32_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_digest_t *digest, uint8_t *hash, size_t hash_len) {
+    psa_status_t status;
+    size_t real_hash_size;
+    psa_hash_operation_t sha256_psa = PSA_HASH_OPERATION_INIT;
+
+    status = psa_crypto_init( );
+    if( status != PSA_SUCCESS )
+        return( EXIT_FAILURE );
+
+    status = psa_hash_setup( &sha256_psa, PSA_ALG_SHA_256 );
+    if( status != PSA_SUCCESS )
+        return( EXIT_FAILURE );
+
+    status = psa_hash_update( &sha256_psa, ptr, len );
+    if( status != PSA_SUCCESS )
+        return( EXIT_FAILURE );
+
+    status = psa_hash_finish( &sha256_psa, hash, hash_len, &real_hash_size );
+    if( status != PSA_SUCCESS )
+        return( EXIT_FAILURE );
+
+    if(real_hash_size != SHA256_DIGEST_LENGTH)
+        return( EXIT_FAILURE );
+
+    digest->algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+    digest->bytes.ptr = hash;
+    digest->bytes.len = SHA256_DIGEST_LENGTH;
+
+    return SUIT_SUCCESS;
+}
+#else
 int32_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_digest_t *digest, uint8_t *hash) {
     int32_t result = suit_generate_sha256(ptr, len, hash);
     if (result != SUIT_SUCCESS) {
@@ -65,8 +104,9 @@ int32_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_digest_t
     digest->bytes.len = SHA256_DIGEST_LENGTH;
     return SUIT_SUCCESS;
 }
+#endif /* LIBCSUIT_PSA_CRYPTO_C */
 
-int32_t suit_generate_digest_include_header(const uint8_t *ptr, const size_t len, suit_digest_t *digest, uint8_t *hash) {
+int32_t suit_generate_digest_include_header(const uint8_t *ptr, const size_t len, suit_digest_t *digest, uint8_t *hash, size_t hash_len) {
     UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
     QCBOREncodeContext context;
     QCBOREncode_Init(&context, tmp_buf);
@@ -76,18 +116,66 @@ int32_t suit_generate_digest_include_header(const uint8_t *ptr, const size_t len
     if (error != QCBOR_SUCCESS) {
         return suit_error_from_qcbor_error(error);
     }
-    return suit_generate_digest(t_buf.ptr, t_buf.len, digest, hash);
+    return suit_generate_digest(t_buf.ptr, t_buf.len, digest, hash, hash_len);
 }
 int32_t suit_generate_encoded_digest(const uint8_t *ptr, const size_t len, UsefulBuf *buf) {
     uint8_t hash[SHA256_DIGEST_LENGTH];
     suit_digest_t digest;
-    int32_t result = suit_generate_digest_include_header(ptr, len, &digest, hash);
+    int32_t result = suit_generate_digest_include_header(ptr, len, &digest, hash, sizeof(hash));
     if (result != SUIT_SUCCESS) {
         return result;
     }
     result = suit_encode_digest(&digest, buf);
     return result;
 }
+
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+int32_t suit_encode_append_authentication_wrapper(const UsefulBufC *manifest, const struct t_cose_key signing_key, QCBOREncodeContext *context)
+{
+    int32_t result;
+    UsefulBuf_MAKE_STACK_UB(digest, SUIT_ENCODE_MAX_BUFFER_SIZE);
+    struct q_useful_buf_c          signed_cose;
+    struct t_cose_sign1_sign_ctx   sign_ctx;
+
+    t_cose_sign1_sign_init(&sign_ctx, 0, T_COSE_ALGORITHM_ES256);
+
+    result = suit_generate_encoded_digest(manifest->ptr, manifest->len, &digest);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+
+    UsefulBufC c_digest = (UsefulBufC){.ptr = digest.ptr, .len = digest.len};
+
+    QCBOREncodeContext t_context;
+    UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
+    QCBOREncode_Init(&t_context, tmp_buf);
+    QCBOREncode_OpenArray(&t_context);
+    QCBOREncode_AddBytes(&t_context, c_digest);
+
+    UsefulBuf_MAKE_STACK_UB(signature, SUIT_ENCODE_MAX_BUFFER_SIZE);
+
+    t_cose_sign1_set_signing_key(&sign_ctx, signing_key, NULL_Q_USEFUL_BUF_C);
+
+    result = t_cose_sign1_sign(&sign_ctx,
+                        c_digest,
+                        signature,
+                        &signed_cose);
+
+    QCBOREncode_AddBytes(&t_context, (UsefulBufC){.ptr = signed_cose.ptr, .len = signed_cose.len});
+    
+    QCBOREncode_CloseArray(&t_context);
+
+    UsefulBufC buf;
+
+    QCBORError error = QCBOREncode_Finish(&t_context, &buf);
+    if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
+        return suit_error_from_qcbor_error(error);
+    }
+
+    QCBOREncode_AddBytesToMapN(context, SUIT_AUTHENTICATION, buf);
+    return result;
+}
+#else
 int32_t suit_encode_append_authentication_wrapper(const UsefulBufC *manifest, char *private_key, char *public_key, QCBOREncodeContext *context) {
     int32_t result;
     UsefulBuf_MAKE_STACK_UB(digest, SUIT_ENCODE_MAX_BUFFER_SIZE);
@@ -105,6 +193,13 @@ int32_t suit_encode_append_authentication_wrapper(const UsefulBufC *manifest, ch
     QCBOREncode_AddBytes(&t_context, c_digest);
     if (private_key != NULL) {
         UsefulBuf_MAKE_STACK_UB(signature, SUIT_ENCODE_MAX_BUFFER_SIZE);
+
+        t_cose_sign1_set_signing_key(&sign_ctx, key_pair, NULL_Q_USEFUL_BUF_C);
+
+        result = t_cose_sign1_sign(&sign_ctx,
+                          c_digest,
+                          signature,
+                          &signed_cose);
         result = suit_sign_cose_sign1(&c_digest, private_key, public_key, &signature);
         QCBOREncode_AddBytes(&t_context, (UsefulBufC){.ptr = signature.ptr, .len = signature.len});
     }
@@ -119,6 +214,8 @@ int32_t suit_encode_append_authentication_wrapper(const UsefulBufC *manifest, ch
     QCBOREncode_AddBytesToMapN(context, SUIT_AUTHENTICATION, buf);
     return result;
 }
+#endif /* LIBCSUIT_PSA_CRYPTO_C */
+
 int32_t suit_append_directive_override_parameters(const suit_parameters_list_t *params_list, QCBOREncodeContext *context) {
     uint8_t tmp_buf[SUIT_ENCODE_MAX_BUFFER_SIZE];
     UsefulBuf t_buf;
@@ -420,7 +517,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest_include_header(dependency_resolution_buf->ptr, dependency_resolution_buf->len, &digest, hash);
+        result = suit_generate_digest_include_header(dependency_resolution_buf->ptr, dependency_resolution_buf->len, &digest, hash, sizeof(hash) );
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -447,7 +544,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest_include_header(payload_fetch_buf->ptr, payload_fetch_buf->len, &digest, hash);
+        result = suit_generate_digest_include_header(payload_fetch_buf->ptr, payload_fetch_buf->len, &digest, hash, sizeof(hash));
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -474,7 +571,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest_include_header(install_buf->ptr, install_buf->len, &digest, hash);
+        result = suit_generate_digest_include_header(install_buf->ptr, install_buf->len, &digest, hash, sizeof(hash));
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -531,7 +628,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest(text_buf->ptr, text_buf->len, &digest, hash);
+        result = suit_generate_digest(text_buf->ptr, text_buf->len, &digest, hash, sizeof(hash));
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -552,7 +649,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest_include_header(payload_fetch_buf->ptr, payload_fetch_buf->len, &digest, hash);
+        result = suit_generate_digest_include_header(payload_fetch_buf->ptr, payload_fetch_buf->len, &digest, hash, sizeof(hash));
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -633,6 +730,64 @@ out:
     return result;
 }
 
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+int32_t suit_encode_envelope(const suit_envelope_t *envelope, t_cose_key *signing_key, uint8_t *buf, size_t *len) {
+    int32_t result;
+    UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
+    suit_encode_t suit_encode = {
+        .pos = 0,
+        .max_pos = tmp_buf.len,
+        .buf = tmp_buf.ptr
+    };
+
+    result = suit_encode_severable_manifest_members_in_envelope(envelope, &suit_encode);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+
+    result = suit_encode_manifest(envelope, &suit_encode);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+
+    QCBOREncodeContext context;
+    QCBOREncode_Init(&context, (UsefulBuf){buf, *len});
+    QCBOREncode_OpenMap(&context);
+    /* TODO
+    result = suit_encode_append_delegation(&envelope->delegation, &context);
+    if (result != SUIT_SUCCESS) {
+        goto out;
+    }
+    */
+
+    result = suit_encode_append_authentication_wrapper(&suit_encode.manifest, *signing_key, &context);
+
+    if (result != SUIT_SUCCESS) {
+        goto out;
+    }
+    result = suit_encode_append_manifest(&suit_encode, &context);
+    if (result != SUIT_SUCCESS) {
+        goto out;
+    }
+    result = suit_encode_append_severable_manifest_members(&suit_encode, &context);
+    if (result != SUIT_SUCCESS) {
+        goto out;
+    }
+
+out:
+    QCBOREncode_CloseMap(&context);
+    UsefulBufC tmp;
+    QCBORError error = QCBOREncode_Finish(&context, &tmp);
+    if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
+        result = suit_error_from_qcbor_error(error);
+    }
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+    *len = tmp.len;
+    return SUIT_SUCCESS;
+}
+#else
 int32_t suit_encode_envelope(const suit_envelope_t *envelope, char *private_key, char *public_key, uint8_t *buf, size_t *len) {
     int32_t result;
     UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
@@ -687,3 +842,6 @@ out:
     *len = tmp.len;
     return SUIT_SUCCESS;
 }
+#endif /* LIBCSUIT_PSA_CRYPTO_C */
+
+

@@ -8,6 +8,86 @@
 #include "suit_cose.h"
 #include "suit_common.h"
 
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+
+cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose) {
+    /* judge authentication object
+     * [ COSE_Sign_Tagged, COSE_Sign1_Tagged, COSE_Mac_Tagged, COSE_Mac0_Tagged ]
+     */
+    cose_tag_key_t result = COSE_TAG_INVALID;
+    QCBORDecodeContext context;
+    QCBORItem item;
+    QCBORError error;
+    QCBORDecode_Init(&context, *signed_cose, QCBOR_DECODE_MODE_NORMAL);
+    uint64_t puTags[QCBOR_MAX_TAGS_PER_ITEM];
+    QCBORTagListOut out = {0, QCBOR_MAX_TAGS_PER_ITEM, puTags};
+    error = QCBORDecode_GetNextWithTags(&context, &item, &out);
+    if (error != QCBOR_SUCCESS) {
+        suit_debug_print(&context, &item, "suit_judge_cose_tag", QCBOR_TYPE_ANY);
+        goto out;
+    }
+    if (out.uNumUsed == 0) {
+        suit_debug_print(&context, &item, "suit_judge_cose_tag(NO TAG FOUND)", QCBOR_TYPE_ANY);
+        goto out;
+    }
+    switch (puTags[0]) {
+        case COSE_SIGN_TAGGED:
+        case COSE_SIGN1_TAGGED:
+        case COSE_MAC_TAGGED:
+        case COSE_MAC0_TAGGED:
+            result = puTags[0];
+            break;
+    }
+out:
+    error = QCBORDecode_Finish(&context);
+    if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
+        result = suit_error_from_qcbor_error(error);
+    }
+    return result;
+}
+
+int32_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key) 
+{
+    psa_key_attributes_t key_attributes = PSA_KEY_ATTRIBUTES_INIT;
+    psa_key_handle_t     key_handle = 0;
+    psa_status_t         result;
+    size_t               public_key_len = 65;
+
+    result = psa_crypto_init();
+
+    if(result != PSA_SUCCESS)
+        return( EXIT_FAILURE );
+
+    psa_set_key_usage_flags( &key_attributes,
+                             PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT );
+    psa_set_key_algorithm( &key_attributes, PSA_ALG_ECDSA(PSA_ALG_SHA_256) );
+    psa_set_key_type( &key_attributes, PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_FAMILY_SECP_R1) );
+
+    /*
+     psa_key_type_t       key_type;
+     psa_algorithm_t      key_alg;
+     key_type = PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_CURVE_SECP256R1);
+     key_alg = PSA_ALG_ECDSA(PSA_ALG_SHA_256);
+     psa_set_key_usage_flags( &key_attributes, PSA_KEY_USAGE_VERIFY_HASH );
+     psa_set_key_algorithm( &key_attributes, key_alg );
+     psa_set_key_type( &key_attributes, key_type );
+    */
+
+    result = psa_import_key(&key_attributes,
+                            (const unsigned char*) public_key,
+                            public_key_len,
+                            &key_handle);
+
+    if (result != PSA_SUCCESS)
+        return( EXIT_FAILURE );
+
+    cose_public_key->k.key_handle = key_handle;
+    cose_public_key->crypto_lib   = T_COSE_CRYPTO_LIB_PSA;
+
+    return( SUIT_SUCCESS );
+}
+#else
+
 int32_t suit_create_es256_key_pair(const char *private_key, const char *public_key, struct t_cose_key *cose_key_pair) {
     EC_GROUP    *ec_group = NULL;
     EC_KEY      *ec_key = NULL;
@@ -57,7 +137,6 @@ int32_t suit_create_es256_key_pair(const char *private_key, const char *public_k
     cose_key_pair->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
     return SUIT_SUCCESS;
 }
-
 
 cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose) {
     /* judge authentication object
@@ -130,7 +209,6 @@ int32_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *
     cose_public_key->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
     return SUIT_SUCCESS;
 }
-
 int32_t suit_sign_cose_sign1(const UsefulBufC *raw_cbor, const char *private_key, const char *public_key, UsefulBuf *returned_payload) {
     // Create cose signed file.
     struct t_cose_key cose_key_pair;
@@ -159,12 +237,15 @@ int32_t suit_sign_cose_sign1(const UsefulBufC *raw_cbor, const char *private_key
     return SUIT_SUCCESS;
 }
 
+#endif /* LIBCSUIT_PSA_CRYPTO_C */
+
 int32_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const char *public_key, UsefulBufC *returned_payload) {
     struct t_cose_key   cose_public_key;
     int32_t             result = SUIT_SUCCESS;
     if (public_key == NULL) {
         return SUIT_FAILED_TO_VERIFY;
     }
+
     result = suit_create_es256_public_key(public_key, &cose_public_key);
     if (result != SUIT_SUCCESS) {
         printf("Fail make_ossl_ecdsa_key_pair : result = %d\n", result);
@@ -184,7 +265,10 @@ int32_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const char *public
          printf("Fail t_cose_sign1_verify : result = %d\n", cose_result);
          return SUIT_FAILED_TO_VERIFY;
      }
-
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+     //  Destroy key 
+#else
      EC_KEY_free(cose_public_key.k.key_ptr);
+#endif /* LIBCSUIT_PSA_CRYPTO_C */
      return SUIT_SUCCESS;
 }

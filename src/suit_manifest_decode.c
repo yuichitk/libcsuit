@@ -10,6 +10,11 @@
 #include "suit_manifest_data.h"
 #include "suit_cose.h"
 #include "suit_digest.h"
+#include <inttypes.h>
+
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+#include "mbedtls/md.h"
+#endif /* LIBCSUIT_PSA_CRYPTO_C */
 
 int32_t suit_qcbor_get_next(QCBORDecodeContext *message, QCBORItem *item, uint8_t data_type) {
     QCBORError error;
@@ -317,7 +322,7 @@ int32_t suit_set_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *con
             case SUIT_PARAMETER_WAIT_INFO:
             case SUIT_PARAMETER_URI_LIST:
             default:
-                printf("suit_set_parameters_list skip %lu\n", item->label.uint64);
+                printf("suit_set_parameters_list skip %" PRId64 "\n", item->label.uint64);
                 suit_debug_print(context, item, "suit_set_parameters_list", QCBOR_TYPE_NONE);
                 result = SUIT_NOT_IMPLEMENTED;
                 if (!suit_qcbor_skip_any(context, item)) {
@@ -338,7 +343,7 @@ out:
 
 int32_t suit_set_command_custom_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, int64_t label, suit_command_sequence_item_t *cmd_item) {
     // TODO:
-    printf("suit_set_command_custom is not implemented (label %ld)", label);
+    printf("suit_set_command_custom is not implemented (label %" PRId64 ")", label);
     return SUIT_NOT_IMPLEMENTED;
 }
 
@@ -394,7 +399,7 @@ int32_t suit_set_command_common_sequence_from_item(uint8_t mode, QCBORDecodeCont
             /* SUIT_Condition // SUIT_Directive */
             if (is_common_sequence && is_suit_directive_only(label)) {
                 /* SUIT_Command_Custom should not come, so skip them */
-                printf("suit_set_common_sequence skip label %ld\n", label);
+                printf("suit_set_common_sequence skip label %" PRId64 "\n", label);
                 result = SUIT_FATAL_ERROR;
                 if (!suit_continue(mode, result)) {
                     break;
@@ -485,7 +490,7 @@ int32_t suit_set_command_common_sequence_from_item(uint8_t mode, QCBORDecodeCont
                 case SUIT_DIRECTIVE_RUN_SEQUENCE:
                 default:
                     // TODO
-                    printf("suit_set_directive_or_condition skip label %ld\n", label);
+                    printf("suit_set_directive_or_condition skip label %" PRId64 "\n", label);
                     suit_debug_print(context, item, "suit_set_directive_or_condition", QCBOR_TYPE_ANY);
                     result = SUIT_NOT_IMPLEMENTED;
             }
@@ -649,7 +654,6 @@ int32_t suit_set_authentication_block(uint8_t mode, suit_buf_t *buf, suit_digest
             printf("WARNING: SKIPPING VERIFICATION of SUIT_Authentication_Block in suit_set_digest\n");
             result = SUIT_NOT_IMPLEMENTED;
     }
-
     return result;
 }
 
@@ -831,7 +835,7 @@ int32_t suit_set_text_from_item(uint8_t mode, QCBORDecodeContext *context, QCBOR
                     case SUIT_TEXT_MANIFEST_JSON_SOURCE:
                     case SUIT_TEXT_MANIFEST_YAML_SOURCE:
                     default:
-                        printf("suit_set_text no parser for label %ld\n", item->val.int64);
+                        printf("suit_set_text no parser for label %" PRId64 "\n", item->val.int64);
                         suit_debug_print(context, item, "suit_set_text", QCBOR_TYPE_INT64);
                         result = SUIT_NOT_IMPLEMENTED;
                         if (!suit_continue(mode, result)) {
@@ -874,9 +878,42 @@ int32_t suit_set_text_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBOR
 
 int32_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
     int32_t result;
+
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+    uint8_t hash[MBEDTLS_MD_MAX_SIZE];
+    size_t hash_len;
+    psa_hash_operation_t sha256_psa = PSA_HASH_OPERATION_INIT;
+    psa_status_t status;
+#endif /* LIBCSUIT_PSA_CRYPTO_C */
+
     switch (digest->algorithm_id) {
         case SUIT_ALGORITHM_ID_SHA256:
+
+#if defined(LIBCSUIT_PSA_CRYPTO_C)
+
+            status = psa_crypto_init( );
+            if( status != PSA_SUCCESS )
+                return( EXIT_FAILURE );
+
+            status = psa_hash_setup( &sha256_psa, PSA_ALG_SHA_256 );
+            if( status != PSA_SUCCESS )
+                return( EXIT_FAILURE );
+
+            status = psa_hash_update( &sha256_psa, buf->ptr, buf->len );
+            if( status != PSA_SUCCESS )
+                return( EXIT_FAILURE );
+
+            status = psa_hash_finish( &sha256_psa, hash, sizeof(hash), &hash_len );
+            if( status != PSA_SUCCESS )
+                return( EXIT_FAILURE );
+
+            if(hash_len != digest->bytes.len)
+                return( EXIT_FAILURE );
+
+            result = memcmp(hash, digest->bytes.ptr, digest->bytes.len);
+#else
             result = suit_verify_sha256(buf->ptr, buf->len, digest->bytes.ptr, digest->bytes.len);
+#endif /* LIBCSUIT_PSA_CRYPTO_C */
             break;
         case SUIT_ALGORITHM_ID_SHA224:
         case SUIT_ALGORITHM_ID_SHA384:
@@ -931,14 +968,14 @@ int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, Q
                     result = SUIT_INVALID_TYPE_OF_ARGUMENT;
                     break;
                 }
-                manifest->version = item->val.uint64;
+                manifest->version = (uint32_t) item->val.uint64;
                 break;
             case SUIT_MANIFEST_SEQUENCE_NUMBER:
                 if (item->uDataType != QCBOR_TYPE_INT64) {
                     result = SUIT_INVALID_TYPE_OF_ARGUMENT;
                     break;
                 }
-                manifest->sequence_number = item->val.uint64;
+                manifest->sequence_number = (uint32_t) item->val.uint64;
                 break;
             case SUIT_COMMON:
                 result = suit_set_common_from_bstr(mode, context, item, false, &manifest->common);
@@ -1028,7 +1065,7 @@ int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, Q
             case SUIT_DEPENDENCY_RESOLUTION:
             default:
                 // TODO
-                printf("suit_set_manifest skip label %lu\n", item->label.uint64);
+                printf("suit_set_manifest skip label %" PRId64 "\n", item->label.uint64);
                 result = SUIT_NOT_IMPLEMENTED;
                 if (suit_continue(mode, result)) {
                     if (!suit_qcbor_skip_any(context, item)) {
@@ -1252,7 +1289,7 @@ int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, Q
             case SUIT_DEPENDENCY_RESOLUTION:
             default:
                 // TODO
-                printf("SUIT_Envelope label %ld is not implemented", item->label.int64);
+                printf("SUIT_Envelope label %" PRId64 " is not implemented", item->label.int64);
                 result = SUIT_NOT_IMPLEMENTED;
                 if (!suit_qcbor_skip_any(context, item)) {
                     result = SUIT_NO_MORE_ITEMS;

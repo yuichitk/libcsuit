@@ -1,14 +1,29 @@
 # [libcsuit](https://github.com/yuichitk/libcsuit/)
-**libcsuit** is a C library for decoding [IETF SUIT Manifest](https://tools.ietf.org/html/draft-ietf-suit-manifest).
+**libcsuit** is a C library for encoding and decoding [IETF SUIT manifests](https://tools.ietf.org/html/draft-ietf-suit-manifest).
+The manifest contains meta-data about the firmware image. The manifest is protected against modification and provides information 
+about the software/firmware author.
+
+For more information on how the IETF SUIT manifest is used to protect firmware updates of IoT devices, please look at the
+ [IETF SUIT architecture](https://datatracker.ietf.org/doc/html/draft-ietf-suit-architecture) document and the 
+ [IETF SUIT](https://datatracker.ietf.org/wg/suit/about/) working group.
 
 ## Overview
- - Implemented C-native data representation.
- - Using [QCBOR](https://github.com/laurencelundblade/QCBOR) for decoding CBOR binary data.
- - This implementation is compliant with [draft-ietf-suit-manifest-11](https://tools.ietf.org/html/draft-ietf-suit-manifest-11).
- - There are a sample codes for interoperability testing.
-   - Decoding a SUIT Manifest binary file.
+
+This implementation uses
+ - the [QCBOR] (https://github.com/laurencelundblade/QCBOR) library for encoding and decoding CBOR structures,
+ - the [t_cose] (https://github.com/laurencelundblade/t_cose) library for cryptographic processing of COSE structures, 
+ - OpenSSL or Mbed TLS (based on the PSA Crypto API) for cryptographic algorithms.
+ 
+This implementation offers a subset of the functionality defined in [draft-ietf-suit-manifest-11](https://tools.ietf.org/html/draft-ietf-suit-manifest-11).
+ 
+Example programs are offered for testing. 
 
 ## Getting started
+
+This library uses two build systems, namely cmake and classical makefiles. 
+
+### Using Makefiles 
+
 Installing [QCBOR](https://github.com/laurencelundblade/QCBOR).
 ```bash
 git clone https://github.com/laurencelundblade/QCBOR.git
@@ -29,15 +44,48 @@ make -f Makefile.encode test
 # generates ./testfiles/suit_manifest_expX.cbor
 ```
 
-## Install libcsuit.a
+To install libcsuit.a use the following command:
 ```
 make install
 ```
 
-## Install libcsuit.so
+To nstall libcsuit.so use the following command: 
 ```
 make install_so
 ```
+
+### Using CMake 
+
+The cmake file allows building code for OpenSSL and for Mbed TLS based on a parameter passed to cmake. 
+If you decide to use OpenSSL then you need to download and install it before building this library.
+The OpenSSL library and the include files need to be included in the search path. 
+
+First, create a directory for the entire project. Inside this directory put the code of qcbor, t_cose, 
+mbedtls (if used), and libcsuit. 
+
+Here are the commands:
+
+```
+git clone https://github.com/hannestschofenig/t_cose.git
+git clone https://github.com/hannestschofenig/QCBOR.git
+git clone https://github.com/ARMmbed/mbedtls.git
+git clone https://github.com/hannestschofenig/libcsuit.git
+cd libcsuit
+git checkout psa
+```
+
+Next, build the code using cmake
+
+```
+mkdir build
+cd build
+cmake -DMBEDTLS=1 ..
+make 
+```
+
+If you want to build the code for OpenSSL then omit the '-DMBEDTLS=1' parameter from the cmake invocation. 
+
+
 
 ## SUIT Protocol Message Examples
 The following description Markdown and CBOR files are compliant with [draft-ietf-suit-manifest-11](https://tools.ietf.org/html/draft-ietf-suit-manifest-11).
