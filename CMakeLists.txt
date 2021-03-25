@@ -5,6 +5,7 @@ project(libcsuit
 	VERSION 1.0.0)
 
 set(CMAKE_C_FLAGS "-Wall -O3 -pedantic")
+set(CMAKE_C_FLAGS_DEBUG "-Wall -O0 -g")
 
 if(MBEDTLS)
 
@@ -51,6 +52,7 @@ if(MBEDTLS)
 
 	set(SOURCE_DECODE
 		src/suit_common.c
+		src/suit_digest.c
 		src/suit_cose.c
 		src/suit_manifest_print.c
 		src/suit_manifest_encode.c	
@@ -61,6 +63,7 @@ if(MBEDTLS)
 
 	set(SOURCE_ENCODE
 		src/suit_common.c
+		src/suit_digest.c
 		src/suit_cose.c
 		src/suit_manifest_print.c
 		src/suit_manifest_encode.c
