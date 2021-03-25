@@ -12,10 +12,6 @@
 #include "suit_digest.h"
 #include <inttypes.h>
 
-#if defined(LIBCSUIT_PSA_CRYPTO_C)
-#include "mbedtls/md.h"
-#endif /* LIBCSUIT_PSA_CRYPTO_C */
-
 int32_t suit_qcbor_get_next(QCBORDecodeContext *message, QCBORItem *item, uint8_t data_type) {
     QCBORError error;
     error = QCBORDecode_GetNext(message, item);
@@ -879,41 +875,9 @@ int32_t suit_set_text_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBOR
 int32_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
     int32_t result;
 
-#if defined(LIBCSUIT_PSA_CRYPTO_C)
-    uint8_t hash[MBEDTLS_MD_MAX_SIZE];
-    size_t hash_len;
-    psa_hash_operation_t sha256_psa = PSA_HASH_OPERATION_INIT;
-    psa_status_t status;
-#endif /* LIBCSUIT_PSA_CRYPTO_C */
-
     switch (digest->algorithm_id) {
         case SUIT_ALGORITHM_ID_SHA256:
-
-#if defined(LIBCSUIT_PSA_CRYPTO_C)
-
-            status = psa_crypto_init( );
-            if( status != PSA_SUCCESS )
-                return( EXIT_FAILURE );
-
-            status = psa_hash_setup( &sha256_psa, PSA_ALG_SHA_256 );
-            if( status != PSA_SUCCESS )
-                return( EXIT_FAILURE );
-
-            status = psa_hash_update( &sha256_psa, buf->ptr, buf->len );
-            if( status != PSA_SUCCESS )
-                return( EXIT_FAILURE );
-
-            status = psa_hash_finish( &sha256_psa, hash, sizeof(hash), &hash_len );
-            if( status != PSA_SUCCESS )
-                return( EXIT_FAILURE );
-
-            if(hash_len != digest->bytes.len)
-                return( EXIT_FAILURE );
-
-            result = memcmp(hash, digest->bytes.ptr, digest->bytes.len);
-#else
             result = suit_verify_sha256(buf->ptr, buf->len, digest->bytes.ptr, digest->bytes.len);
-#endif /* LIBCSUIT_PSA_CRYPTO_C */
             break;
         case SUIT_ALGORITHM_ID_SHA224:
         case SUIT_ALGORITHM_ID_SHA384:
@@ -923,7 +887,6 @@ int32_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
         case SUIT_ALGORITHM_ID_SHA3_384:
         case SUIT_ALGORITHM_ID_SHA3_512:
         default:
-            printf("verification is not implemented for SUIT_Digest.algorithm_id=%d\n", digest->algorithm_id);
             result = SUIT_NOT_IMPLEMENTED;
     }
     return result;

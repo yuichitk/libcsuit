@@ -11,14 +11,6 @@
 #include "suit_manifest_data.h"
 #include "suit_cose.h"
 #include "suit_digest.h"
-#if defined(LIBCSUIT_PSA_CRYPTO_C)
-#include "psa/crypto.h"
-#define SHA256_DIGEST_LENGTH 32
-#else
-#include "openssl/ecdsa.h"
-#endif /* LIBCSUIT_PSA_CRYPTO_C */
-
-
 #define SUIT_ENCODE_MAX_BUFFER_SIZE 2048
 
 int32_t suit_encode_append_severable_manifest_members(const suit_encode_t *suit_encode, QCBOREncodeContext *context) {
@@ -62,43 +54,12 @@ int32_t suit_encode_digest(const suit_digest_t *digest, UsefulBuf *buf) {
     *buf = (UsefulBuf){.ptr = (void *)t_buf.ptr, .len = t_buf.len};
     return SUIT_SUCCESS;
 }
-#if defined(LIBCSUIT_PSA_CRYPTO_C)
-int32_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_digest_t *digest, uint8_t *hash, size_t hash_len) {
-    psa_status_t status;
-    size_t real_hash_size;
-    psa_hash_operation_t sha256_psa = PSA_HASH_OPERATION_INIT;
 
-    status = psa_crypto_init( );
-    if( status != PSA_SUCCESS )
-        return( EXIT_FAILURE );
-
-    status = psa_hash_setup( &sha256_psa, PSA_ALG_SHA_256 );
-    if( status != PSA_SUCCESS )
-        return( EXIT_FAILURE );
-
-    status = psa_hash_update( &sha256_psa, ptr, len );
-    if( status != PSA_SUCCESS )
-        return( EXIT_FAILURE );
-
-    status = psa_hash_finish( &sha256_psa, hash, hash_len, &real_hash_size );
-    if( status != PSA_SUCCESS )
-        return( EXIT_FAILURE );
-
-    if(real_hash_size != SHA256_DIGEST_LENGTH)
-        return( EXIT_FAILURE );
-
-    digest->algorithm_id = SUIT_ALGORITHM_ID_SHA256;
-    digest->bytes.ptr = hash;
-    digest->bytes.len = SHA256_DIGEST_LENGTH;
-
-    return SUIT_SUCCESS;
-}
-#else
 int32_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_digest_t *digest, uint8_t *hash, size_t hash_len) {
     if (hash_len != SHA256_DIGEST_LENGTH) {
         return SUIT_FATAL_ERROR;
     }
-    int32_t result = suit_generate_sha256(ptr, len, hash);
+    int32_t result = suit_generate_sha256(ptr, len, hash, hash_len);
     if (result != SUIT_SUCCESS) {
         return result;
     }
@@ -107,7 +68,6 @@ int32_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_digest_t
     digest->bytes.len = SHA256_DIGEST_LENGTH;
     return SUIT_SUCCESS;
 }
-#endif /* LIBCSUIT_PSA_CRYPTO_C */
 
 int32_t suit_generate_digest_include_header(const uint8_t *ptr, const size_t len, suit_digest_t *digest, uint8_t *hash, size_t hash_len) {
     UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
@@ -454,7 +414,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
     QCBOREncode_AddBytesToMapN(&context, SUIT_COMMON, (UsefulBufC){.ptr = suit_common.ptr, .len = suit_common.len});
 
     UsefulBuf buf;
-    uint8_t hash[SHA256_DIGEST_LENGTH];
+    uint8_t hash[SHA256_DIGEST_WORK_SPACE_LENGTH];
     uint8_t tmp_buf[SUIT_ENCODE_MAX_BUFFER_SIZE];
     UsefulBufC t_buf;
     suit_digest_t digest;
