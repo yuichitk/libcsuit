@@ -5,7 +5,7 @@ project(libcsuit
 	VERSION 1.0.0)
 
 set(CMAKE_C_FLAGS "-Wall -O3 -pedantic")
-set(CMAKE_C_FLAGS_DEBUG "-Wall -O0 -g")
+set(CMAKE_C_FLAGS_DEBUG "-Wall -O0 -g -DDEBUG") # use `-DCMAKE_BUILD_TYPE=Debug'
 
 if(MBEDTLS)
 
@@ -43,7 +43,7 @@ if(MBEDTLS)
 
 	include_directories(../QCBOR/inc/)
 	include_directories(../t_cose/inc)
-	include_directories(../t_cose/src)		
+	include_directories(../t_cose/src)
 	include_directories(examples/inc)
 	include_directories(inc)
 
@@ -55,7 +55,7 @@ if(MBEDTLS)
 		src/suit_digest.c
 		src/suit_cose.c
 		src/suit_manifest_print.c
-		src/suit_manifest_encode.c	
+		src/suit_manifest_encode.c
 		src/suit_manifest_decode.c
 		examples/suit_examples_common.c
 		examples/suit_manifest_parser_main_psa.c
@@ -67,7 +67,7 @@ if(MBEDTLS)
 		src/suit_cose.c
 		src/suit_manifest_print.c
 		src/suit_manifest_encode.c
-		src/suit_manifest_decode.c			
+		src/suit_manifest_decode.c
 		examples/suit_examples_common.c
 		examples/suit_manifest_encode_main_psa.c
 	)
@@ -87,7 +87,7 @@ else()
 
 	include_directories(../QCBOR/inc/)
 	include_directories(../t_cose/inc)
-	include_directories(../t_cose/src)		
+	include_directories(../t_cose/src)
 	include_directories(examples/inc)
 	include_directories(inc)
 
@@ -102,10 +102,10 @@ else()
 
 	set(SOURCE_DECODE
 		src/suit_common.c
-		src/suit_digest.c		
+		src/suit_digest.c
 		src/suit_cose.c
 		src/suit_manifest_print.c
-		src/suit_manifest_encode.c	
+		src/suit_manifest_encode.c
 		src/suit_manifest_decode.c
 		examples/suit_examples_common.c
 		examples/suit_manifest_parser_main.c
@@ -123,7 +123,7 @@ else()
 		src/suit_cose.c
 		src/suit_manifest_print.c
 		src/suit_manifest_encode.c
-		src/suit_manifest_decode.c			
+		src/suit_manifest_decode.c
 		examples/suit_examples_common.c
 		examples/suit_manifest_encode_main.c
 	)
