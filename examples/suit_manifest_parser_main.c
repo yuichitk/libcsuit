@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
 #endif
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
     suit_buf_t buf = {.ptr = manifest_buf, .len = manifest_len};
-    result = suit_set_envelope(mode, &buf, &envelope, &cose_key);
+    result = suit_decode_envelope(mode, &buf, &envelope, &cose_key);
     if (result != SUIT_SUCCESS) {
         printf("main : Can't parse Manifest file. err=%d\n", result);
         return EXIT_FAILURE;

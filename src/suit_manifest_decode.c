@@ -193,7 +193,7 @@ bool suit_qcbor_skip_any(QCBORDecodeContext *message, QCBORItem *item) {
     return true;
 }
 
-int32_t suit_set_digest_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_digest_t *digest) {
+int32_t suit_decode_digest_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_digest_t *digest) {
     digest->algorithm_id = SUIT_ALGORITHM_ID_INVALID;
     digest->bytes.len = 0;
     //digest->extension.len = 0;
@@ -205,14 +205,14 @@ int32_t suit_set_digest_from_item(uint8_t mode, QCBORDecodeContext *context, QCB
 
     result = suit_qcbor_get_next_uint(context, item);
     if (!suit_continue(mode, result)) {
-        suit_debug_print(context, item, "suit_set_digest@algorithm-id", QCBOR_TYPE_INT64);
+        suit_debug_print(context, item, "suit_decode_digest@algorithm-id", QCBOR_TYPE_INT64);
         return result;
     }
     digest->algorithm_id = item->val.uint64;
 
     result = suit_qcbor_get_next(context, item, QCBOR_TYPE_BYTE_STRING);
     if (!suit_continue(mode, result)) {
-        suit_debug_print(context, item, "suit_set_digest@digest-bytes", QCBOR_TYPE_BYTE_STRING);
+        suit_debug_print(context, item, "suit_decode_digest@digest-bytes", QCBOR_TYPE_BYTE_STRING);
         return result;
     }
     if (result == SUIT_SUCCESS) {
@@ -222,7 +222,7 @@ int32_t suit_set_digest_from_item(uint8_t mode, QCBORDecodeContext *context, QCB
 
     for (size_t i = 0; i < ext_len; i++) {
         // TODO
-        suit_debug_print(context, item, "suit_set_digest skipping SUIT_Digest-extensions", QCBOR_TYPE_ANY);
+        suit_debug_print(context, item, "suit_decode_digest skipping SUIT_Digest-extensions", QCBOR_TYPE_ANY);
         if (!suit_continue(mode, SUIT_NOT_IMPLEMENTED)) {
             return SUIT_NOT_IMPLEMENTED;
         }
@@ -233,11 +233,11 @@ int32_t suit_set_digest_from_item(uint8_t mode, QCBORDecodeContext *context, QCB
     return SUIT_SUCCESS;
 }
 
-int32_t suit_set_digest(uint8_t mode, suit_buf_t *buf, suit_digest_t *digest) {
+int32_t suit_decode_digest(uint8_t mode, suit_buf_t *buf, suit_digest_t *digest) {
     QCBORDecodeContext digest_context;
     QCBORItem item;
     QCBORDecode_Init(&digest_context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
-    int32_t result = suit_set_digest_from_item(mode, &digest_context, &item, true, digest);
+    int32_t result = suit_decode_digest_from_item(mode, &digest_context, &item, true, digest);
     QCBORError error = QCBORDecode_Finish(&digest_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
@@ -245,7 +245,7 @@ int32_t suit_set_digest(uint8_t mode, suit_buf_t *buf, suit_digest_t *digest) {
     return result;
 }
 
-int32_t suit_set_digest_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_digest_t *digest) {
+int32_t suit_decode_digest_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_digest_t *digest) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_BYTE_STRING);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -253,10 +253,10 @@ int32_t suit_set_digest_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCB
     suit_buf_t buf;
     buf.ptr = item->val.string.ptr;
     buf.len = item->val.string.len;
-    return suit_set_digest(mode, &buf, digest);
+    return suit_decode_digest(mode, &buf, digest);
 }
 
-int32_t suit_set_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_parameters_list_t *params_list) {
+int32_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_parameters_list_t *params_list) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -298,7 +298,7 @@ int32_t suit_set_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *con
                 params_list->params[i].value.string.len = item->val.string.len;
                 break;
             case SUIT_PARAMETER_IMAGE_DIGEST:
-                result = suit_set_digest_from_bstr(mode, context, item, false, &params_list->params[i].value.digest);
+                result = suit_decode_digest_from_bstr(mode, context, item, false, &params_list->params[i].value.digest);
                 break;
 
             case SUIT_PARAMETER_USE_BEFORE:
@@ -317,7 +317,7 @@ int32_t suit_set_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *con
             case SUIT_PARAMETER_WAIT_INFO:
             case SUIT_PARAMETER_URI_LIST:
             default:
-                suit_debug_print(context, item, "suit_set_parameters_list", QCBOR_TYPE_NONE);
+                suit_debug_print(context, item, "suit_decode_parameters_list", QCBOR_TYPE_NONE);
                 result = SUIT_NOT_IMPLEMENTED;
                 if (!suit_qcbor_skip_any(context, item)) {
                     result = SUIT_FATAL_ERROR;
@@ -335,7 +335,7 @@ out:
     return result;
 }
 
-int32_t suit_set_command_custom_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, int64_t label, suit_command_sequence_item_t *cmd_item) {
+int32_t suit_decode_command_custom_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, int64_t label, suit_command_sequence_item_t *cmd_item) {
     // TODO:
     return SUIT_NOT_IMPLEMENTED;
 }
@@ -357,7 +357,7 @@ bool is_suit_directive_only(uint64_t label) {
     return false;
 }
 
-int32_t suit_set_command_common_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq, bool is_common_sequence) {
+int32_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq, bool is_common_sequence) {
     /* NOTE:
      * SUIT_Common_Sequence  = [ + (SUIT_Condition // SUIT_Common_Commands) ]
      * SUIT_Command_Sequence = [ + (SUIT_Condition // SUIT_Directive // SUIT_Command_Custom ] */
@@ -382,7 +382,7 @@ int32_t suit_set_command_common_sequence_from_item(uint8_t mode, QCBORDecodeCont
         // NOTE: assert every label is in [INT64_MIN, INT64_MAX]
         if (label < 0) {
             /* SUIT_Command_Custom */
-            result = suit_set_command_custom_from_item(mode, context, item, label, &cmd_seq->commands[cmd_seq->len]);
+            result = suit_decode_command_custom_from_item(mode, context, item, label, &cmd_seq->commands[cmd_seq->len]);
             if (result == SUIT_SUCCESS) {
                 cmd_seq->len++;
             }
@@ -423,7 +423,7 @@ int32_t suit_set_command_common_sequence_from_item(uint8_t mode, QCBORDecodeCont
                     break;
                 case SUIT_DIRECTIVE_SET_PARAMETERS:
                 case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
-                    result = suit_set_parameters_list_from_item(mode, context, item, true, &cmd_seq->commands[cmd_seq->len].value.params_list);
+                    result = suit_decode_parameters_list_from_item(mode, context, item, true, &cmd_seq->commands[cmd_seq->len].value.params_list);
                     if (!suit_continue(mode, result)) {
                         break;
                     }
@@ -481,7 +481,7 @@ int32_t suit_set_command_common_sequence_from_item(uint8_t mode, QCBORDecodeCont
                 case SUIT_DIRECTIVE_RUN_SEQUENCE:
                 default:
                     // TODO
-                    suit_debug_print(context, item, "suit_set_directive_or_condition", QCBOR_TYPE_ANY);
+                    suit_debug_print(context, item, "suit_decode_directive_or_condition", QCBOR_TYPE_ANY);
                     result = SUIT_NOT_IMPLEMENTED;
             }
             if (!suit_continue(mode, result)) {
@@ -495,15 +495,15 @@ int32_t suit_set_command_common_sequence_from_item(uint8_t mode, QCBORDecodeCont
     return result;
 }
 
-int32_t suit_set_common_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmn_seq) {
-    return suit_set_command_common_sequence_from_item(mode, context, item, next, cmn_seq, true);
+int32_t suit_decode_common_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmn_seq) {
+    return suit_decode_command_common_sequence_from_item(mode, context, item, next, cmn_seq, true);
 }
 
-int32_t suit_set_common_sequence(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmn_seq) {
+int32_t suit_decode_common_sequence(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmn_seq) {
     QCBORDecodeContext cmn_seq_context;
     QCBORItem item;
     QCBORDecode_Init(&cmn_seq_context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
-    int32_t result = suit_set_common_sequence_from_item(mode, &cmn_seq_context, &item, true, cmn_seq);
+    int32_t result = suit_decode_common_sequence_from_item(mode, &cmn_seq_context, &item, true, cmn_seq);
     QCBORError error = QCBORDecode_Finish(&cmn_seq_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
@@ -511,7 +511,7 @@ int32_t suit_set_common_sequence(uint8_t mode, const suit_buf_t *buf, suit_comma
     return result;
 }
 
-int32_t suit_set_common_sequence_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmn_seq) {
+int32_t suit_decode_common_sequence_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmn_seq) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_BYTE_STRING);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -519,18 +519,18 @@ int32_t suit_set_common_sequence_from_bstr(uint8_t mode, QCBORDecodeContext *con
     suit_buf_t buf;
     buf.len = item->val.string.len;
     buf.ptr = item->val.string.ptr;
-    return suit_set_command_sequence(mode, &buf, cmn_seq);
+    return suit_decode_command_sequence(mode, &buf, cmn_seq);
 }
 
-int32_t suit_set_command_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq) {
-    return suit_set_command_common_sequence_from_item(mode, context, item, next, cmd_seq, false);
+int32_t suit_decode_command_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq) {
+    return suit_decode_command_common_sequence_from_item(mode, context, item, next, cmd_seq, false);
 }
 
-int32_t suit_set_command_sequence(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmd_seq) {
+int32_t suit_decode_command_sequence(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmd_seq) {
     QCBORDecodeContext cmd_seq_context;
     QCBORItem item;
     QCBORDecode_Init(&cmd_seq_context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
-    int32_t result = suit_set_command_sequence_from_item(mode, &cmd_seq_context, &item, true, cmd_seq);
+    int32_t result = suit_decode_command_sequence_from_item(mode, &cmd_seq_context, &item, true, cmd_seq);
     QCBORError error = QCBORDecode_Finish(&cmd_seq_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
@@ -538,24 +538,24 @@ int32_t suit_set_command_sequence(uint8_t mode, const suit_buf_t *buf, suit_comm
     return result;
 }
 
-int32_t suit_set_command_sequence_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq) {
+int32_t suit_decode_command_sequence_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_BYTE_STRING);
     if (result != SUIT_SUCCESS) {
-        suit_debug_print(context, item, "suit_set_command_sequence_from_bstr", QCBOR_TYPE_BYTE_STRING);
+        suit_debug_print(context, item, "suit_decode_command_sequence_from_bstr", QCBOR_TYPE_BYTE_STRING);
         return result;
     }
     suit_buf_t buf;
     buf.len = item->val.string.len;
     buf.ptr = item->val.string.ptr;
-    return suit_set_command_sequence(mode, &buf, cmd_seq);
+    return suit_decode_command_sequence(mode, &buf, cmd_seq);
 }
 
-int32_t suit_set_component_identifiers_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_component_identifier_t *identifier) {
+int32_t suit_decode_component_identifiers_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_component_identifier_t *identifier) {
     identifier->len = 0;
 
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_ARRAY);
     if (result != SUIT_SUCCESS) {
-        suit_debug_print(context, item, "suit_set_component_identifiers", QCBOR_TYPE_ARRAY);
+        suit_debug_print(context, item, "suit_decode_component_identifiers", QCBOR_TYPE_ARRAY);
         return result;
     }
     size_t len = item->val.uCount;
@@ -576,11 +576,11 @@ int32_t suit_set_component_identifiers_from_item(uint8_t mode, QCBORDecodeContex
     return result;
 }
 
-int32_t suit_set_component_identifiers(uint8_t mode, suit_buf_t *buf, suit_component_identifier_t *identifier) {
+int32_t suit_decode_component_identifiers(uint8_t mode, suit_buf_t *buf, suit_component_identifier_t *identifier) {
     QCBORDecodeContext component_context;
     QCBORItem item;
     QCBORDecode_Init(&component_context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
-    int32_t result = suit_set_component_identifiers_from_item(mode, &component_context, &item, true, identifier);
+    int32_t result = suit_decode_component_identifiers_from_item(mode, &component_context, &item, true, identifier);
     QCBORError error = QCBORDecode_Finish(&component_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
@@ -588,7 +588,7 @@ int32_t suit_set_component_identifiers(uint8_t mode, suit_buf_t *buf, suit_compo
     return result;
 }
 
-int32_t suit_set_components_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_components_t *components) {
+int32_t suit_decode_components_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_components_t *components) {
     components->len = 0;
 
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_ARRAY);
@@ -602,7 +602,7 @@ int32_t suit_set_components_from_item(uint8_t mode, QCBORDecodeContext *context,
             break;
         }
         if (result == SUIT_SUCCESS) {
-            result = suit_set_component_identifiers_from_item(mode, context, item, false, &components->comp_id[components->len]);
+            result = suit_decode_component_identifiers_from_item(mode, context, item, false, &components->comp_id[components->len]);
             if (result == SUIT_SUCCESS) {
                 components->len++;
             }
@@ -622,7 +622,7 @@ int32_t suit_set_components_from_item(uint8_t mode, QCBORDecodeContext *context,
     return result;
 }
 
-int32_t suit_set_authentication_block(uint8_t mode, suit_buf_t *buf, suit_digest_t *digest, const struct t_cose_key *public_key) {
+int32_t suit_decode_authentication_block(uint8_t mode, suit_buf_t *buf, suit_digest_t *digest, const struct t_cose_key *public_key) {
     UsefulBufC signed_cose = {buf->ptr, buf->len};
     int32_t result;
     cose_tag_key_t cose_tag = suit_judge_cose_tag_from_buf(&signed_cose);
@@ -637,7 +637,7 @@ int32_t suit_set_authentication_block(uint8_t mode, suit_buf_t *buf, suit_digest
             suit_buf_t payload_buf;
             payload_buf.ptr = returned_payload.ptr;
             payload_buf.len = returned_payload.len;
-            result = suit_set_digest(mode, &payload_buf, digest);
+            result = suit_decode_digest(mode, &payload_buf, digest);
             break;
         default:
             result = SUIT_NOT_IMPLEMENTED;
@@ -645,7 +645,7 @@ int32_t suit_set_authentication_block(uint8_t mode, suit_buf_t *buf, suit_digest
     return result;
 }
 
-int32_t suit_set_common_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_common_t *common) {
+int32_t suit_decode_common_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_common_t *common) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -658,15 +658,15 @@ int32_t suit_set_common_from_item(uint8_t mode, QCBORDecodeContext *context, QCB
         }
         switch (item->label.uint64) {
             case SUIT_COMPONENTS:
-                result = suit_set_components_from_item(mode, context, item, false, &common->components);
+                result = suit_decode_components_from_item(mode, context, item, false, &common->components);
                 break;
             case SUIT_COMMON_SEQUENCE:
-                result = suit_set_common_sequence_from_bstr(mode, context, item, false, &common->cmd_seq);
+                result = suit_decode_common_sequence_from_bstr(mode, context, item, false, &common->cmd_seq);
                 break;
             case SUIT_DEPENDENCIES:
             default:
                 // TODO
-                suit_debug_print(context, item, "suit_set_dependencies(skipping)", QCBOR_TYPE_ARRAY);
+                suit_debug_print(context, item, "suit_decode_dependencies(skipping)", QCBOR_TYPE_ARRAY);
                 result = SUIT_NOT_IMPLEMENTED;
                 if (!suit_qcbor_skip_any(context, item)) {
                     result = SUIT_NO_MORE_ITEMS;
@@ -681,7 +681,7 @@ int32_t suit_set_common_from_item(uint8_t mode, QCBORDecodeContext *context, QCB
     return result;
 }
 
-int32_t suit_set_common_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_common_t *common) {
+int32_t suit_decode_common_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_common_t *common) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_BYTE_STRING);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -690,7 +690,7 @@ int32_t suit_set_common_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCB
     QCBORDecode_Init(&common_context,
                      item->val.string,
                      QCBOR_DECODE_MODE_NORMAL);
-    result = suit_set_common_from_item(mode, &common_context, item, true, common);
+    result = suit_decode_common_from_item(mode, &common_context, item, true, common);
     QCBORError error = QCBORDecode_Finish(&common_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
@@ -698,7 +698,7 @@ int32_t suit_set_common_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCB
     return result;
 }
 
-int32_t suit_set_text_component_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_text_component_t *text_component) {
+int32_t suit_decode_text_component_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_text_component_t *text_component) {
     /* NOTE: in QCBOR_DECODE_MODE_MAP_AS_ARRAY */
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP_AS_ARRAY);
     if (result != SUIT_SUCCESS) {
@@ -775,7 +775,7 @@ int32_t suit_set_text_component_from_item(uint8_t mode, QCBORDecodeContext *cont
     return result;
 }
 
-int32_t suit_set_text_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_text_t *text) {
+int32_t suit_decode_text_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_text_t *text) {
     /* NOTE: in QCBOR_DECODE_MODE_MAP_AS_ARRAY */
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP_AS_ARRAY);
     if (result != SUIT_SUCCESS) {
@@ -792,14 +792,14 @@ int32_t suit_set_text_from_item(uint8_t mode, QCBORDecodeContext *context, QCBOR
 
         switch (item->uDataType) {
             case QCBOR_TYPE_ARRAY:
-                result = suit_set_component_identifiers_from_item(mode, context, item, false, &text->component[text->component_len].key);
+                result = suit_decode_component_identifiers_from_item(mode, context, item, false, &text->component[text->component_len].key);
                 if (result != SUIT_SUCCESS) {
                     if (!suit_qcbor_skip_any(context, item)) {
                         result = SUIT_FATAL_ERROR;
                     }
                     break;
                 }
-                result = suit_set_text_component_from_item(mode, context, item, true, &text->component[text->component_len].text_component);
+                result = suit_decode_text_component_from_item(mode, context, item, true, &text->component[text->component_len].text_component);
                 if (result == SUIT_SUCCESS) {
                     text->component_len++;
                 }
@@ -823,7 +823,7 @@ int32_t suit_set_text_from_item(uint8_t mode, QCBORDecodeContext *context, QCBOR
                     case SUIT_TEXT_MANIFEST_JSON_SOURCE:
                     case SUIT_TEXT_MANIFEST_YAML_SOURCE:
                     default:
-                        suit_debug_print(context, item, "suit_set_text", QCBOR_TYPE_INT64);
+                        suit_debug_print(context, item, "suit_decode_text", QCBOR_TYPE_INT64);
                         result = SUIT_NOT_IMPLEMENTED;
                         if (!suit_continue(mode, result)) {
                             if (!suit_qcbor_skip_any(context, item)) {
@@ -846,7 +846,7 @@ int32_t suit_set_text_from_item(uint8_t mode, QCBORDecodeContext *context, QCBOR
     return result;
 }
 
-int32_t suit_set_text_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_text_t *text) {
+int32_t suit_decode_text_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_text_t *text) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_BYTE_STRING);
     QCBORDecodeContext text_context;
     /* NOTE: SUIT_Text_Map may contain component-identifier key,
@@ -855,7 +855,7 @@ int32_t suit_set_text_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBOR
     QCBORDecode_Init(&text_context,
                      (UsefulBufC){item->val.string.ptr, item->val.string.len},
                      QCBOR_DECODE_MODE_MAP_AS_ARRAY);
-    result = suit_set_text_from_item(mode, &text_context, item, true, text);
+    result = suit_decode_text_from_item(mode, &text_context, item, true, text);
     QCBORError error = QCBORDecode_Finish(&text_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
@@ -898,7 +898,7 @@ int32_t suit_verify_item(QCBORDecodeContext *context, QCBORItem *item, suit_dige
     return suit_verify_digest(&buf, digest);
 }
 
-int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_manifest_t *manifest) {
+int32_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_manifest_t *manifest) {
     manifest->sev_man_mem.dependency_resolution_status = SUIT_SEVERABLE_INVALID;
     manifest->sev_man_mem.payload_fetch_status = SUIT_SEVERABLE_INVALID;
     manifest->sev_man_mem.install_status = SUIT_SEVERABLE_INVALID;
@@ -932,15 +932,15 @@ int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, Q
                 manifest->sequence_number = (uint32_t) item->val.uint64;
                 break;
             case SUIT_COMMON:
-                result = suit_set_common_from_bstr(mode, context, item, false, &manifest->common);
+                result = suit_decode_common_from_bstr(mode, context, item, false, &manifest->common);
                 break;
             case SUIT_PAYLOAD_FETCH:
                 if (item->uDataType == QCBOR_TYPE_ARRAY) {
                     /* SUIT_Digest */
-                    result = suit_set_digest_from_item(mode, context, item, false, &manifest->sev_mem_dig.payload_fetch);
+                    result = suit_decode_digest_from_item(mode, context, item, false, &manifest->sev_mem_dig.payload_fetch);
                 }
                 else if (item->uDataType == QCBOR_TYPE_BYTE_STRING) {
-                    result = suit_set_command_sequence_from_bstr(mode, context, item, false, &manifest->sev_man_mem.payload_fetch);
+                    result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->sev_man_mem.payload_fetch);
                     if (result == SUIT_SUCCESS) {
                         manifest->sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IN_MANIFEST;
                         if (manifest->is_verified) {
@@ -955,11 +955,11 @@ int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, Q
             case SUIT_INSTALL:
                 if (item->uDataType == QCBOR_TYPE_ARRAY) {
                     /* SUIT_Digest */
-                    result = suit_set_digest_from_item(mode, context, item, false, &manifest->sev_mem_dig.install);
+                    result = suit_decode_digest_from_item(mode, context, item, false, &manifest->sev_mem_dig.install);
                 }
                 else if (item->uDataType == QCBOR_TYPE_BYTE_STRING) {
                     /* bstr .cbor SUIT_Command_Sequence */
-                    result = suit_set_command_sequence_from_bstr(mode, context, item, false, &manifest->sev_man_mem.install);
+                    result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->sev_man_mem.install);
                     if (result == SUIT_SUCCESS) {
                         manifest->sev_man_mem.install_status |= SUIT_SEVERABLE_IN_MANIFEST;
                         if (manifest->is_verified) {
@@ -974,11 +974,11 @@ int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, Q
             case SUIT_TEXT:
                 if (item->uDataType == QCBOR_TYPE_ARRAY) {
                     /* SUIT_Digest */
-                    result = suit_set_digest_from_item(mode, context, item, false, &manifest->sev_mem_dig.text);
+                    result = suit_decode_digest_from_item(mode, context, item, false, &manifest->sev_mem_dig.text);
                 }
                 else if (item->uDataType == QCBOR_TYPE_BYTE_STRING) {
                     /* bstr .cbor SUIT_Text_Map */
-                    result = suit_set_text_from_bstr(mode, context, item, false, &manifest->sev_man_mem.text);
+                    result = suit_decode_text_from_bstr(mode, context, item, false, &manifest->sev_man_mem.text);
                     if (result == SUIT_SUCCESS) {
                         manifest->sev_man_mem.text_status |= SUIT_SEVERABLE_IN_MANIFEST;
                         if (manifest->is_verified) {
@@ -993,7 +993,7 @@ int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, Q
             case SUIT_COSWID:
                 if (item->uDataType == QCBOR_TYPE_ARRAY) {
                     /* SUIT_Digest */
-                    result = suit_set_digest_from_item(mode, context, item, false, &manifest->sev_mem_dig.coswid);
+                    result = suit_decode_digest_from_item(mode, context, item, false, &manifest->sev_mem_dig.coswid);
                 }
                 else if (item->uDataType == QCBOR_TYPE_BYTE_STRING) {
                     /* bstr .cbor concise-software-identity */
@@ -1007,13 +1007,13 @@ int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, Q
                 break;
             /* SUIT_Unseverabme_Members */
             case SUIT_VALIDATE:
-                result = suit_set_command_sequence_from_bstr(mode, context, item, false, &manifest->unsev_mem.validate);
+                result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->unsev_mem.validate);
                 break;
             case SUIT_LOAD:
-                result = suit_set_command_sequence_from_bstr(mode, context, item, false, &manifest->unsev_mem.load);
+                result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->unsev_mem.load);
                 break;
             case SUIT_RUN:
-                result = suit_set_command_sequence_from_bstr(mode, context, item, false, &manifest->unsev_mem.run);
+                result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->unsev_mem.run);
                 break;
             case SUIT_REFERENCE_URI:
             case SUIT_DEPENDENCY_RESOLUTION:
@@ -1034,13 +1034,13 @@ int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, Q
     return result;
 }
 
-int32_t suit_set_manifest(uint8_t mode, suit_buf_t *buf, suit_manifest_t *manifest) {
+int32_t suit_decode_manifest(uint8_t mode, suit_buf_t *buf, suit_manifest_t *manifest) {
     QCBORDecodeContext manifest_context;
     QCBORItem item;
     QCBORDecode_Init(&manifest_context,
                      (UsefulBufC){buf->ptr, buf->len},
                      QCBOR_DECODE_MODE_NORMAL);
-    int32_t result = suit_set_manifest_from_item(mode, &manifest_context, &item, true, manifest);
+    int32_t result = suit_decode_manifest_from_item(mode, &manifest_context, &item, true, manifest);
     QCBORError error = QCBORDecode_Finish(&manifest_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
@@ -1048,7 +1048,7 @@ int32_t suit_set_manifest(uint8_t mode, suit_buf_t *buf, suit_manifest_t *manife
     return result;
 }
 
-int32_t suit_set_manifest_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_manifest_t *manifest, suit_digest_t *digest) {
+int32_t suit_decode_manifest_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_manifest_t *manifest, suit_digest_t *digest) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_BYTE_STRING);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -1064,10 +1064,10 @@ int32_t suit_set_manifest_from_bstr(uint8_t mode, QCBORDecodeContext *context, Q
     }
     suit_buf_t buf = {.ptr = item->val.string.ptr, .len = item->val.string.len};
 
-    return suit_set_manifest(mode, &buf, manifest);
+    return suit_decode_manifest(mode, &buf, manifest);
 }
 
-int32_t suit_set_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_authentication_wrapper_t *wrapper, const struct t_cose_key *public_key) {
+int32_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_authentication_wrapper_t *wrapper, const struct t_cose_key *public_key) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_ARRAY);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -1088,10 +1088,10 @@ int32_t suit_set_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeConte
         buf.len = item->val.string.len;
 
         if (i == 0) {
-            result = suit_set_digest(mode, &buf, &wrapper->digest[0]);
+            result = suit_decode_digest(mode, &buf, &wrapper->digest[0]);
         }
         else {
-            result = suit_set_authentication_block(mode, &buf, &wrapper->digest[wrapper->len], public_key);
+            result = suit_decode_authentication_block(mode, &buf, &wrapper->digest[wrapper->len], public_key);
         }
         if (!suit_continue(mode, result)) {
             break;
@@ -1105,11 +1105,11 @@ int32_t suit_set_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeConte
     return result;
 }
 
-int32_t suit_set_authentication_wrapper(uint8_t mode, suit_buf_t *buf, suit_authentication_wrapper_t *wrapper, const struct t_cose_key *public_key) {
+int32_t suit_decode_authentication_wrapper(uint8_t mode, suit_buf_t *buf, suit_authentication_wrapper_t *wrapper, const struct t_cose_key *public_key) {
     QCBORDecodeContext auth_context;
     QCBORItem item;
     QCBORDecode_Init(&auth_context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
-    int32_t result = suit_set_authentication_wrapper_from_item(mode, &auth_context, &item, true, wrapper, public_key);
+    int32_t result = suit_decode_authentication_wrapper_from_item(mode, &auth_context, &item, true, wrapper, public_key);
     QCBORError error = QCBORDecode_Finish(&auth_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
@@ -1117,7 +1117,7 @@ int32_t suit_set_authentication_wrapper(uint8_t mode, suit_buf_t *buf, suit_auth
     return result;
 }
 
-int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
+int32_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -1140,7 +1140,7 @@ int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, Q
                 }
                 buf.ptr = item->val.string.ptr;
                 buf.len = item->val.string.len;
-                result = suit_set_authentication_wrapper(mode, &buf, &envelope->wrapper, public_key);
+                result = suit_decode_authentication_wrapper(mode, &buf, &envelope->wrapper, public_key);
                 if (result == SUIT_SUCCESS) {
                     is_authentication_set = true;
                 }
@@ -1150,7 +1150,7 @@ int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, Q
                      result = SUIT_FAILED_TO_VERIFY;
                      break;
                 }
-                result = suit_set_manifest_from_bstr(mode, context, item, false, &envelope->manifest, &envelope->wrapper.digest[envelope->wrapper.len - 1]);
+                result = suit_decode_manifest_from_bstr(mode, context, item, false, &envelope->manifest, &envelope->wrapper.digest[envelope->wrapper.len - 1]);
                 if (!suit_continue(mode, result)) {
                     break;
                 }
@@ -1173,7 +1173,7 @@ int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, Q
                 else if (is_authentication_set && result == SUIT_SUCCESS) {
                     envelope->manifest.sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IS_VERIFIED;
                 }
-                result = suit_set_command_sequence_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.payload_fetch);
+                result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.payload_fetch);
                 if (result == SUIT_SUCCESS) {
                     envelope->manifest.sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IN_ENVELOPE;
                 }
@@ -1192,7 +1192,7 @@ int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, Q
                 else if (is_authentication_set && result == SUIT_SUCCESS) {
                     envelope->manifest.sev_man_mem.install_status |= SUIT_SEVERABLE_IS_VERIFIED;
                 }
-                result = suit_set_command_sequence_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.install);
+                result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.install);
                 if (result == SUIT_SUCCESS) {
                     envelope->manifest.sev_man_mem.install_status |= SUIT_SEVERABLE_IN_ENVELOPE;
                 }
@@ -1211,7 +1211,7 @@ int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, Q
                 else if (is_authentication_set && result == SUIT_SUCCESS) {
                     envelope->manifest.sev_man_mem.text_status |= SUIT_SEVERABLE_IS_VERIFIED;
                 }
-                result = suit_set_text_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.text);
+                result = suit_decode_text_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.text);
                 if (result == SUIT_SUCCESS) {
                     envelope->manifest.sev_man_mem.text_status |= SUIT_SEVERABLE_IN_ENVELOPE;
                 }
@@ -1254,13 +1254,13 @@ int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, Q
     return result;
 }
 
-int32_t suit_set_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
+int32_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
     QCBORDecodeContext decode_context;
     QCBORItem item;
     QCBORDecode_Init(&decode_context,
                      (UsefulBufC){buf->ptr, buf->len},
                      QCBOR_DECODE_MODE_NORMAL);
-    int32_t result = suit_set_envelope_from_item(mode, &decode_context, &item, true, envelope, public_key);
+    int32_t result = suit_decode_envelope_from_item(mode, &decode_context, &item, true, envelope, public_key);
     QCBORError error = QCBORDecode_Finish(&decode_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);

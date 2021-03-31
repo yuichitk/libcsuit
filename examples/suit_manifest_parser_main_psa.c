@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
     struct t_cose_key cose_public_key;
     result = suit_create_es256_public_key((char *)public_key, &cose_public_key);
 
-    result = suit_set_envelope(mode, &buf, &envelope, &cose_public_key);
+    result = suit_decode_envelope(mode, &buf, &envelope, &cose_public_key);
 
     if (result != SUIT_SUCCESS) {
         printf("Can't parse Manifest.\n");
