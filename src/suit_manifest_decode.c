@@ -263,7 +263,6 @@ int32_t suit_set_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *con
     }
 
     params_list->len = item->val.uCount;
-    // printf("suit_set_parameters_list : len = %lu\n", params_list->len);
     for (size_t i = 0; i < params_list->len; i++) {
         result = suit_qcbor_get_next(context, item, QCBOR_TYPE_ANY);
         if (!suit_continue(mode, result)) {
@@ -318,7 +317,6 @@ int32_t suit_set_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *con
             case SUIT_PARAMETER_WAIT_INFO:
             case SUIT_PARAMETER_URI_LIST:
             default:
-                printf("suit_set_parameters_list skip %" PRId64 "\n", item->label.uint64);
                 suit_debug_print(context, item, "suit_set_parameters_list", QCBOR_TYPE_NONE);
                 result = SUIT_NOT_IMPLEMENTED;
                 if (!suit_qcbor_skip_any(context, item)) {
@@ -339,7 +337,6 @@ out:
 
 int32_t suit_set_command_custom_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, int64_t label, suit_command_sequence_item_t *cmd_item) {
     // TODO:
-    printf("suit_set_command_custom is not implemented (label %" PRId64 ")", label);
     return SUIT_NOT_IMPLEMENTED;
 }
 
@@ -369,7 +366,6 @@ int32_t suit_set_command_common_sequence_from_item(uint8_t mode, QCBORDecodeCont
         return result;
     }
     size_t array_count = item->val.uCount;
-    // printf("suit_set_command_sequence : array_count = %u\n", array_count);
     cmd_seq->len = 0;
     for (size_t i = 0; i < array_count; i += 2) {
         if (cmd_seq->len >= SUIT_MAX_ARRAY_LENGTH) {
@@ -395,7 +391,6 @@ int32_t suit_set_command_common_sequence_from_item(uint8_t mode, QCBORDecodeCont
             /* SUIT_Condition // SUIT_Directive */
             if (is_common_sequence && is_suit_directive_only(label)) {
                 /* SUIT_Command_Custom should not come, so skip them */
-                printf("suit_set_common_sequence skip label %" PRId64 "\n", label);
                 result = SUIT_FATAL_ERROR;
                 if (!suit_continue(mode, result)) {
                     break;
@@ -486,7 +481,6 @@ int32_t suit_set_command_common_sequence_from_item(uint8_t mode, QCBORDecodeCont
                 case SUIT_DIRECTIVE_RUN_SEQUENCE:
                 default:
                     // TODO
-                    printf("suit_set_directive_or_condition skip label %" PRId64 "\n", label);
                     suit_debug_print(context, item, "suit_set_directive_or_condition", QCBOR_TYPE_ANY);
                     result = SUIT_NOT_IMPLEMENTED;
             }
@@ -520,7 +514,6 @@ int32_t suit_set_common_sequence(uint8_t mode, const suit_buf_t *buf, suit_comma
 int32_t suit_set_common_sequence_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmn_seq) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_BYTE_STRING);
     if (result != SUIT_SUCCESS) {
-        printf("\nsuit_set_command_sequence_from_bstr : Error! uDataType = %d\n", item->uDataType);
         return result;
     }
     suit_buf_t buf;
@@ -647,7 +640,6 @@ int32_t suit_set_authentication_block(uint8_t mode, suit_buf_t *buf, suit_digest
             result = suit_set_digest(mode, &payload_buf, digest);
             break;
         default:
-            printf("WARNING: SKIPPING VERIFICATION of SUIT_Authentication_Block in suit_set_digest\n");
             result = SUIT_NOT_IMPLEMENTED;
     }
     return result;
@@ -831,7 +823,6 @@ int32_t suit_set_text_from_item(uint8_t mode, QCBORDecodeContext *context, QCBOR
                     case SUIT_TEXT_MANIFEST_JSON_SOURCE:
                     case SUIT_TEXT_MANIFEST_YAML_SOURCE:
                     default:
-                        printf("suit_set_text no parser for label %" PRId64 "\n", item->val.int64);
                         suit_debug_print(context, item, "suit_set_text", QCBOR_TYPE_INT64);
                         result = SUIT_NOT_IMPLEMENTED;
                         if (!suit_continue(mode, result)) {
@@ -1028,7 +1019,6 @@ int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, Q
             case SUIT_DEPENDENCY_RESOLUTION:
             default:
                 // TODO
-                printf("suit_set_manifest skip label %" PRId64 "\n", item->label.uint64);
                 result = SUIT_NOT_IMPLEMENTED;
                 if (suit_continue(mode, result)) {
                     if (!suit_qcbor_skip_any(context, item)) {
@@ -1059,7 +1049,6 @@ int32_t suit_set_manifest(uint8_t mode, suit_buf_t *buf, suit_manifest_t *manife
 }
 
 int32_t suit_set_manifest_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_manifest_t *manifest, suit_digest_t *digest) {
-    // printf("suit_set_manifest\n");
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_BYTE_STRING);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -1252,7 +1241,6 @@ int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, Q
             case SUIT_DEPENDENCY_RESOLUTION:
             default:
                 // TODO
-                printf("SUIT_Envelope label %" PRId64 " is not implemented", item->label.int64);
                 result = SUIT_NOT_IMPLEMENTED;
                 if (!suit_qcbor_skip_any(context, item)) {
                     result = SUIT_NO_MORE_ITEMS;
