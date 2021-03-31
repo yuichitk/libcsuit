@@ -13,33 +13,27 @@ cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose) {
      * [ COSE_Sign_Tagged, COSE_Sign1_Tagged, COSE_Mac_Tagged, COSE_Mac0_Tagged ]
      */
     cose_tag_key_t result = COSE_TAG_INVALID;
-    QCBORDecodeContext context;
-    QCBORItem item;
-    QCBORError error;
-    QCBORDecode_Init(&context, *signed_cose, QCBOR_DECODE_MODE_NORMAL);
-    uint64_t puTags[QCBOR_MAX_TAGS_PER_ITEM];
-    QCBORTagListOut out = {0, QCBOR_MAX_TAGS_PER_ITEM, puTags};
-    error = QCBORDecode_GetNextWithTags(&context, &item, &out);
-    if (error != QCBOR_SUCCESS) {
-        suit_debug_print(&context, &item, "suit_judge_cose_tag", QCBOR_TYPE_ANY);
-        goto out;
-    }
-    if (out.uNumUsed == 0) {
-        suit_debug_print(&context, &item, "suit_judge_cose_tag(NO TAG FOUND)", QCBOR_TYPE_ANY);
-        goto out;
-    }
-    switch (puTags[0]) {
-        case COSE_SIGN_TAGGED:
-        case COSE_SIGN1_TAGGED:
-        case COSE_MAC_TAGGED:
-        case COSE_MAC0_TAGGED:
-            result = puTags[0];
+    uint8_t tag0 = ((uint8_t *)signed_cose->ptr)[0];
+    uint8_t tag1;
+    switch (tag0) {
+    case 0xd1: // Tag(17)
+        result = COSE_MAC0_TAGGED;
+        break;
+    case 0xd2: // Tag(18)
+        result = COSE_SIGN1_TAGGED;
+        break;
+    case 0xe8:
+        tag1 = ((uint8_t *)signed_cose->ptr)[1];
+        switch (tag1) {
+        case 0x61: // Tag(97)
+            result = COSE_MAC_TAGGED;
             break;
-    }
-out:
-    error = QCBORDecode_Finish(&context);
-    if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
-        result = suit_error_from_qcbor_error(error);
+        case 0x62: // Tag(98)
+            result = COSE_SIGN_TAGGED;
+            break;
+        }
+    default:
+        break;
     }
     return result;
 }
