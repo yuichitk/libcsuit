@@ -629,7 +629,7 @@ int32_t suit_set_components_from_item(uint8_t mode, QCBORDecodeContext *context,
     return result;
 }
 
-int32_t suit_set_authentication_block(uint8_t mode, suit_buf_t *buf, suit_digest_t *digest, const char *public_key) {
+int32_t suit_set_authentication_block(uint8_t mode, suit_buf_t *buf, suit_digest_t *digest, const struct t_cose_key *public_key) {
     UsefulBufC signed_cose = {buf->ptr, buf->len};
     int32_t result;
     cose_tag_key_t cose_tag = suit_judge_cose_tag_from_buf(&signed_cose);
@@ -1078,7 +1078,7 @@ int32_t suit_set_manifest_from_bstr(uint8_t mode, QCBORDecodeContext *context, Q
     return suit_set_manifest(mode, &buf, manifest);
 }
 
-int32_t suit_set_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_authentication_wrapper_t *wrapper, const char *public_key) {
+int32_t suit_set_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_authentication_wrapper_t *wrapper, const struct t_cose_key *public_key) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_ARRAY);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -1116,7 +1116,7 @@ int32_t suit_set_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeConte
     return result;
 }
 
-int32_t suit_set_authentication_wrapper(uint8_t mode, suit_buf_t *buf, suit_authentication_wrapper_t *wrapper, const char *public_key) {
+int32_t suit_set_authentication_wrapper(uint8_t mode, suit_buf_t *buf, suit_authentication_wrapper_t *wrapper, const struct t_cose_key *public_key) {
     QCBORDecodeContext auth_context;
     QCBORItem item;
     QCBORDecode_Init(&auth_context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
@@ -1128,7 +1128,7 @@ int32_t suit_set_authentication_wrapper(uint8_t mode, suit_buf_t *buf, suit_auth
     return result;
 }
 
-int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const char *public_key) {
+int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
     int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -1266,7 +1266,7 @@ int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, Q
     return result;
 }
 
-int32_t suit_set_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const char *public_key) {
+int32_t suit_set_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
     QCBORDecodeContext decode_context;
     QCBORItem item;
     QCBORDecode_Init(&decode_context,

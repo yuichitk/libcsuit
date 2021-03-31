@@ -99,9 +99,9 @@ int main(int argc, char *argv[]) {
 #endif
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
     suit_buf_t buf = {.ptr = manifest_buf, .len = manifest_len};
-    result = suit_set_envelope(mode, &buf, &envelope, public_key);
+    result = suit_set_envelope(mode, &buf, &envelope, &cose_key);
     if (result != SUIT_SUCCESS) {
-        printf("main : Can't parse Manifest file.\n");
+        printf("main : Can't parse Manifest file. err=%d\n", result);
         return EXIT_FAILURE;
     }
 
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
     printf("\nmain : Print Manifest.\n");
     result = suit_print_envelope(mode, &envelope, 2);
     if (result != SUIT_SUCCESS) {
-        printf("main : Can't print Manifest file.\n");
+        printf("main : Can't print Manifest file. err=%d\n", result);
         return EXIT_FAILURE;
     }
 
@@ -118,6 +118,7 @@ int main(int argc, char *argv[]) {
     size_t encode_len = MAX_FILE_BUFFER_SIZE;
     printf("\nmain : Encode Manifest.\n");
     result = suit_encode_envelope(&envelope, &cose_key, encode_buf, &encode_len);
+    EC_KEY_free(cose_key.k.key_ptr);
     if (result != SUIT_SUCCESS) {
         printf("main : Fail to encode. %d\n", result);
         return EXIT_FAILURE;

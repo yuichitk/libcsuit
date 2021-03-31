@@ -398,8 +398,8 @@ int32_t suit_qcbor_get_next(QCBORDecodeContext *message, QCBORItem *item, uint8_
 int32_t suit_qcbor_get(QCBORDecodeContext *message, QCBORItem *item, bool next, uint8_t data_type);
 size_t suit_qcbor_calc_rollback(QCBORItem *item);
 
-int32_t suit_set_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const char *public_key);
-int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const char *public_key);
+int32_t suit_set_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const struct t_cose_key *public_key);
+int32_t suit_set_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const struct t_cose_key *public_key);
 
 int32_t suit_set_component_identifiers(uint8_t mode, suit_buf_t *buf, suit_component_identifier_t *identifier);
 int32_t suit_set_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_manifest_t *manifest);
