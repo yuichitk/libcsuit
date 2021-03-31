@@ -51,6 +51,7 @@ int32_t suit_print_bytestr(const uint8_t *bytes, size_t len)
     return( SUIT_FATAL_ERROR );
 }
 
+#ifdef DEBUG
 void suit_debug_print(QCBORDecodeContext *message,
                       QCBORItem *item,
                       const char *func_name,
@@ -70,6 +71,13 @@ void suit_debug_print(QCBORDecodeContext *message,
         printf("    item->uDataType %d != %d\n", item->uDataType, expecting);
     }
 }
+#else
+void suit_debug_print(QCBORDecodeContext *message,
+                      QCBORItem *item,
+                      const char *func_name,
+                      uint8_t expecting) {}
+#endif
+
 
 bool suit_continue(uint8_t mode, int32_t result) {
     bool ret = false;

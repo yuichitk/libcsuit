@@ -14,7 +14,7 @@ OBJDIR	= ./obj
 OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
 ifdef debug
-    CFLAGS += -DSKIP_ERROR
+    CFLAGS += -DSKIP_ERROR -DDEBUG
 endif
 
 $(TARGET):	$(OBJS)
