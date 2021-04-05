@@ -281,12 +281,17 @@ int32_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *
                 params_list->params[i].value.uint64 = item->val.uint64;
                 break;
             case SUIT_PARAMETER_URI:
-                if (item->uDataType != QCBOR_TYPE_TEXT_STRING) {
-                    result = SUIT_INVALID_TYPE_OF_ARGUMENT;
-                    break;
+                if (item->uDataType == QCBOR_TYPE_TEXT_STRING) {
+                    params_list->params[i].value.string.ptr = item->val.string.ptr;
+                    params_list->params[i].value.string.len = item->val.string.len;
                 }
-                params_list->params[i].value.string.ptr = item->val.string.ptr;
-                params_list->params[i].value.string.len = item->val.string.len;
+                else if (item->uDataType == QCBOR_TYPE_NULL) {
+                    params_list->params[i].value.string.ptr = NULL;
+                    params_list->params[i].value.string.len = 0;
+                }
+                else {
+                    result = SUIT_INVALID_TYPE_OF_ARGUMENT;
+                }
                 break;
             case SUIT_PARAMETER_VENDOR_IDENTIFIER:
             case SUIT_PARAMETER_CLASS_IDENTIFIER:

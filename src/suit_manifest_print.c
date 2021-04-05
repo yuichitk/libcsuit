@@ -107,7 +107,12 @@ int32_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_lis
                 printf("%" PRId64 "\n", params_list->params[i].value.uint64);
                 break;
             case SUIT_PARAMETER_URI:
-                result = suit_print_string(&params_list->params[i].value.string);
+                if (params_list->params[i].value.string.len > 0) {
+                    result = suit_print_string(&params_list->params[i].value.string);
+                }
+                else {
+                    printf("NULL");
+                }
                 printf("\n");
                 break;
             case SUIT_PARAMETER_USE_BEFORE:

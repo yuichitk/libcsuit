@@ -154,7 +154,12 @@ int32_t suit_append_directive_override_parameters(const suit_parameters_list_t *
                 QCBOREncode_AddUInt64ToMapN(context, item->label, item->value.uint64);
                 break;
             case SUIT_PARAMETER_URI:
-                QCBOREncode_AddTextToMapN(context, item->label, (UsefulBufC){.ptr = item->value.string.ptr, .len = item->value.string.len});
+                if (item->value.string.len > 0) {
+                    QCBOREncode_AddTextToMapN(context, item->label, (UsefulBufC){.ptr = item->value.string.ptr, .len = item->value.string.len});
+                }
+                else {
+                    QCBOREncode_AddNULLToMapN(context, item->label);
+                }
                 break;
             case SUIT_PARAMETER_VENDOR_IDENTIFIER:
             case SUIT_PARAMETER_CLASS_IDENTIFIER:
