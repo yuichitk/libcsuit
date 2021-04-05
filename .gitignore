@@ -2,6 +2,7 @@
 suit_manifest_encode
 suit_manifest_parser
 suit_manifest_parser_main_psa
+suit_for_teep_encode
 
 # Build directory
 build/
