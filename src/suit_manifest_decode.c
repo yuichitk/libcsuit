@@ -623,22 +623,15 @@ int32_t suit_decode_components_from_item(uint8_t mode, QCBORDecodeContext *conte
     return result;
 }
 
-int32_t suit_decode_authentication_block(uint8_t mode, suit_buf_t *buf, suit_digest_t *digest, const struct t_cose_key *public_key) {
+int32_t suit_decode_authentication_block(uint8_t mode, suit_buf_t *buf, suit_buf_t *digest_buf, const struct t_cose_key *public_key) {
     UsefulBufC signed_cose = {buf->ptr, buf->len};
     int32_t result;
     cose_tag_key_t cose_tag = suit_judge_cose_tag_from_buf(&signed_cose);
 
-    UsefulBufC returned_payload;
+    UsefulBufC returned_payload = {.ptr = digest_buf->ptr, .len = digest_buf->len};
     switch (cose_tag) {
         case COSE_SIGN1_TAGGED:
             result = suit_verify_cose_sign1(&signed_cose, public_key, &returned_payload);
-            if (result != SUIT_SUCCESS) {
-                return result;
-            }
-            suit_buf_t payload_buf;
-            payload_buf.ptr = returned_payload.ptr;
-            payload_buf.len = returned_payload.len;
-            result = suit_decode_digest(mode, &payload_buf, digest);
             break;
         default:
             result = SUIT_NOT_IMPLEMENTED;
@@ -1078,8 +1071,20 @@ int32_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeCo
     }
 
     size_t len = item->val.uCount;
-    wrapper->len = 0;
-    for (size_t i = 0; i < len; i++) {
+
+    result = suit_qcbor_get_next(context, item, QCBOR_TYPE_BYTE_STRING);
+    if (!suit_continue(mode, result)) {
+        return result;
+    }
+    suit_buf_t digest_buf;
+    digest_buf.ptr = item->val.string.ptr;
+    digest_buf.len = item->val.string.len;
+    result = suit_decode_digest(mode, &digest_buf, &wrapper->digest);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+
+    for (size_t i = 1; i < len; i++) {
         result = suit_qcbor_get_next(context, item, QCBOR_TYPE_BYTE_STRING);
         if (!suit_continue(mode, result)) {
             break;
@@ -1088,19 +1093,10 @@ int32_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeCo
         buf.ptr = item->val.string.ptr;
         buf.len = item->val.string.len;
 
-        if (i == 0) {
-            result = suit_decode_digest(mode, &buf, &wrapper->digest[0]);
-        }
-        else {
-            result = suit_decode_authentication_block(mode, &buf, &wrapper->digest[wrapper->len], public_key);
-        }
-        if (!suit_continue(mode, result)) {
+        result = suit_decode_authentication_block(mode, &buf, &digest_buf, public_key);
+        if (result == SUIT_SUCCESS || !suit_continue(mode, result)) {
             break;
         }
-        wrapper->len++;
-    }
-    if (result != SUIT_SUCCESS && !(mode & SUIT_DECODE_MODE_PRESERVE_ON_ERROR)) {
-        wrapper->len = 0;
     }
 
     return result;
@@ -1151,7 +1147,7 @@ int32_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context
                      result = SUIT_FAILED_TO_VERIFY;
                      break;
                 }
-                result = suit_decode_manifest_from_bstr(mode, context, item, false, &envelope->manifest, &envelope->wrapper.digest[envelope->wrapper.len - 1]);
+                result = suit_decode_manifest_from_bstr(mode, context, item, false, &envelope->manifest, &envelope->wrapper.digest);
                 if (!suit_continue(mode, result)) {
                     break;
                 }

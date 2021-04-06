@@ -567,24 +567,11 @@ int32_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, uint3
     int32_t result = SUIT_SUCCESS;
     printf("%*sSUIT Manifest Envelope :\n", indent_space, "");
     // authentication-wrapper
-    if (envelope->wrapper.len > 0) {
-        printf("%*sauthentication-wrapper : \n", indent_space + 2, "");
-        printf("%*sdigest : SUIT_Digest \n", indent_space + 4, "");
-        result = suit_print_digest(&envelope->wrapper.digest[0], indent_space + 6);
-        if (result != SUIT_SUCCESS) {
-            return result;
-        }
-        if (envelope->wrapper.len > 0) {
-            printf("%*ssignatures : [\n", indent_space + 4, "");
-            for (size_t i = 1; i < envelope->wrapper.len; i++) {
-                printf("%*sdigest(verified) : SUIT_Digest\n", indent_space + 6, "");
-                result = suit_print_digest(&envelope->wrapper.digest[i], indent_space + 8);
-                if (result != SUIT_SUCCESS) {
-                    return result;
-                }
-            }
-            printf("%*s]\n", indent_space + 4, "");
-        }
+    printf("%*sauthentication-wrapper : \n", indent_space + 2, "");
+    printf("%*sdigest : SUIT_Digest \n", indent_space + 4, "");
+    result = suit_print_digest(&envelope->wrapper.digest, indent_space + 6);
+    if (result != SUIT_SUCCESS) {
+        return result;
     }
     // manifest
     result = suit_print_manifest(mode, &envelope->manifest, indent_space + 2);

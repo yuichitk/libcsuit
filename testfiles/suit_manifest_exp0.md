@@ -6,32 +6,27 @@
 
 # SUIT Manifest
     B.1.  Example 0: Secure Boot
-    https://tools.ietf.org/html/draft-ietf-suit-manifest-11#appendix-B.1
+    https://tools.ietf.org/html/draft-ietf-suit-manifest-12#appendix-B.1
 
 
 ## CBOR Diagnostic
     / SUIT_Envelope = /
     {
-        / authentication-wrapper / 2 : bstr .cbor ({
-            digest : bstr .cbor ([
+        / authentication-wrapper / 2 : bstr .cbor ([
+            / digest / bstr .cbor ([
                 / algorithm-id / 2 / "sha256" /,
                 / digest-bytes / h'5c097ef64bf3bb9b494e71e1f2418eef8d466cc902f639a855ec9af3e9eddb99'
-            ])
-            signatures : [
-                bstr .cbor (18([
-                    / protected / bstr .cbor ({
-                        / alg / 1 : -7 / "ES256" /,
-                    }),
-                    / unprotected / {
-                    },
-                    / payload / bstr .cbor ([
-                        / algorithm-id / 2 / "sha256" /,
-                        / digest-bytes / h'5c097ef64bf3bb9b494e71e1f2418eef8d466cc902f639a855ec9af3e9eddb99'
-                    ]),
-                    / signature / h'60f5c3d03a3aa759bfef2ef0f5f97a93b1f5e741f7463f4385af88513a5c2957bea2d6c4cfddd03392a267aab0fc0fd515560ed58e33fad26ac32a024c5a7143'
-                ]))
-            ]
-        }),
+            ]),
+            / signature / bstr .cbor (18([
+                / protected / bstr .cbor ({
+                    / alg / 1 : -7 / "ES256" /,
+                }),
+                / unprotected / {
+                },
+                / payload / F6 / nil /,
+                / signature / h'a19fd1f23b17beed321cece7423dfb48c457b8f1f6ac83577a3c10c6773f6f3a7902376b59540920b6c5f57bac5fc8543d8f5d3d974faa2e6d03daa534b443a7'
+            ]))
+        ]),
         / manifest / 3 : bstr .cbor ({
             / manifest-version / 1 : 1,
             / manifest-sequence-number / 2 : 0,
@@ -67,8 +62,8 @@
 ## CBOR binary
     A2                                      # map(2)
        02                                   # unsigned(2)
-       58 98                                # bytes(152)
-          825824820258205C097EF64BF3BB9B494E71E1F2418EEF8D466CC902F639A855EC9AF3E9EDDB99586FD28443A10126A05824820258205C097EF64BF3BB9B494E71E1F2418EEF8D466CC902F639A855EC9AF3E9EDDB99584060F5C3D03A3AA759BFEF2EF0F5F97A93B1F5E741F7463F4385AF88513A5C2957BEA2D6C4CFDDD03392A267AAB0FC0FD515560ED58E33FAD26AC32A024C5A7143
+       58 73                                # bytes(115)
+          825824820258205C097EF64BF3BB9B494E71E1F2418EEF8D466CC902F639A855EC9AF3E9EDDB99584AD28443A10126A0F65840A19FD1F23B17BEED321CECE7423DFB48C457B8F1F6AC83577A3C10C6773F6F3A7902376B59540920B6C5F57BAC5FC8543D8F5D3D974FAA2E6D03DAA534B443A7
        03                                   # unsigned(3)
        58 71                                # bytes(113)
           A50101020003585FA202818141000458568614A40150FA6B4A53D5AD5FDFBE9DE663E4D41FFE02501492AF1425695E48BF429B2D51F2AB450358248202582000112233445566778899AABBCCDDEEFF0123456789ABCDEFFEDCBA98765432100E1987D0010F020F0A4382030F0C43821702
@@ -77,7 +72,7 @@
 ## CBOR binary (extracted)
     A2                                      # map(2)
        02                                   # unsigned(2) / authentication-wrapper : /
-       58 98                                # bytes(152)
+       58 73                                # bytes(152)
           # SUIT_Authentication #
           82                                # array(2)
              58 24                          # bytes(36)
@@ -86,24 +81,18 @@
                    02                       # unsigned(2) / algorithm-id : "sha256" /
                    58 20                    # bytes(32)   / digest-bytes /
                       5C097EF64BF3BB9B494E71E1F2418EEF8D466CC902F639A855EC9AF3E9EDDB99
-             58 6F                          # bytes(111)
-                # SUIT_Authentication_Block #
-                D2                          # tag(18) / COSE_Sign1 /
-                   84                       # array(4)
-                      43                    # bytes(3)
-                         # protected #
-                         A1                 # map(1)
-                            01              # unsigned(1) / alg : /
-                            26              # negative(6) / -7 /
-                      A0                    # map(0)
-                      58 24                 # bytes(36)
-                         # payload = SUIT_Digest #
-                         82                 # array(2)
-                            02              # unsigned(2) / algorithm-id : "sha256" /
-                            58 20           # bytes(32)   / digest-bytes /
-                               5C097EF64BF3BB9B494E71E1F2418EEF8D466CC902F639A855EC9AF3E9EDDB99
-                      58 40                 # bytes(64)   / signature /
-                         60F5C3D03A3AA759BFEF2EF0F5F97A93B1F5E741F7463F4385AF88513A5C2957BEA2D6C4CFDDD03392A267AAB0FC0FD515560ED58E33FAD26AC32A024C5A7143
+              58 4A                         # bytes(74)
+                 D2                         # tag(18) / COSE_Sign1 /
+                    84                      # array(4)
+                       43                   # bytes(3)
+                          # protected #
+                          A1                # map(1)
+                             01             # unsigned(1) / alg : /
+                             26             # negative(6) / -7 /
+                       A0                   # map(0)
+                       F6                   # null
+                       58 40                # bytes(64)   / signature /
+                          A19FD1F23B17BEED321CECE7423DFB48C457B8F1F6AC83577A3C10C6773F6F3A7902376B59540920B6C5F57BAC5FC8543D8F5D3D974FAA2E6D03DAA534B443A7
        03                                   # unsigned(3) / manifest : /
        58 71                                # bytes(113)
           # SUIT_Manifest #
@@ -161,4 +150,4 @@
 
 
 ## Command
-    echo -en "\xA2\x02\x58\x98\x82\x58\x24\x82\x02\x58\x20\x5C\x09\x7E\xF6\x4B\xF3\xBB\x9B\x49\x4E\x71\xE1\xF2\x41\x8E\xEF\x8D\x46\x6C\xC9\x02\xF6\x39\xA8\x55\xEC\x9A\xF3\xE9\xED\xDB\x99\x58\x6F\xD2\x84\x43\xA1\x01\x26\xA0\x58\x24\x82\x02\x58\x20\x5C\x09\x7E\xF6\x4B\xF3\xBB\x9B\x49\x4E\x71\xE1\xF2\x41\x8E\xEF\x8D\x46\x6C\xC9\x02\xF6\x39\xA8\x55\xEC\x9A\xF3\xE9\xED\xDB\x99\x58\x40\x60\xF5\xC3\xD0\x3A\x3A\xA7\x59\xBF\xEF\x2E\xF0\xF5\xF9\x7A\x93\xB1\xF5\xE7\x41\xF7\x46\x3F\x43\x85\xAF\x88\x51\x3A\x5C\x29\x57\xBE\xA2\xD6\xC4\xCF\xDD\xD0\x33\x92\xA2\x67\xAA\xB0\xFC\x0F\xD5\x15\x56\x0E\xD5\x8E\x33\xFA\xD2\x6A\xC3\x2A\x02\x4C\x5A\x71\x43\x03\x58\x71\xA5\x01\x01\x02\x00\x03\x58\x5F\xA2\x02\x81\x81\x41\x00\x04\x58\x56\x86\x14\xA4\x01\x50\xFA\x6B\x4A\x53\xD5\xAD\x5F\xDF\xBE\x9D\xE6\x63\xE4\xD4\x1F\xFE\x02\x50\x14\x92\xAF\x14\x25\x69\x5E\x48\xBF\x42\x9B\x2D\x51\xF2\xAB\x45\x03\x58\x24\x82\x02\x58\x20\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF\x01\x23\x45\x67\x89\xAB\xCD\xEF\xFE\xDC\xBA\x98\x76\x54\x32\x10\x0E\x19\x87\xD0\x01\x0F\x02\x0F\x0A\x43\x82\x03\x0F\x0C\x43\x82\x17\x02" > suit_manifest_exp0.cbor
+    echo -en "\xA2\x02\x58\x73\x82\x58\x24\x82\x02\x58\x20\x5C\x09\x7E\xF6\x4B\xF3\xBB\x9B\x49\x4E\x71\xE1\xF2\x41\x8E\xEF\x8D\x46\x6C\xC9\x02\xF6\x39\xA8\x55\xEC\x9A\xF3\xE9\xED\xDB\x99\x58\x4A\xD2\x84\x43\xA1\x01\x26\xA0\xF6\x58\x40\xA1\x9F\xD1\xF2\x3B\x17\xBE\xED\x32\x1C\xEC\xE7\x42\x3D\xFB\x48\xC4\x57\xB8\xF1\xF6\xAC\x83\x57\x7A\x3C\x10\xC6\x77\x3F\x6F\x3A\x79\x02\x37\x6B\x59\x54\x09\x20\xB6\xC5\xF5\x7B\xAC\x5F\xC8\x54\x3D\x8F\x5D\x3D\x97\x4F\xAA\x2E\x6D\x03\xDA\xA5\x34\xB4\x43\xA7\x03\x58\x71\xA5\x01\x01\x02\x00\x03\x58\x5F\xA2\x02\x81\x81\x41\x00\x04\x58\x56\x86\x14\xA4\x01\x50\xFA\x6B\x4A\x53\xD5\xAD\x5F\xDF\xBE\x9D\xE6\x63\xE4\xD4\x1F\xFE\x02\x50\x14\x92\xAF\x14\x25\x69\x5E\x48\xBF\x42\x9B\x2D\x51\xF2\xAB\x45\x03\x58\x24\x82\x02\x58\x20\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF\x01\x23\x45\x67\x89\xAB\xCD\xEF\xFE\xDC\xBA\x98\x76\x54\x32\x10\x0E\x19\x87\xD0\x01\x0F\x02\x0F\x0A\x43\x82\x03\x0F\x0C\x43\x82\x17\x02" > suit_manifest_exp0.cbor

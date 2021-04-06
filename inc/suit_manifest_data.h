@@ -304,8 +304,7 @@ typedef struct suit_text {
  * SUIT_Authentication_Wrapper
  */
 typedef struct suit_authentication_wrapper {
-    size_t                          len;
-    suit_digest_t                   digest[SUIT_MAX_ARRAY_LENGTH];
+    suit_digest_t                   digest;
 } suit_authentication_wrapper_t;
 
 /*
