@@ -479,6 +479,7 @@ int32_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDecodeC
                 case SUIT_DIRECTIVE_FETCH_URI_LIST:
                 case SUIT_DIRECTIVE_SWAP:
                 case SUIT_DIRECTIVE_RUN_SEQUENCE:
+                case SUIT_DIRECTIVE_GARBAGE_COLLECT:
                 default:
                     // TODO
                     suit_debug_print(context, item, "suit_decode_directive_or_condition", QCBOR_TYPE_ANY);

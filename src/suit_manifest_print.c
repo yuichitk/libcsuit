@@ -40,6 +40,7 @@ const char* SUIT_COMMAND_SEQUENCE_NUM_TO_STRING[] = {
     "directive-fetch-uri-list",         //SUIT_DIRECTIVE_FETCH_URI_LIST       = 30,
     "directive-swap",                   //SUIT_DIRECTIVE_SWAP                 = 31,
     "directive-run-sequence",           //SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
+    "directive-garbage-collect",        //SUIT_DIRECTIVE_GARBAGE_COLLECT      = 33,
 };
 
 const char* SUIT_PARAMETER_NUM_TO_STRING[] = {
@@ -190,6 +191,7 @@ int32_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_seq,
             case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:
             case SUIT_DIRECTIVE_RUN_SEQUENCE:
+            case SUIT_DIRECTIVE_GARBAGE_COLLECT:
                 result = SUIT_FATAL_ERROR;
                 printf("?\n");
                 break;

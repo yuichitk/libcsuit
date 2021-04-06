@@ -247,6 +247,7 @@ int32_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, UsefulBuf 
             case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:
             case SUIT_DIRECTIVE_RUN_SEQUENCE:
+            case SUIT_DIRECTIVE_GARBAGE_COLLECT:
             default:
                 result = SUIT_NOT_IMPLEMENTED;
         }

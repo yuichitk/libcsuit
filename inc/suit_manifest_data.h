@@ -92,6 +92,7 @@ typedef enum suit_rep_policy_key {
     SUIT_DIRECTIVE_FETCH_URI_LIST       = 30,
     SUIT_DIRECTIVE_SWAP                 = 31,
     SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
+    SUIT_DIRECTIVE_GARBAGE_COLLECT      = 33,
 } suit_rep_policy_key_t;
 
 #define SUIT_SEVERABLE_INVALID               0 // 0b00000000
