@@ -877,7 +877,7 @@ int32_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
     return result;
 }
 
-int32_t suit_verify_item(QCBORDecodeContext *context, QCBORItem *item, suit_digest_t *digest, bool suit_install) {
+int32_t suit_verify_item(QCBORDecodeContext *context, QCBORItem *item, suit_digest_t *digest) {
     if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
         return SUIT_INVALID_TYPE_OF_ARGUMENT;
     }
@@ -887,7 +887,6 @@ int32_t suit_verify_item(QCBORDecodeContext *context, QCBORItem *item, suit_dige
     suit_buf_t buf;
     size_t cursor = UsefulInputBuf_Tell(&context->InBuf);
     buf.len = suit_qcbor_calc_rollback(item);
-    buf.len -= (suit_install) ? 0 : (buf.len - item->val.string.len);
     buf.ptr = (uint8_t *)context->InBuf.UB.ptr + (cursor - buf.len);
     return suit_verify_digest(&buf, digest);
 }
@@ -1049,7 +1048,7 @@ int32_t suit_decode_manifest_from_bstr(uint8_t mode, QCBORDecodeContext *context
     }
 
     /* verify the SUIT_Manifest with SUIT_Digest */
-    result = suit_verify_item(context, item, digest, true);
+    result = suit_verify_item(context, item, digest);
     if (!suit_continue(mode, result)) {
         return result;
     }
@@ -1163,7 +1162,7 @@ int32_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context
                         break;
                     }
                 }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.payload_fetch, true);
+                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.payload_fetch);
                 if (!suit_continue(mode, result)) {
                     break;
                 }
@@ -1182,7 +1181,7 @@ int32_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context
                         break;
                     }
                 }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.install, true);
+                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.install);
                 if (!suit_continue(mode, result)) {
                     break;
                 }
@@ -1201,7 +1200,7 @@ int32_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context
                         break;
                     }
                 }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.text, false);
+                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.text);
                 if (!suit_continue(mode, result)) {
                     break;
                 }
@@ -1220,7 +1219,7 @@ int32_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context
                         break;
                     }
                 }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.coswid, true);
+                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.coswid);
                 if (!suit_continue(mode, result)) {
                     break;
                 }

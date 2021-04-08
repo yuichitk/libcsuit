@@ -546,7 +546,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest(text_buf->ptr, text_buf->len, &digest, hash, sizeof(hash));
+        result = suit_generate_digest_include_header(text_buf->ptr, text_buf->len, &digest, hash, sizeof(hash));
         if (result != SUIT_SUCCESS) {
             goto out;
         }
