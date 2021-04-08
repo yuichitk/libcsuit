@@ -140,7 +140,7 @@ int32_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cos
         return SUIT_FAILED_TO_VERIFY;
     }
 
-    t_cose_sign1_verify_init(&verify_ctx, 0);
+    t_cose_sign1_verify_init(&verify_ctx, T_COSE_OPT_ALLOW_DETACHED_CONTENT);
     t_cose_sign1_set_verification_key(&verify_ctx, *public_key);
     cose_result = t_cose_sign1_verify(&verify_ctx,
                                       *signed_cose,
@@ -228,7 +228,7 @@ int32_t suit_sign_cose_sign1(const UsefulBufC *raw_cbor, const struct t_cose_key
         return SUIT_FAILED_TO_VERIFY;
     }
 
-    t_cose_sign1_sign_init(&sign_ctx, 0, cose_algorithm_id);
+    t_cose_sign1_sign_init(&sign_ctx, T_COSE_OPT_DETACHED_CONTENT, cose_algorithm_id);
     t_cose_sign1_set_signing_key(&sign_ctx, *key_pair, NULL_Q_USEFUL_BUF_C);
     cose_result = t_cose_sign1_sign(&sign_ctx, *raw_cbor, signed_cose_buffer, &tmp_signed_cose);
     if (cose_result != T_COSE_SUCCESS) {
