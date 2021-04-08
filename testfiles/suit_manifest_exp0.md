@@ -13,11 +13,11 @@
     / SUIT_Envelope = /
     {
         / authentication-wrapper / 2 : bstr .cbor ([
-            / digest / bstr .cbor ([
+            / digest : / bstr .cbor ([
                 / algorithm-id / 2 / "sha256" /,
                 / digest-bytes / h'5c097ef64bf3bb9b494e71e1f2418eef8d466cc902f639a855ec9af3e9eddb99'
             ]),
-            / signature / bstr .cbor (18([
+            / signature : / bstr .cbor (18([
                 / protected / bstr .cbor ({
                     / alg / 1 : -7 / "ES256" /,
                 }),
@@ -72,7 +72,7 @@
 ## CBOR binary (extracted)
     A2                                      # map(2)
        02                                   # unsigned(2) / authentication-wrapper : /
-       58 73                                # bytes(152)
+       58 73                                # bytes(115)
           # SUIT_Authentication #
           82                                # array(2)
              58 24                          # bytes(36)
@@ -90,8 +90,8 @@
                              01             # unsigned(1) / alg : /
                              26             # negative(6) / -7 /
                        A0                   # map(0)
-                       F6                   # null
-                       58 40                # bytes(64)   / signature /
+                       F6                   # primitive(22) / null /
+                       58 40                # bytes(64) / signature /
                           A19FD1F23B17BEED321CECE7423DFB48C457B8F1F6AC83577A3C10C6773F6F3A7902376B59540920B6C5F57BAC5FC8543D8F5D3D974FAA2E6D03DAA534B443A7
        03                                   # unsigned(3) / manifest : /
        58 71                                # bytes(113)
