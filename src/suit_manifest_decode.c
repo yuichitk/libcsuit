@@ -12,6 +12,14 @@
 #include "suit_digest.h"
 #include <inttypes.h>
 
+/*!
+    \file   suit_manifest_decode.c
+
+    \brief  This implements libcsuit docoding
+
+    Call suit_decode_envelope() to decode whole SUIT manifest.
+ */
+
 int32_t suit_qcbor_get_next(QCBORDecodeContext *message, QCBORItem *item, uint8_t data_type) {
     QCBORError error;
     error = QCBORDecode_GetNext(message, item);
@@ -1254,6 +1262,15 @@ int32_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context
     return result;
 }
 
+/*! \brief Decode SUIT binary
+
+    \param[in]  mode        Controls parsing behavior, e.g. #SUIT_DECODE_MODE_STRICT
+    \param[in]  buf         Input SUIT binary
+    \param[out] envelope    Output structure to hold the parsing result of SUIT binary
+    \param[in]  public_key  Public key to verify the COSE_Sign1 of authentication-wrapper
+
+    \return     SUIT_SUCCESS on success
+*/
 int32_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
     QCBORDecodeContext decode_context;
     QCBORItem item;

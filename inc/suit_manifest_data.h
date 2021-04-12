@@ -13,6 +13,12 @@
 #include "qcbor/qcbor.h"
 #include "t_cose/t_cose_common.h"
 
+/*!
+    \file   suit_manifest_data.h
+
+    \brief  Declarations of structures and functions
+ */
+
 #define SUIT_MAX_ARRAY_LENGTH           20
 
 typedef enum suit_envelope_key {
