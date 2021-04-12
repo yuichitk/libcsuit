@@ -71,7 +71,6 @@ git clone https://github.com/hannestschofenig/QCBOR.git
 git clone https://github.com/ARMmbed/mbedtls.git
 git clone https://github.com/hannestschofenig/libcsuit.git
 cd libcsuit
-git checkout psa
 ```
 
 Next, build the code using cmake
