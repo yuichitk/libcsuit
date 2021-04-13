@@ -594,6 +594,7 @@ out:
     }
     return SUIT_SUCCESS;
 }
+
 suit_err_t suit_encode_severable_manifest_members_in_envelope(const suit_envelope_t *envelope, suit_encode_t *suit_encode) {
     suit_err_t result = SUIT_SUCCESS;
     const suit_manifest_t *manifest = &envelope->manifest;
@@ -613,7 +614,6 @@ suit_err_t suit_encode_severable_manifest_members_in_envelope(const suit_envelop
         UsefulBufC *payload_fetch_buf = &suit_encode->payload_fetch;
         buf = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->pos], .len = suit_encode->max_pos - suit_encode->pos};
 
-        //buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
         result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.payload_fetch, &buf);
         if (result != SUIT_SUCCESS) {
             goto out;
@@ -623,7 +623,6 @@ suit_err_t suit_encode_severable_manifest_members_in_envelope(const suit_envelop
     }
     if (manifest->sev_man_mem.install_status & SUIT_SEVERABLE_IN_ENVELOPE) {
         UsefulBufC *install_buf = &suit_encode->install;
-        //buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
         buf = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->pos], .len = suit_encode->max_pos - suit_encode->pos};
 
         result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.install, &buf);
@@ -635,8 +634,8 @@ suit_err_t suit_encode_severable_manifest_members_in_envelope(const suit_envelop
     }
     if (manifest->sev_man_mem.text_status & SUIT_SEVERABLE_IN_ENVELOPE) {
         UsefulBufC *text_buf = &suit_encode->text;
-        //buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
         buf = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->pos], .len = suit_encode->max_pos - suit_encode->pos};
+
         result = suit_encode_text(&manifest->sev_man_mem.text, &buf);
         if (result != SUIT_SUCCESS) {
             goto out;
@@ -652,7 +651,7 @@ out:
     return result;
 }
 
-suit_err_t suit_encode_envelope(const suit_envelope_t *envelope, t_cose_key *signing_key, uint8_t *buf, size_t *len) {
+suit_err_t suit_encode_envelope(const suit_envelope_t *envelope, const t_cose_key *signing_key, uint8_t *buf, size_t *len) {
     suit_err_t result;
     UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
     suit_encode_t suit_encode = {
