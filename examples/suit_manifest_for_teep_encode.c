@@ -71,35 +71,45 @@ int main(int argc, char *argv[]) {
     suit_parameters_list_t *params_list;
     cmd_seq->commands[0].label = SUIT_DIRECTIVE_SET_PARAMETERS;
     params_list = &cmd_seq->commands[0].value.params_list;
-    params_list->len = 5;
+    params_list->len = 4;
 
-    uint8_t uri[] = "http://example.com/file.bin";
-    params_list->params[0].label = SUIT_PARAMETER_URI;
-    params_list->params[0].value.string.ptr = uri;
-    params_list->params[0].value.string.len = sizeof(uri) - 1;
+    params_list->params[0].label = SUIT_CONDITION_VENDOR_IDENTIFIER;
+    params_list->params[0].value.string.ptr = vendor_id;
+    params_list->params[0].value.string.len = sizeof(vendor_id);
 
-    params_list->params[1].label = SUIT_CONDITION_VENDOR_IDENTIFIER;
-    params_list->params[1].value.string.ptr = vendor_id;
-    params_list->params[1].value.string.len = sizeof(vendor_id);
-
-    params_list->params[2].label = SUIT_CONDITION_CLASS_IDENTIFIER;
-    params_list->params[2].value.string.ptr = class_id;
-    params_list->params[2].value.string.len = sizeof(class_id);
+    params_list->params[1].label = SUIT_CONDITION_CLASS_IDENTIFIER;
+    params_list->params[1].value.string.ptr = class_id;
+    params_list->params[1].value.string.len = sizeof(class_id);
 
     uint8_t image_digest[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10};
-    params_list->params[3].label = SUIT_PARAMETER_IMAGE_DIGEST,
-    params_list->params[3].value.digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
-    params_list->params[3].value.digest.bytes.ptr = image_digest;
-    params_list->params[3].value.digest.bytes.len = sizeof(image_digest);
+    params_list->params[2].label = SUIT_PARAMETER_IMAGE_DIGEST,
+    params_list->params[2].value.digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+    params_list->params[2].value.digest.bytes.ptr = image_digest;
+    params_list->params[2].value.digest.bytes.len = sizeof(image_digest);
 
-    params_list->params[4].label = SUIT_PARAMETER_IMAGE_SIZE;
-    params_list->params[4].value.uint64 = 34768;
+    params_list->params[3].label = SUIT_PARAMETER_IMAGE_SIZE;
+    params_list->params[3].value.uint64 = 34768;
 
     cmd_seq->commands[1].label = SUIT_CONDITION_VENDOR_IDENTIFIER;
     cmd_seq->commands[1].value.uint64 = 15; // report all
 
     cmd_seq->commands[2].label = SUIT_CONDITION_CLASS_IDENTIFIER;
     cmd_seq->commands[2].value.uint64 = 15; // report all
+
+    /* install */
+    manifest->sev_man_mem.install_status = SUIT_SEVERABLE_IN_MANIFEST;
+    suit_command_sequence_t *install = &manifest->sev_man_mem.install;
+    install->len = 1;
+    install->commands[0].label = SUIT_DIRECTIVE_SET_PARAMETERS;
+
+    params_list = &install->commands[0].value.params_list;
+    params_list->len = 1;
+
+    uint8_t uri[] = "http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta";
+    params_list->params[0].label = SUIT_PARAMETER_URI;
+    params_list->params[0].value.string.ptr = uri;
+    params_list->params[0].value.string.len = sizeof(uri) - 1;
+
 
     // Print manifest.
     printf("\nmain : Print Manifest.\n");
