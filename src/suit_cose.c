@@ -8,6 +8,15 @@
 #include "suit_cose.h"
 #include "suit_common.h"
 
+/*!
+    \file   suit_cose.c
+
+    \brief  This implements Sign and Verify the COSE.
+ */
+
+/*
+    Public function. See suit_cose.h
+ */
 cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose) {
     /* judge authentication object
      * [ COSE_Sign_Tagged, COSE_Sign1_Tagged, COSE_Mac_Tagged, COSE_Mac0_Tagged ]
@@ -39,6 +48,9 @@ cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose) {
 }
 
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
+/*
+    Public function. See suit_cose.h
+ */
 suit_err_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
     psa_key_attributes_t key_attributes = PSA_KEY_ATTRIBUTES_INIT;
     psa_key_handle_t     key_handle = 0;
@@ -80,6 +92,15 @@ suit_err_t suit_create_es256_public_key(const char *public_key, struct t_cose_ke
 }
 #else /* LIBCSUIT_PSA_CRYPTO_C */
 
+/*
+    \brief      Internal function calls OpenSSL functions to create public key.
+
+    \param[in]  nid                 EC network id.
+    \param[in]  public_key          Pointer of char array type of public key.
+    \param[out] cose_public_key     Pointer and length of the resulting key.
+
+    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
+ */
 suit_err_t suit_create_es_public_key(int nid, const char *public_key, struct t_cose_key *cose_public_key) {
     EC_GROUP    *ec_group = NULL;
     EC_KEY      *ec_key = NULL;
@@ -146,11 +167,22 @@ suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_
                                       returned_payload,
                                       &parameters);
     if (cose_result != T_COSE_SUCCESS) {
-        result = SUIT_ERR_FATAL;
+        result = SUIT_ERR_FAILED_TO_VERIFY;
     }
     return result;
 }
 
+/*!
+    \brief  Distinguish algorithm id from t_cose_key.
+
+    \param[in]  key                 Pointer of the key.
+    \param[out] cose_algorithm_id   Pointer of the resulting algorithm id.
+
+    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
+
+    COSE supports ES256, ES384 and ES512 as alrogithm of signature,
+    so T_COSE_ALGORITHM_ES256, T_COSE_ALGORITHM_ES384 or T_COSE_ALGORITHM_ES512 will be set to cose_algorithm_id argument if success.
+ */
 suit_err_t suit_get_algorithm_from_cose_key(const struct t_cose_key *key, int32_t *cose_algorithm_id) {
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
     if (key->crypto_lib != T_COSE_CRYPTO_LIB_PSA) {

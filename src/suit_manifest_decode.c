@@ -86,13 +86,20 @@ suit_err_t suit_qcbor_get_next_uint(QCBORDecodeContext *message, QCBORItem *item
     return (suit_qcbor_value_is_uint64(item)) ? SUIT_SUCCESS : SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
 }
 
-/*
- * counts the CBOR binary offset between the CBOR type and length declaration
- * and current cursor = UsefulInputBuf_Tell(&context.InBuf)
- * note that with INT64, UINT64, TEXT_STRING, and BYTE_STRING,
- * the current cursor is tail of the value,
- * but with ARRAY, MAP, MAP_AS_ARRAY,
- * the current cursor is tail of the type and length declaration.
+/*!
+    \brief  Calculate the length of the CBOR header.
+
+    \param[in]  item    QCBOR item to be calculated.
+
+    \return     This returns the length of the CBOR header.
+
+    Counts the CBOR binary offset between the CBOR type and length declaration
+    and current cursor = UsefulInputBuf_Tell(&context.InBuf)
+
+    NOTE: If the item type is one of INT64, UINT64, TEXT_STRING, and BYTE_STRING,
+    the current cursor is tail of the value,
+    but with ARRAY, MAP, MAP_AS_ARRAY,
+    the current cursor is tail of the type and length declaration.
  */
 size_t suit_qcbor_calc_rollback(QCBORItem *item) {
     uint8_t type = item->uDataType;
@@ -1262,15 +1269,9 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
     return result;
 }
 
-/*! \brief Decode SUIT binary
-
-    \param[in]  mode        Controls parsing behavior, e.g. #SUIT_DECODE_MODE_STRICT
-    \param[in]  buf         Input SUIT binary
-    \param[out] envelope    Output structure to hold the parsing result of SUIT binary
-    \param[in]  public_key  Public key to verify the COSE_Sign1 of authentication-wrapper
-
-    \return     SUIT_SUCCESS on success, else on error
-*/
+/*
+    Public function. See suit_manifest_data.h
+ */
 suit_err_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
     QCBORDecodeContext decode_context;
     QCBORItem item;

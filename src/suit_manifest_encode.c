@@ -13,6 +13,17 @@
 #include "suit_digest.h"
 #define SUIT_ENCODE_MAX_BUFFER_SIZE 2048
 
+/*!
+    \file   suit_manifest_encode.c
+
+    \brief  This implements libcsuit encoding
+
+    Prepare suit_eocode_t struct and struct t_cose_key,
+    and then call suit_encode_envelope() to encode whole SUIT manifest.
+ */
+
+
+
 suit_err_t suit_encode_append_severable_manifest_members(const suit_encode_t *suit_encode, QCBOREncodeContext *context) {
     if (suit_encode->dependency_resolution.len > 0) {
         QCBOREncode_AddBytesToMapN(context, SUIT_DEPENDENCY_RESOLUTION, suit_encode->dependency_resolution);
@@ -398,6 +409,33 @@ suit_err_t suit_encode_text_bstr(const suit_text_t *text, UsefulBuf *buf) {
     *buf = (UsefulBuf){.ptr = (void *)t_buf.ptr, .len = t_buf.len};
     return result;
 }
+
+/*!
+    \brief  Encode suit-manifest
+
+    \param[in]  envelope    Input struct of libcsuit, correspond to the SUIT_Envelope.
+    \param[out] suit_encode Internal struct holding the status of encoding binary.
+
+    \return     This returns one of the error codes defined by \ref suit_err_t.
+
+    This is the "map" of the encoding process.
+    \code{.unparsed}
+    SUIT_Envelope {
+        suit-authentication-wrapper,
+        suit-manifest { // <= You are here!
+            suit-common,
+            suit-install,
+            suit-validate,
+            ...
+        }
+
+        // severed member
+        suit-install,
+        suit-validate,
+        ...
+    }
+    \endcode
+ */
 suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *suit_encode) {
     const suit_manifest_t *manifest = &envelope->manifest;
     UsefulBuf_MAKE_STACK_UB(suit_common, SUIT_ENCODE_MAX_BUFFER_SIZE);
@@ -651,6 +689,9 @@ out:
     return result;
 }
 
+/*
+    Public function. See suit_manifest_data.h
+ */
 suit_err_t suit_encode_envelope(const suit_envelope_t *envelope, const t_cose_key *signing_key, uint8_t *buf, size_t *len) {
     suit_err_t result;
     UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);

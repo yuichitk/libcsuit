@@ -404,18 +404,75 @@ suit_err_t suit_qcbor_get_next(QCBORDecodeContext *message, QCBORItem *item, uin
 suit_err_t suit_qcbor_get(QCBORDecodeContext *message, QCBORItem *item, bool next, uint8_t data_type);
 size_t suit_qcbor_calc_rollback(QCBORItem *item);
 
+/*!
+    \brief  Decode SUIT binary.
+
+    \param[in]  mode        This ontrols parsing behavior, e.g. #SUIT_DECODE_MODE_STRICT.
+    \param[in]  buf         Pointer and length of input binary.
+    \param[out] envelope    Pointer of output structure to hold the parsing result of SUIT binary.
+    \param[in]  public_key  Pointer of public key to verify the COSE_Sign1 of authentication-wrapper.
+
+    \return     This returns one of the error codes defined by \ref suit_err_t.
+ */
 suit_err_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const struct t_cose_key *public_key);
-suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const struct t_cose_key *public_key);
 
+/*!
+    \brief  Decode array of SUIT_Component_Identifier.
+
+    \param[in]  mode        Controls parsing behavior, e.g. #SUIT_DECODE_MODE_STRICT.
+    \param[in]  buf         Pointer and length of input binary.
+    \param[out] identifier  Pointers and length of resulting SUIT_Component_Identifiers.
+
+    \return     This returns one of the error codes defined by \ref suit_err_t.
+ */
 suit_err_t suit_decode_component_identifiers(uint8_t mode, suit_buf_t *buf, suit_component_identifier_t *identifier);
-suit_err_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_manifest_t *manifest);
 
-suit_err_t suit_decode_component_identifiers(uint8_t mode, suit_buf_t *buf, suit_component_identifier_t *identifier);
-suit_err_t suit_decode_component_identifiers_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_component_identifier_t *identifier);
+/*!
+    \brief  Decode bstr-wrapped command sequence.
 
+    \param[in]  mode        Controls parsing behavior, e.g. #SUIT_DECODE_MODE_STRICT.
+    \param[in]  buf         Pointer and length of input binary.
+    \param[out] identifier  Pointers and length of resulting SUIT_Command_Sequence.
+
+    \return     This returns one of the error codes defined by \ref suit_err_t.
+ */
 suit_err_t suit_decode_command_sequence(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmd_seq);
-suit_err_t suit_decode_command_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq);
 
+
+/*!
+    \brief  Encode SUIT binary
+
+    \param[in]      envelope    Input struct of libcsuit, correspond to the SUIT_Envelope.
+    \param[in]      signing_key The private key (or key pair) to generate COSE_Sign1 signature.
+    \param[out]     buf         Output buffer of the binary.
+    \param[in,out]  len         Length of the allocated buf size in input,
+                                and the size of the generated binary size in output.
+
+    \return     This returns one of the error codes defined by \ref suit_err_t.
+
+    Encoding SUIT_Envelope takes several steps.
+    1st. Generate SUIT_Digest of severed members
+    2nd. Generate SUIT_Digest of suit-manifest
+    3rd. Respectively append suit-authentication-wrapper, suit-manifest, ...
+
+    This is the "map" of the encoding proccess.
+    \code{.unparsed}
+    SUIT_Envelope { // <= You are here!
+        suit-authentication-wrapper,
+        suit-manifest {
+            suit-common,
+            suit-install,
+            suit-validate,
+            ...
+        }
+
+        // severed member
+        suit-install,
+        suit-validate,
+        ...
+    }
+    \endcode
+ */
 suit_err_t suit_encode_envelope(const suit_envelope_t *envelope, const t_cose_key *signing_key, uint8_t *buf, size_t *len);
 
 #endif  // SUIT_MANIFEST_DATA_H

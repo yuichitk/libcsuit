@@ -11,6 +11,9 @@
 #include "suit_common.h"
 #include "suit_digest.h"
 
+/*
+    Public function. See suit_digest.h
+ */
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
 suit_err_t suit_generate_sha256(const uint8_t *tgt_ptr, const size_t tgt_len, uint8_t *digest_bytes_ptr, const size_t digest_bytes_len) {
     psa_status_t status;
@@ -55,6 +58,9 @@ suit_err_t suit_generate_sha256(const uint8_t *tgt_ptr, const size_t tgt_len, ui
 }
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
 
+/*
+    Public function. See suit_digest.h
+ */
 suit_err_t suit_verify_sha256(const uint8_t *tgt_ptr, const size_t tgt_len, const uint8_t *digest_bytes_ptr, const size_t digest_bytes_len) {
     if (digest_bytes_len != SHA256_DIGEST_LENGTH) {
         return SUIT_ERR_FATAL;
