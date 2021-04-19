@@ -75,7 +75,7 @@ Here are the commands:
 git clone https://github.com/hannestschofenig/t_cose.git
 git clone https://github.com/hannestschofenig/QCBOR.git
 git clone https://github.com/ARMmbed/mbedtls.git
-git clone https://github.com/hannestschofenig/libcsuit.git
+git clone https://github.com/yuichitk/libcsuit.git
 cd libcsuit
 ```
 
