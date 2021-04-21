@@ -6,19 +6,19 @@
 
 #include "suit_common.h"
 
-int32_t suit_error_from_qcbor_error(QCBORError error) {
+suit_err_t suit_error_from_qcbor_error(QCBORError error) {
     switch (error) {
         case QCBOR_SUCCESS:
             return SUIT_SUCCESS;
         case QCBOR_ERR_BUFFER_TOO_SMALL:
-            return SUIT_NO_MEMORY;
+            return SUIT_ERR_NO_MEMORY;
         default:
-            return SUIT_FATAL_ERROR;
+            return SUIT_ERR_FATAL;
     }
 }
 
-int32_t suit_print_hex_in_max(const uint8_t *array, const size_t size, const size_t max_print_size) {
-    int32_t result = SUIT_SUCCESS;
+suit_err_t suit_print_hex_in_max(const uint8_t *array, const size_t size, const size_t max_print_size) {
+    suit_err_t result = SUIT_SUCCESS;
     if (size <= max_print_size) {
         result = suit_print_hex(array, size);
     }
@@ -29,9 +29,9 @@ int32_t suit_print_hex_in_max(const uint8_t *array, const size_t size, const siz
     return result;
 }
 
-int32_t suit_print_hex(const uint8_t *array, size_t size) {
+suit_err_t suit_print_hex(const uint8_t *array, size_t size) {
     if (array == NULL) {
-        return SUIT_FATAL_ERROR;
+        return SUIT_ERR_FATAL;
     }
     for (size_t i = 0; i < size; i++) {
         printf("0x%02x ", (unsigned char)array[i]);
@@ -39,16 +39,16 @@ int32_t suit_print_hex(const uint8_t *array, size_t size) {
     return SUIT_SUCCESS;
 }
 
-int32_t suit_print_bytestr(const uint8_t *bytes, size_t len)
+suit_err_t suit_print_bytestr(const uint8_t *bytes, size_t len)
 {
     if (bytes == NULL)
-        return( SUIT_FATAL_ERROR );
+        return( SUIT_ERR_FATAL );
 
     for(unsigned int idx=0; idx < len; idx++)
     {
         printf("%02X", bytes[idx]);
     }
-    return( SUIT_FATAL_ERROR );
+    return( SUIT_ERR_FATAL );
 }
 
 #ifdef DEBUG
@@ -79,24 +79,24 @@ void suit_debug_print(QCBORDecodeContext *message,
 #endif
 
 
-bool suit_continue(uint8_t mode, int32_t result) {
+bool suit_continue(uint8_t mode, suit_err_t result) {
     bool ret = false;
     switch (result) {
         case SUIT_SUCCESS:
             ret = true;
             break;
-        case SUIT_FAILED_TO_VERIFY:
+        case SUIT_ERR_FAILED_TO_VERIFY:
             if (mode & SUIT_DECODE_MODE_SKIP_SIGN_FAILURE) {
                 ret = true;
             }
             break;
-        case SUIT_NOT_IMPLEMENTED:
-        case SUIT_INVALID_TYPE_OF_ARGUMENT:
+        case SUIT_ERR_NOT_IMPLEMENTED:
+        case SUIT_ERR_INVALID_TYPE_OF_ARGUMENT:
             if (mode & SUIT_DECODE_MODE_SKIP_UNKNOWN_ELEMENT) {
                 ret = true;
             }
-        case SUIT_NO_MEMORY:
-        case SUIT_FATAL_ERROR:
+        case SUIT_ERR_NO_MEMORY:
+        case SUIT_ERR_FATAL:
         default:
             break;
     }
