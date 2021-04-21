@@ -35,8 +35,14 @@ int32_t suit_encode_append_manifest(const suit_encode_t *suit_encode, QCBOREncod
     QCBOREncode_AddBytesToMapN(context, SUIT_MANIFEST, suit_encode->manifest);
     return SUIT_SUCCESS;
 }
-int32_t suit_encode_append_digest(const suit_digest_t *digest, QCBOREncodeContext *context) {
-    QCBOREncode_OpenArray(context);
+int32_t suit_encode_append_digest(const suit_digest_t *digest, const uint32_t label, QCBOREncodeContext *context) {
+    if (label > 0) {
+        /* in map */
+        QCBOREncode_OpenArrayInMapN(context, label);
+    }
+    else {
+        QCBOREncode_OpenArray(context);
+    }
     QCBOREncode_AddUInt64(context, digest->algorithm_id);
     QCBOREncode_AddBytes(context, (UsefulBufC){.ptr = digest->bytes.ptr, .len = digest->bytes.len});
     QCBOREncode_CloseArray(context);
@@ -45,7 +51,7 @@ int32_t suit_encode_append_digest(const suit_digest_t *digest, QCBOREncodeContex
 int32_t suit_encode_digest(const suit_digest_t *digest, UsefulBuf *buf) {
     QCBOREncodeContext context;
     QCBOREncode_Init(&context, *buf);
-    suit_encode_append_digest(digest, &context);
+    suit_encode_append_digest(digest, 0, &context);
     UsefulBufC t_buf;
     QCBORError error = QCBOREncode_Finish(&context, &t_buf);
     if (error != QCBOR_SUCCESS) {
@@ -282,6 +288,20 @@ int32_t suit_encode_common_sequence_bstr(const suit_command_sequence_t *cmd_seq,
     *buf = (UsefulBuf){.ptr = (void *)t_buf.ptr, .len = t_buf.len};
     return result;
 }
+int32_t suit_encode_append_component_identifier(const suit_component_identifier_t *component_id, uint32_t label, QCBOREncodeContext *context) {
+    if (label > 0) {
+        QCBOREncode_OpenArrayInMapN(context, label);
+    }
+    else {
+        QCBOREncode_OpenArray(context);
+    }
+    for (size_t j = 0; j < component_id->len; j++) {
+        const suit_buf_t *identifier = &component_id->identifier[j];
+        QCBOREncode_AddBytes(context, (UsefulBufC){.ptr = identifier->ptr, .len = identifier->len});
+    }
+    QCBOREncode_CloseArray(context);
+    return SUIT_SUCCESS;
+}
 
 int32_t suit_encode_common(const suit_common_t *suit_common, UsefulBuf *buf) {
     UsefulBuf_MAKE_STACK_UB(suit_common_sequence, SUIT_ENCODE_MAX_BUFFER_SIZE);
@@ -294,18 +314,30 @@ int32_t suit_encode_common(const suit_common_t *suit_common, UsefulBuf *buf) {
     QCBOREncode_Init(&context, *buf);
     QCBOREncode_OpenMap(&context);
 
-    // suit-components
-    QCBOREncode_OpenArrayInMapN(&context, SUIT_COMPONENTS);
-    for (size_t i = 0; i < suit_common->components.len; i++) {
-        const suit_component_identifier_t *component_id = &suit_common->components.comp_id[i];
-        QCBOREncode_OpenArray(&context);
-        for (size_t j = 0; j < component_id->len; j++) {
-            const suit_buf_t *identifier = &component_id->identifier[j];
-            QCBOREncode_AddBytes(&context, (UsefulBufC){.ptr = identifier->ptr, .len = identifier->len});
+    // suit-dependencies
+    if (suit_common->dependencies.len > 0) {
+        QCBOREncode_OpenArrayInMapN(&context, SUIT_DEPENDENCIES);
+        for (size_t i = 0; i <suit_common->dependencies.len; i++) {
+            const suit_dependency_t *dependency = &suit_common->dependencies.dependency[i];
+            QCBOREncode_OpenMap(&context);
+            suit_encode_append_digest(&dependency->digest, SUIT_DEPENDENCY_DIGEST, &context);
+            if (dependency->prefix.len > 0) {
+                suit_encode_append_component_identifier(&dependency->prefix, SUIT_DEPENDENCY_PREFIX, &context);
+            }
+            //TODO: SUIT_Dependency-extensions
+            QCBOREncode_CloseMap(&context);
         }
         QCBOREncode_CloseArray(&context);
     }
-    QCBOREncode_CloseArray(&context);
+
+    // suit-components
+    if (suit_common->components.len > 0) {
+        QCBOREncode_OpenArrayInMapN(&context, SUIT_COMPONENTS);
+        for (size_t i = 0; i < suit_common->components.len; i++) {
+            suit_encode_append_component_identifier(&suit_common->components.comp_id[i], 0, &context);
+        }
+        QCBOREncode_CloseArray(&context);
+    }
 
     // suit-common-sequence
     if (suit_common_sequence.len > 2) {
@@ -449,7 +481,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
             goto out;
         }
         QCBOREncode_AddUInt64(&context, SUIT_DEPENDENCY_RESOLUTION);
-        result = suit_encode_append_digest(&digest, &context);
+        result = suit_encode_append_digest(&digest, 0, &context);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -476,7 +508,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
             goto out;
         }
         QCBOREncode_AddUInt64(&context, SUIT_PAYLOAD_FETCH);
-        result = suit_encode_append_digest(&digest, &context);
+        result = suit_encode_append_digest(&digest, 0, &context);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -503,7 +535,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
             goto out;
         }
         QCBOREncode_AddUInt64(&context, SUIT_INSTALL);
-        result = suit_encode_append_digest(&digest, &context);
+        result = suit_encode_append_digest(&digest, 0, &context);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -560,7 +592,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
             goto out;
         }
         QCBOREncode_AddUInt64(&context, SUIT_TEXT);
-        result = suit_encode_append_digest(&digest, &context);
+        result = suit_encode_append_digest(&digest, 0, &context);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -581,7 +613,7 @@ int32_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *sui
             goto out;
         }
         QCBOREncode_AddUInt64(&context, SUIT_COSWID);
-        result = suit_encode_append_digest(&digest, &context);
+        result = suit_encode_append_digest(&digest, 0, &context);
         if (result != SUIT_SUCCESS) {
             goto out;
         }

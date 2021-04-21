@@ -213,6 +213,24 @@ typedef struct suit_components {
     suit_component_identifier_t     comp_id[SUIT_MAX_ARRAY_LENGTH];
 } suit_components_t;
 
+
+/*
+ * SUIT_Dependency
+ */
+typedef struct suit_dependency {
+    suit_digest_t                   digest;
+    suit_component_identifier_t     prefix;
+    //TODO:                         $$SUIT_Dependency-extensions
+} suit_dependency_t;
+
+/*
+ * SUIT_Dependencies
+ */
+typedef struct suit_dependencies {
+    size_t                          len;
+    suit_dependency_t               dependency[SUIT_MAX_ARRAY_LENGTH];
+} suit_dependencies_t;
+
 /*
  * SUIT_Parameters
  */
@@ -346,7 +364,7 @@ typedef struct suit_unseverable_members {
  * SUIT_Common
  */
 typedef struct suit_common {
-    // TODO :                       suit-dependencies
+    suit_dependencies_t             dependencies;
     suit_components_t               components;
     // TODO :                       suit-dependency-components
     suit_command_sequence_t         cmd_seq;

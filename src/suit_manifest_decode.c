@@ -627,6 +627,74 @@ int32_t suit_decode_components_from_item(uint8_t mode, QCBORDecodeContext *conte
     return result;
 }
 
+int32_t suit_decode_dependency_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_dependency_t *dependency) {
+    int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+
+    size_t len = item->val.uCount;
+    for (size_t i = 0; i < len; i++) {
+        result = suit_qcbor_get_next(context, item, QCBOR_TYPE_ANY);
+        if (!suit_continue(mode, result)) {
+            goto out;
+        }
+
+        switch (item->label.uint64) {
+            case SUIT_DEPENDENCY_DIGEST:
+                result = suit_decode_digest_from_item(mode, context, item, false, &dependency->digest);
+                break;
+            case SUIT_DEPENDENCY_PREFIX:
+                result = suit_decode_component_identifiers_from_item(mode, context, item, false, &dependency->prefix);
+                break;
+            default:
+                suit_debug_print(context, item, "suit_decode_dependency", QCBOR_TYPE_NONE);
+                result = SUIT_NOT_IMPLEMENTED;
+                if (!suit_qcbor_skip_any(context, item)) {
+                    result = SUIT_FATAL_ERROR;
+                }
+                break;
+        }
+out:
+        if (!suit_continue(mode, result)) {
+            if (!(mode & SUIT_DECODE_MODE_PRESERVE_ON_ERROR)) {
+                dependency->digest.algorithm_id = SUIT_ALGORITHM_ID_INVALID;
+                dependency->prefix.len = 0;
+            }
+        }
+    }
+    return result;
+}
+
+int32_t suit_decode_dependencies_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_dependencies_t *dependencies) {
+    dependencies->len = 0;
+
+    int32_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_ARRAY);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+    size_t len = item->val.uCount;
+    for (size_t i = 0; i < len; i++) {
+        result = suit_qcbor_get(context, item, true, QCBOR_TYPE_MAP);
+        if (!suit_continue(mode, result)) {
+            break;
+        }
+        if (result == SUIT_SUCCESS) {
+            result = suit_decode_dependency_from_item(mode, context, item, false, &dependencies->dependency[dependencies->len]);
+            if (result == SUIT_SUCCESS) {
+                dependencies->len++;
+            }
+        }
+        if (!suit_continue(mode, result)) {
+            if (!(mode & SUIT_DECODE_MODE_PRESERVE_ON_ERROR)) {
+                dependencies->len = 0;
+            }
+            break;
+        }
+    }
+    return result;
+}
+
 int32_t suit_decode_authentication_block(uint8_t mode, suit_buf_t *buf, suit_digest_t *digest, const struct t_cose_key *public_key) {
     UsefulBufC signed_cose = {buf->ptr, buf->len};
     int32_t result;
@@ -662,13 +730,15 @@ int32_t suit_decode_common_from_item(uint8_t mode, QCBORDecodeContext *context, 
             break;
         }
         switch (item->label.uint64) {
+            case SUIT_DEPENDENCIES:
+                result = suit_decode_dependencies_from_item(mode, context, item, false, &common->dependencies);
+                break;
             case SUIT_COMPONENTS:
                 result = suit_decode_components_from_item(mode, context, item, false, &common->components);
                 break;
             case SUIT_COMMON_SEQUENCE:
                 result = suit_decode_common_sequence_from_bstr(mode, context, item, false, &common->cmd_seq);
                 break;
-            case SUIT_DEPENDENCIES:
             default:
                 // TODO
                 suit_debug_print(context, item, "suit_decode_dependencies(skipping)", QCBOR_TYPE_ARRAY);

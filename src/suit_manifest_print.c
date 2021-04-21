@@ -239,6 +239,34 @@ int32_t suit_print_digest(const suit_digest_t *digest, const uint32_t indent_spa
     return SUIT_SUCCESS;
 }
 
+int32_t suit_print_dependency(const suit_dependency_t *dependency, uint32_t indent_space) {
+    if (dependency == NULL) {
+        return SUIT_FATAL_ERROR;
+    }
+    int32_t result = SUIT_SUCCESS;
+    if (dependency->digest.algorithm_id == SUIT_ALGORITHM_ID_INVALID) {
+        return SUIT_FATAL_ERROR;
+    }
+
+    printf("%*sdependency-digest : SUIT_Digest\n", indent_space, "");
+    result = suit_print_digest(&dependency->digest, indent_space + 2);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+
+    if (dependency->prefix.len > 0) {
+        printf("%*sdependency-prefix : ", indent_space, "");
+        result = suit_print_component_identifier(&dependency->prefix);
+        if (result != SUIT_SUCCESS) {
+            return result;
+        }
+        printf("\n");
+    }
+
+    /* TODO: SUIT_Dependency-extensions */
+    return SUIT_SUCCESS;
+}
+
 bool suit_text_component_have_something_to_print(const suit_text_component_t *text_component) {
     return (text_component->vendor_name.ptr != NULL ||
             text_component->model_name.ptr != NULL ||
@@ -522,6 +550,17 @@ int32_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, uint3
     printf("%*smanifest-sequence-number : %u\n", indent_space + 2, "", manifest->sequence_number);
 
     printf("%*scommon : SUIT_Common\n", indent_space + 2, "");
+    if (manifest->common.dependencies.len > 0) {
+        printf("%*sdependencies : SUIT_Dependencies [\n", indent_space + 4, "");
+        for (size_t i = 0; i < manifest->common.dependencies.len; i++) {
+            result = suit_print_dependency(&manifest->common.dependencies.dependency[i], indent_space + 6);
+            if (result != SUIT_SUCCESS) {
+                return result;
+            }
+        }
+        printf("%*s]\n", indent_space + 4, "");
+    }
+
     if (manifest->common.components.len > 0) {
         printf("%*scomponents : [\n", indent_space + 4, "");
         for (size_t i = 0; i < manifest->common.components.len; i++) {
