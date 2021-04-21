@@ -8,6 +8,15 @@
 #include "suit_cose.h"
 #include "suit_common.h"
 
+/*!
+    \file   suit_cose.c
+
+    \brief  This implements Sign and Verify the COSE.
+ */
+
+/*
+    Public function. See suit_cose.h
+ */
 cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose) {
     /* judge authentication object
      * [ COSE_Sign_Tagged, COSE_Sign1_Tagged, COSE_Mac_Tagged, COSE_Mac0_Tagged ]
@@ -39,8 +48,10 @@ cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose) {
 }
 
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
-int32_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key) 
-{
+/*
+    Public function. See suit_cose.h
+ */
+suit_err_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
     psa_key_attributes_t key_attributes = PSA_KEY_ATTRIBUTES_INIT;
     psa_key_handle_t     key_handle = 0;
     psa_status_t         result;
@@ -81,7 +92,16 @@ int32_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *
 }
 #else /* LIBCSUIT_PSA_CRYPTO_C */
 
-int32_t suit_create_es_public_key(int nid, const char *public_key, struct t_cose_key *cose_public_key) {
+/*
+    \brief      Internal function calls OpenSSL functions to create public key.
+
+    \param[in]  nid                 EC network id.
+    \param[in]  public_key          Pointer of char array type of public key.
+    \param[out] cose_public_key     Pointer and length of the resulting key.
+
+    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
+ */
+suit_err_t suit_create_es_public_key(int nid, const char *public_key, struct t_cose_key *cose_public_key) {
     EC_GROUP    *ec_group = NULL;
     EC_KEY      *ec_key = NULL;
     EC_POINT    *ec_point = NULL;
@@ -89,27 +109,27 @@ int32_t suit_create_es_public_key(int nid, const char *public_key, struct t_cose
 
     ec_group = EC_GROUP_new_by_curve_name(nid);
     if (ec_group == NULL) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
     ec_key = EC_KEY_new();
     if (ec_key == NULL) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
     result = EC_KEY_set_group(ec_key, ec_group);
     if (!result) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
     ec_point = EC_POINT_new(ec_group);
     if (ec_point == NULL) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
     ec_point = EC_POINT_hex2point(ec_group, public_key, ec_point, NULL);
     if (ec_point == NULL) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
     result = EC_KEY_set_public_key(ec_key, ec_point);
     if (result == 0) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
 
     cose_public_key->k.key_ptr  = ec_key;
@@ -117,27 +137,27 @@ int32_t suit_create_es_public_key(int nid, const char *public_key, struct t_cose
     return SUIT_SUCCESS;
 }
 
-int32_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
+suit_err_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
     return suit_create_es_public_key(NID_X9_62_prime256v1, public_key, cose_public_key);
 }
 
-int32_t suit_create_es384_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
+suit_err_t suit_create_es384_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
     return suit_create_es_public_key(NID_secp384r1, public_key, cose_public_key);
 }
 
-int32_t suit_create_es521_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
+suit_err_t suit_create_es521_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
     return suit_create_es_public_key(NID_secp521r1, public_key, cose_public_key);
 }
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
 
-int32_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload) {
-    int32_t result = SUIT_SUCCESS;
+suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload) {
+    suit_err_t result = SUIT_SUCCESS;
     struct t_cose_sign1_verify_ctx verify_ctx;
     struct t_cose_parameters parameters;
     enum t_cose_err_t cose_result;
 
     if (public_key == NULL) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
 
     t_cose_sign1_verify_init(&verify_ctx, T_COSE_OPT_ALLOW_DETACHED_CONTENT);
@@ -147,21 +167,32 @@ int32_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cos
                                       returned_payload,
                                       &parameters);
     if (cose_result != T_COSE_SUCCESS) {
-        result = SUIT_FATAL_ERROR;
+        result = SUIT_ERR_FAILED_TO_VERIFY;
     }
     return result;
 }
 
-int32_t suit_get_algorithm_from_cose_key(const struct t_cose_key *key, int32_t *cose_algorithm_id) {
+/*!
+    \brief  Distinguish algorithm id from t_cose_key.
+
+    \param[in]  key                 Pointer of the key.
+    \param[out] cose_algorithm_id   Pointer of the resulting algorithm id.
+
+    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
+
+    COSE supports ES256, ES384 and ES512 as alrogithm of signature,
+    so T_COSE_ALGORITHM_ES256, T_COSE_ALGORITHM_ES384 or T_COSE_ALGORITHM_ES512 will be set to cose_algorithm_id argument if success.
+ */
+suit_err_t suit_get_algorithm_from_cose_key(const struct t_cose_key *key, int32_t *cose_algorithm_id) {
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
     if (key->crypto_lib != T_COSE_CRYPTO_LIB_PSA) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
     psa_key_handle_t *key_handle = key->k.key_ptr;
     psa_key_attributes_t key_attributes;
     psa_status_t status = psa_get_key_attributes(*key_handle, &key_attributes);
     if (status != PSA_SUCCESS) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
     psa_algorithm_t key_alg = psa_get_key_algorithm(&key_attributes);
     switch (key_alg) {
@@ -175,19 +206,19 @@ int32_t suit_get_algorithm_from_cose_key(const struct t_cose_key *key, int32_t *
         *cose_algorithm_id = T_COSE_ALGORITHM_ES512;
         break;
     default:
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
 #else /* !LIBCSUIT_PSA_CRYPTO_C */
     if (key->crypto_lib != T_COSE_CRYPTO_LIB_OPENSSL) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
     const EC_KEY *key_ptr = key->k.key_ptr;
     if (key_ptr == NULL) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
     const EC_GROUP *ec_group = EC_KEY_get0_group(key_ptr);
     if (ec_group == NULL) {
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
     int nid = EC_GROUP_get_curve_name(ec_group);
     switch (nid) {
@@ -201,13 +232,13 @@ int32_t suit_get_algorithm_from_cose_key(const struct t_cose_key *key, int32_t *
         *cose_algorithm_id = T_COSE_ALGORITHM_ES512;
         break;
     default:
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
 #endif
     return SUIT_SUCCESS;
 }
 
-int32_t suit_sign_cose_sign1(const UsefulBufC *raw_cbor, const struct t_cose_key *key_pair, UsefulBuf *returned_payload) {
+suit_err_t suit_sign_cose_sign1(const UsefulBufC *raw_cbor, const struct t_cose_key *key_pair, UsefulBuf *returned_payload) {
     // Create cose signed buffer.
     int32_t cose_algorithm_id;
     struct t_cose_sign1_sign_ctx sign_ctx;
@@ -215,7 +246,7 @@ int32_t suit_sign_cose_sign1(const UsefulBufC *raw_cbor, const struct t_cose_key
     UsefulBufC tmp_signed_cose;
     UsefulBuf_MAKE_STACK_UB(signed_cose_buffer, 1024);
 
-    int32_t result = suit_get_algorithm_from_cose_key(key_pair, &cose_algorithm_id);
+    suit_err_t result = suit_get_algorithm_from_cose_key(key_pair, &cose_algorithm_id);
     if (result != SUIT_SUCCESS) {
         return result;
     }
@@ -225,14 +256,14 @@ int32_t suit_sign_cose_sign1(const UsefulBufC *raw_cbor, const struct t_cose_key
     case T_COSE_ALGORITHM_ES512:
         break;
     default:
-        return SUIT_FAILED_TO_VERIFY;
+        return SUIT_ERR_FAILED_TO_VERIFY;
     }
 
     t_cose_sign1_sign_init(&sign_ctx, T_COSE_OPT_DETACHED_CONTENT, cose_algorithm_id);
     t_cose_sign1_set_signing_key(&sign_ctx, *key_pair, NULL_Q_USEFUL_BUF_C);
     cose_result = t_cose_sign1_sign(&sign_ctx, *raw_cbor, signed_cose_buffer, &tmp_signed_cose);
     if (cose_result != T_COSE_SUCCESS) {
-        return SUIT_FATAL_ERROR;
+        return SUIT_ERR_FATAL;
     }
     memcpy(returned_payload->ptr, tmp_signed_cose.ptr, tmp_signed_cose.len);
     returned_payload->len = tmp_signed_cose.len;

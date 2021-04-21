@@ -1,0 +1,49 @@
+#
+# Copyright (c) 2020 SECOM CO., LTD. All Rights reserved.
+#
+# SPDX-License-Identifier: BSD-2-Clause
+#
+
+CC		= gcc
+CFLAGS	= -Wall -g
+LDFLAGS	= -lt_cose -lqcbor -lcrypto
+INC		= -I ./inc -I ./examples/inc
+TARGET1	= ./suit_for_teep_dependee
+TARGET2	= ./suit_for_teep_depending
+SRC1	= examples/suit_manifest_for_teep_encode.c
+SRC2	= examples/suit_manifest_for_teep_encode_depend.c
+SRCS	= examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_decode.c src/suit_manifest_encode.c src/suit_cose.c src/suit_digest.c
+OBJDIR	= ./obj
+OBJ1	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRC1)))
+OBJ2	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRC2)))
+OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
+
+ifdef debug
+    CFLAGS += -DSKIP_ERROR
+endif
+
+.PHONY: all test clean
+
+all: $(TARGET1) $(TARGET2)
+
+$(TARGET1):	$(OBJ1) $(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(TARGET2):	$(OBJ2) $(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(OBJDIR)/%.o:	%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
+
+PRIV_KEY1	:= ./testfiles/key/trust_anchor_secp256r1.der
+OUTPUT1		:= ./testfiles/suit_manifest_expT.cbor
+PRIV_KEY2	:= ../libteep/testfiles/key/tam_prime256v1.der
+OUTPUT2		:= ./testfiles/suit_manifest_expD.cbor
+test: all
+	$(TARGET1) $(PRIV_KEY1) $(OUTPUT1)
+	$(TARGET2) $(PRIV_KEY2) $(OUTPUT2)
+
+clean:
+	rm -f $(OBJS) $(TARGET1) $(TARGET2)
+

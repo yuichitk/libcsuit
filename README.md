@@ -49,10 +49,16 @@ To install libcsuit.a use the following command:
 make install
 ```
 
-To nstall libcsuit.so use the following command: 
+To install libcsuit.so use the following command:
 ```
 make install_so
 ```
+
+To generate Doxygen document use the following command:
+```
+make doc
+```
+and open `html/index.html`.
 
 ### Using CMake 
 
@@ -71,7 +77,6 @@ git clone https://github.com/hannestschofenig/QCBOR.git
 git clone https://github.com/ARMmbed/mbedtls.git
 git clone https://github.com/hannestschofenig/libcsuit.git
 cd libcsuit
-git checkout psa
 ```
 
 Next, build the code using cmake

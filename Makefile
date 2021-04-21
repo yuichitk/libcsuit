@@ -14,11 +14,14 @@ PUBLIC_INTERFACE	= inc/csuit.h inc/suit_common.h inc/suit_manifest_data.h inc/su
 OBJDIR				= ./obj
 OBJS				= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
-.PHONY: all so install uninstall clean
+.PHONY: all so doc install uninstall clean
 
 all: $(NAME).a
 
 so: $(NAME).so
+
+doc:
+	doxygen Doxyfile
 
 $(NAME).a: $(OBJS)
 	$(AR) -r $@ $^
