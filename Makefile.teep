@@ -38,11 +38,12 @@ $(OBJDIR)/%.o:	%.c
 
 PRIV_KEY1	:= ./testfiles/key/trust_anchor_secp256r1.der
 OUTPUT1		:= ./testfiles/suit_manifest_expT.cbor
+URI			:= http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta
 PRIV_KEY2	:= ../libteep/testfiles/key/tam_prime256v1.der
 OUTPUT2		:= ./testfiles/suit_manifest_expD.cbor
 test: all
 	$(TARGET1) $(PRIV_KEY1) $(OUTPUT1)
-	$(TARGET2) $(PRIV_KEY2) $(OUTPUT2)
+	$(TARGET2) $(OUTPUT1) $(URI) $(PRIV_KEY2) $(OUTPUT2)
 
 clean:
 	rm -f $(OBJS) $(TARGET1) $(TARGET2)

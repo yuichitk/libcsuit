@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include "qcbor/qcbor.h"
 #include "suit_common.h"
 #include "suit_manifest_data.h"
@@ -20,15 +21,43 @@
 
 int main(int argc, char *argv[]) {
     // check arguments.
-    if (argc < 2) {
-        printf("suit_manifest_encode <private key path> <output manifest file path>");
+    if (argc < 4) {
+        printf("suit_for_teep_depending <manifest to depend> <uri> <private key path> <output manifest file path>");
         return EXIT_FAILURE;
     }
-    char *private_key_file = argv[1];
-    char *manifest_file = argv[2];
+    char *input_manifest_file = argv[1];
+    char *uri = argv[2];
+    char *private_key_file = argv[3];
+    char *output_manifest_file = argv[4];
     struct t_cose_key key_pair;
     char public_key[PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
     char private_key[PRIME256V1_PRIVATE_KEY_CHAR_SIZE + 1];
+
+    // Read a SUIT manifest to depend
+    printf("\nmain : Read Manifest file to depend.\n");
+    uint8_t manifest_buf[MAX_FILE_BUFFER_SIZE];
+    size_t manifest_len = read_from_file(input_manifest_file, MAX_FILE_BUFFER_SIZE, manifest_buf);
+    if (!manifest_len) {
+        printf("main : Can't read Manifest file.\n");
+        return EXIT_FAILURE;
+    }
+    suit_print_hex(manifest_buf, manifest_len);
+    printf("\n");
+
+    // Decode manifest file.
+    printf("\nmain : Decode Manifest file.\n");
+    uint8_t mode = SUIT_DECODE_MODE_SKIP_ANY_ERROR;
+    suit_envelope_t read_envelope = (suit_envelope_t){ 0 };
+    suit_buf_t buf = {.ptr = manifest_buf, .len = manifest_len};
+    t_cose_key cose_key = {0}; // fake key
+
+    int32_t result = suit_decode_envelope(mode, &buf, &read_envelope, &cose_key);
+    if (result != SUIT_SUCCESS) {
+        printf("main : Can't parse Manifest file. err=%d\n", result);
+        return EXIT_FAILURE;
+    }
+
+    suit_digest_t *digest = &read_envelope.wrapper.digest[0];
 
     // Read der file.
     printf("\nmain : Read Private&Public Key.\n");
@@ -45,7 +74,7 @@ int main(int argc, char *argv[]) {
     read_prime256v1_key_pair(der_buf, private_key, public_key);
     printf("Private Key : %s\n", private_key);
     printf("Public Key : %s\n", public_key);
-    int32_t result = suit_create_es256_key_pair(private_key, public_key, &key_pair);
+    result = suit_create_es256_key_pair(private_key, public_key, &key_pair);
     if (result != SUIT_SUCCESS) {
         printf("main : Can't create ES256 key pair.\n");
         return EXIT_FAILURE;
@@ -62,10 +91,12 @@ int main(int argc, char *argv[]) {
     /* suit-dependencies */
     common->dependencies.len = 1;
     suit_digest_t *depending_digest = &common->dependencies.dependency[0].digest;
-    const uint8_t digest_bytes[] = {0xB4, 0xBF, 0xB6, 0x8A, 0x52, 0xF5, 0xE8, 0x86, 0x7B, 0x2C, 0x99, 0x25, 0x4A, 0xBB, 0x2E, 0x89, 0x99, 0x65, 0x46, 0xB6, 0x19, 0x27, 0x52, 0x88, 0xAB, 0x21, 0x3B, 0xAF, 0xB5, 0x4E, 0x94, 0x4F};
-    depending_digest->algorithm_id = 2;
-    depending_digest->bytes.len = 32;
-    depending_digest->bytes.ptr = digest_bytes;
+    *depending_digest = *digest;
+    /*
+    depending_digest->algorithm_id = digest->algorithm_id;
+    depending_digest->bytes.len = digest->bytes.len;
+    depending_digest->bytes.ptr = digest->bytes.ptr;
+    */
 
     /* suit-components */
     common->components.len = 1;
@@ -113,10 +144,12 @@ int main(int argc, char *argv[]) {
     params_list = &install->commands[0].value.params_list;
     params_list->len = 1;
 
+    /*
     uint8_t uri[] = "http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta";
+    */
     params_list->params[0].label = SUIT_PARAMETER_URI;
     params_list->params[0].value.string.ptr = uri;
-    params_list->params[0].value.string.len = sizeof(uri) - 1;
+    params_list->params[0].value.string.len = strlen(uri);
 
     install->commands[1].label = SUIT_DIRECTIVE_FETCH;
     install->commands[1].value.uint64 = 2;
@@ -124,7 +157,7 @@ int main(int argc, char *argv[]) {
 
     // Print manifest.
     printf("\nmain : Print Manifest.\n");
-    uint8_t mode = SUIT_DECODE_MODE_STRICT;
+    mode = SUIT_DECODE_MODE_STRICT;
     result = suit_print_envelope(mode, &envelope, 2);
     if (result != SUIT_SUCCESS) {
         printf("main : Can't print Manifest file.\n");
@@ -141,9 +174,9 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    size_t w_len = write_to_file(manifest_file, encode_len, encode_buf);
+    size_t w_len = write_to_file(output_manifest_file, encode_len, encode_buf);
     if (w_len != encode_len) {
-        printf("main : Fail to write to %s\n", manifest_file);
+        printf("main : Fail to write to %s\n", output_manifest_file);
     }
 
     return EXIT_SUCCESS;
