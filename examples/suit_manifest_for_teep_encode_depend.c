@@ -99,9 +99,11 @@ int main(int argc, char *argv[]) {
     */
 
     /* suit-components */
+    /*
     common->components.len = 1;
     common->components.comp_id[0].len = 1;
     common->components.comp_id[0].identifier[0] = (suit_buf_t){.ptr = component_id, .len = sizeof(component_id)};
+    */
 
     suit_parameters_list_t *params_list;
 
@@ -138,21 +140,23 @@ int main(int argc, char *argv[]) {
     /* install */
     manifest->sev_man_mem.install_status = SUIT_SEVERABLE_IN_MANIFEST;
     suit_command_sequence_t *install = &manifest->sev_man_mem.install;
-    install->len = 2;
-    install->commands[0].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
+    install->len = 3;
+    install->commands[0].label = SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX;
+    install->commands[0].value.uint64 = 0;
 
-    params_list = &install->commands[0].value.params_list;
+    install->commands[1].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
+    params_list = &install->commands[1].value.params_list;
     params_list->len = 1;
 
     /*
     uint8_t uri[] = "http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta";
     */
     params_list->params[0].label = SUIT_PARAMETER_URI;
-    params_list->params[0].value.string.ptr = uri;
+    params_list->params[0].value.string.ptr = (uint8_t *)uri;
     params_list->params[0].value.string.len = strlen(uri);
 
-    install->commands[1].label = SUIT_DIRECTIVE_FETCH;
-    install->commands[1].value.uint64 = 2;
+    install->commands[2].label = SUIT_DIRECTIVE_PROCESS_DEPENDENCY;
+    install->commands[2].value.uint64 = 15; // report all
 
 
     // Print manifest.
