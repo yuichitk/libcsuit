@@ -5,17 +5,21 @@
  */
 
 #include <stdlib.h>
-#include "csuit/csuit.h"
+#include "csuit.h"
+#include "suit_manifest_process.h"
+#include "qcbor/qcbor_spiffy_decode.h"
 #include <CUnit/CUnit.h>
 #include <CUnit/Console.h>
 
 void test_csuit_rollback(void);
+void test_csuit_get_digest(void);
 
 int main(int argc, char *argv[]) {
     CU_pSuite suite;
     CU_initialize_registry();
     suite = CU_add_suite("SUIT", NULL, NULL);
     CU_add_test(suite, "test_csuit_rollback", test_csuit_rollback);
+    CU_add_test(suite, "test_csuit_get_digest", test_csuit_get_digest);
     CU_console_run_tests();
     CU_cleanup_registry();
     return 0;
@@ -107,3 +111,70 @@ void test_csuit_rollback(void) {
     CU_ASSERT(test_csuit_rollback_buf(bufa0, 26) == 0);
 }
 
+void test_csuit_get_digest(void) {
+    QCBORDecodeContext context;
+    QCBORItem item;
+    QCBORError error;
+    suit_digest_t digest;
+
+    uint8_t bstr_wrapped_array[] = {
+        0x41, 0x80
+    };
+    QCBORDecode_Init(&context, (UsefulBufC){.ptr = bstr_wrapped_array, .len = sizeof(bstr_wrapped_array)}, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_EnterBstrWrapped(&context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
+    QCBORDecode_EnterArray(&context, NULL);
+    QCBORDecode_ExitArray(&context);
+    QCBORDecode_ExitBstrWrapped(&context);
+    error = QCBORDecode_Finish(&context);
+    CU_ASSERT_EQUAL(error, QCBOR_SUCCESS);
+
+    uint8_t suit_digest_buf[] = {
+        0x58, 0x24, 0x82, 0x02, 0x58, 0x20, 0x5C, 0x09, 0x7E, 0xF6,
+        0x4B, 0xF3, 0xBB, 0x9B, 0x49, 0x4E, 0x71, 0xE1, 0xF2, 0x41,
+        0x8E, 0xEF, 0x8D, 0x46, 0x6C, 0xC9, 0x02, 0xF6, 0x39, 0xA8,
+        0x55, 0xEC, 0x9A, 0xF3, 0xE9, 0xED, 0xDB, 0x99
+    };
+    QCBORDecode_Init(&context, (UsefulBufC){.ptr = suit_digest_buf, .len = sizeof(suit_digest_buf)}, QCBOR_DECODE_MODE_NORMAL);
+    suit_process_digest(&context, &digest);
+    error = QCBORDecode_Finish(&context);
+    CU_ASSERT_EQUAL(error, QCBOR_SUCCESS);
+    CU_ASSERT_EQUAL(digest.bytes.len, 32);
+
+    uint8_t suit_authentication_buf[] = {
+        0x58, 0x73, 0x82, 0x58, 0x24, 0x82, 0x02, 0x58, 0x20, 0x5C, 0x09, 0x7E,
+        0xF6, 0x4B, 0xF3, 0xBB, 0x9B, 0x49, 0x4E, 0x71, 0xE1, 0xF2,
+        0x41, 0x8E, 0xEF, 0x8D, 0x46, 0x6C, 0xC9, 0x02, 0xF6, 0x39,
+        0xA8, 0x55, 0xEC, 0x9A, 0xF3, 0xE9, 0xED, 0xDB, 0x99, 0x58,
+        0x4A, 0xD2, 0x84, 0x43, 0xA1, 0x01, 0x26, 0xA0, 0xF6, 0x58,
+        0x40, 0xA1, 0x9F, 0xD1, 0xF2, 0x3B, 0x17, 0xBE, 0xED, 0x32,
+        0x1C, 0xEC, 0xE7, 0x42, 0x3D, 0xFB, 0x48, 0xC4, 0x57, 0xB8,
+        0xF1, 0xF6, 0xAC, 0x83, 0x57, 0x7A, 0x3C, 0x10, 0xC6, 0x77,
+        0x3F, 0x6F, 0x3A, 0x79, 0x02, 0x37, 0x6B, 0x59, 0x54, 0x09,
+        0x20, 0xB6, 0xC5, 0xF5, 0x7B, 0xAC, 0x5F, 0xC8, 0x54, 0x3D,
+        0x8F, 0x5D, 0x3D, 0x97, 0x4F, 0xAA, 0x2E, 0x6D, 0x03, 0xDA,
+        0xA5, 0x34, 0xB4, 0x43, 0xA7
+    };
+    UsefulBufC tmp;
+
+    QCBORDecode_Init(&context, (UsefulBufC){.ptr = suit_authentication_buf, .len = sizeof(suit_authentication_buf)}, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_EnterBstrWrapped(&context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
+    QCBORDecode_EnterArray(&context, NULL);
+    //QCBORDecode_GetByteString(&context, &tmp);
+    /*
+    QCBORDecode_EnterBstrWrapped(&context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
+    QCBORDecode_EnterArray(&context, NULL);
+    QCBORDecode_GetNext(&context, &item);
+    QCBORDecode_GetNext(&context, &item);
+    QCBORDecode_ExitArray(&context);
+    QCBORDecode_ExitBstrWrapped(&context);
+    */
+    suit_process_digest(&context, &digest);
+
+    QCBORDecode_GetByteString(&context, &tmp);
+    QCBORDecode_ExitArray(&context);
+    QCBORDecode_ExitBstrWrapped(&context);
+    //suit_process_authentication_wrapper(&context, NULL, &digest);
+    error = QCBORDecode_Finish(&context);
+    CU_ASSERT_EQUAL(error, QCBOR_SUCCESS);
+    CU_ASSERT_EQUAL(digest.bytes.len, 32);
+}
