@@ -1,0 +1,46 @@
+#
+# Copyright (c) 2020 SECOM CO., LTD. All Rights reserved.
+#
+# SPDX-License-Identifier: BSD-2-Clause
+#
+
+CFLAGS	= -Wall -g
+LDFLAGS	= -lt_cose -lqcbor -lcrypto
+INC		= -I ./inc -I ./examples/inc
+TARGET	= ./suit_manifest_process
+SRCS	= examples/suit_manifest_process_main.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_common.c src/suit_manifest_process.c src/suit_cose.c src/suit_digest.c
+OBJDIR	= ./obj
+OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
+
+ifdef debug
+    CFLAGS += -DSKIP_ERROR
+endif
+
+.PHONY: all test clean
+
+all: $(TARGET)
+
+$(TARGET):	$(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(OBJDIR)/%.o:	%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
+
+TEST_NUM	:= 0_auth 0
+
+define test-one
+	$(TARGET) ./testfiles/suit_manifest_exp$(1).cbor
+
+endef
+
+test: all
+	$(foreach num,$(TEST_NUM),$(call test-one,$(num)))
+
+#MANIFEST1	:= ./testfiles/suit_manifest_exp.cbor
+#test: all
+#	$(TARGET) $(MANIFEST1)
+
+clean:
+	rm -f $(OBJS) $(TARGET1) $(TARGET2)
+
