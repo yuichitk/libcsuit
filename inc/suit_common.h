@@ -28,6 +28,7 @@ typedef enum {
     SUIT_ERR_NO_MORE_ITEMS              = 4, /*! mandatory items in array is not appeared */
     SUIT_ERR_NOT_IMPLEMENTED            = 5, /*! parser is not implemented */
     SUIT_ERR_FAILED_TO_VERIFY           = 6, /*! COSE or hash digest verification failure */
+    SUIT_ERR_AUTHENTICATION_POSITION    = 7, /*! suit-authentication-block MUST come before any element, except suit-delegation */
 } suit_err_t;
 
 /*! \brief abort immediately on any error */
@@ -46,5 +47,13 @@ suit_err_t suit_print_hex_in_max(const uint8_t *array, const size_t size, const 
 suit_err_t suit_print_hex(const uint8_t *array, size_t size);
 suit_err_t suit_print_bytestr(const uint8_t *bytes, size_t len);
 void suit_debug_print(QCBORDecodeContext *message, QCBORItem *item, const char *func_name, uint8_t expecting);
+bool suit_qcbor_value_is_uint64(QCBORItem *item);
+bool suit_qcbor_value_is_uint32(QCBORItem *item);
+suit_err_t suit_qcbor_get_next_uint(QCBORDecodeContext *message, QCBORItem *item);
+suit_err_t suit_qcbor_get_next(QCBORDecodeContext *message, QCBORItem *item, uint8_t data_type);
+suit_err_t suit_qcbor_get(QCBORDecodeContext *message, QCBORItem *item, bool next, uint8_t data_type);
+suit_err_t suit_qcbor_peek_next(QCBORDecodeContext *message, QCBORItem *item, uint8_t data_type);
+bool suit_qcbor_skip_any(QCBORDecodeContext *message, QCBORItem *item);
+size_t suit_qcbor_calc_rollback(QCBORItem *item);
 bool suit_continue(uint8_t mode, suit_err_t result);
 #endif  // SUIT_COMMON_H

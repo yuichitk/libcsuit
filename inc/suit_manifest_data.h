@@ -41,6 +41,7 @@ typedef enum suit_algorithm_id {
 } suit_algorithm_id_t;
 
 typedef enum suit_manifest_key {
+    SUIT_MANIFEST_KEY_ALL               = 0,
     SUIT_MANIFEST_KEY_INVALID           = 0,
     SUIT_MANIFEST_VERSION               = 1,
     SUIT_MANIFEST_SEQUENCE_NUMBER       = 2,
@@ -155,10 +156,10 @@ typedef enum suit_compression_algorithm {
     SUIT_COMPRESSION_ALGORITHM_ZSTD     = 3,
 } suit_compression_algorithm_t;
 
-typedef enum suit_unpack_info_key {
-    SUIT_UNPACK_INVALID     = 0,
-    SUIT_UNPACK_ALGORITHM   = 1,
-} suit_unpack_info_key_t;
+typedef struct suit_compression_info {
+    suit_compression_algorithm_t    algorithm;
+    //??                            compression_info_extensions;
+} suit_compression_info_t;
 
 typedef enum suit_unpack_algorithm {
     SUIT_UNPACK_ALGORITHM_HEX   = 1,
@@ -185,6 +186,13 @@ typedef enum suit_text_component_key {
     SUIT_TEXT_COMPONENT_VERSION     = 6,
     SUIT_TEXT_VERSION_REQUIRED      = 7,
 } suit_text_component_key_t;
+
+/* for suit-parameter-strict-order */
+typedef enum suit_parameter_bool {
+    SUIT_PARAMETER_DEFAULT          = 0,
+    SUIT_PARAMETER_TRUE             = 1,
+    SUIT_PARAMETER_FALSE            = 2,
+} suit_parameter_bool_t;
 
 /*
  * bstr
@@ -417,10 +425,6 @@ typedef struct suit_encode {
 } suit_encode_t;
 
 typedef struct t_cose_key t_cose_key;
-
-suit_err_t suit_qcbor_get_next(QCBORDecodeContext *message, QCBORItem *item, uint8_t data_type);
-suit_err_t suit_qcbor_get(QCBORDecodeContext *message, QCBORItem *item, bool next, uint8_t data_type);
-size_t suit_qcbor_calc_rollback(QCBORItem *item);
 
 /*!
     \brief  Decode SUIT binary.

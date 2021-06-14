@@ -217,5 +217,8 @@ suit_err_t suit_verify_sha3_384(const uint8_t *tgt_ptr, const size_t tgt_len, co
  */
 suit_err_t suit_verify_sha3_512(const uint8_t *tgt_ptr, const size_t tgt_len, const uint8_t *digest_bytes_ptr, const size_t digest_bytes_len);
 
+suit_err_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest);
+suit_err_t suit_verify_item(QCBORDecodeContext *context, QCBORItem *item, suit_digest_t *digest, bool suit_install);
+
 #endif /* SUIT_DIGEST_H */
 
