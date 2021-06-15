@@ -20,9 +20,9 @@
     \brief  Declarations of structures and functions
  */
 
-typedef uint8_t suit_condition_t;
-
 typedef struct suit_install {
+    uint64_t                    command_exists;
+
     suit_component_identifier_t component;
 
     /* image info */
@@ -36,14 +36,18 @@ typedef struct suit_install {
     uint64_t                    offset;
 
     /* condition info */
-    suit_condition_t            condition_vendor_id;
-    suit_condition_t            condition_class_id;
+    struct {
+        uint64_t                vendor_id;
+        uint64_t                class_id;
+    } condition;
 } suit_install_t;
 
 /**
  * common commands for a specific component
  */
-typedef struct suit_common_params {
+typedef struct suit_common_args {
+    uint64_t                    manifest_sequence_number;
+
     /* SUIT_Dependencies */
     //??
 
@@ -51,46 +55,65 @@ typedef struct suit_common_params {
     suit_components_t           components;
 
     /* SUIT_Common_Sequence */
+    /* SUIT_Conditions */
     struct {
+        uint64_t                    vendor_identifier;
+        uint64_t                    class_identifier;
+        uint64_t                    image_match;
+        uint64_t                    use_before;
+        uint64_t                    component_offset;
+        uint64_t                    abort;
+        uint64_t                    device_identifier;
+        uint64_t                    image_not_match;
+        uint64_t                    minimum_battery;
+        uint64_t                    update_authorized;
+        uint64_t                    version;
+    } condition;
 
-        /* SUIT_Parameters */
-        struct {
-            suit_compression_info_t     compression_info;
+    /* SUIT_Directives */
+    struct {
+        uint64_t                    directive_exists;
+    } directive;
 
-            /* uri is combined in uri-list */
-            //suit_buf_t                uri;
+    /* SUIT_Parameters */
+    struct {
+        uint64_t                    parameter_exists;
 
-            //??                        source_component;
+        suit_compression_info_t     compression_info;
 
-            /* used in suit-directive-run */
-            suit_buf_t                  run_args;
+        /* uri is combined in uri-list */
+        //suit_buf_t                uri;
 
-            /* positive minimum battery level in mWh */
-            int64_t                     minimum_battery;
+        //??                        source_component;
 
-            /* the value is not defined, though 0 means "NOT GIVEN" here */
-            int64_t                     update_priority;
+        /* used in suit-directive-run */
+        suit_buf_t                  run_args;
 
-            /* processed if suit-condition-version is specified */
-            suit_buf_t                  version;
+        /* positive minimum battery level in mWh */
+        int64_t                     minimum_battery;
 
-            //??                        wait_info;
+        /* the value is not defined, though 0 means "NOT GIVEN" here */
+        int64_t                     update_priority;
 
-            /* decoded from both suit-parameter-uri and suit-parameter-uri-list,
-               and will be used one-by-one with its array order */
-            suit_buf_t                  uri_list[SUIT_MAX_ARRAY_LENGTH];
+        /* processed if suit-condition-version is specified */
+        suit_buf_t                  version;
 
-            //??                        fetch_arguments;
+        //??                        wait_info;
 
-            /* default True */
-            suit_parameter_bool_t       strict_order;
+        /* decoded from both suit-parameter-uri and suit-parameter-uri-list,
+           and will be used one-by-one with its array order */
+        suit_buf_t                  uri_list[SUIT_MAX_ARRAY_LENGTH];
 
-            /* default True if suit-directive-try-each is involved,
-               default False if suit-directive-run-sequence is invoked */
-            suit_parameter_bool_t       soft_failure;
-        } parameter;
-    } common_commands;
-} suit_common_params_t;
+        //??                        fetch_arguments;
+
+        /* default True */
+        suit_parameter_bool_t       strict_order;
+
+        /* default True if suit-directive-try-each is involved,
+           default False if suit-directive-run-sequence is invoked */
+        suit_parameter_bool_t       soft_failure;
+    } parameter;
+} suit_common_args_t;
 
 typedef struct suit_inputs {
     size_t manifest_len;
