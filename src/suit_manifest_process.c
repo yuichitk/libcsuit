@@ -23,6 +23,14 @@
     One or more manifests may depend other manifests.
  */
 
+suit_err_t suit_process_install(QCBORDecodeContext *context,
+                                suit_process_t *suit_process) {
+    QCBORDecode_EnterBstrWrapped(context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
+    // TODO:
+    QCBORDecode_ExitBstrWrapped(context);
+    return SUIT_SUCCESS;
+}
+
 /*
     component_index
         Negative: All
@@ -147,14 +155,15 @@ out:
     return result;
 }
 
-suit_err_t suit_process_manifest(QCBORDecodeContext *context, suit_digest_t *digest, suit_process_t *suit_process) {
+suit_err_t suit_process_manifest(QCBORDecodeContext *context,
+                                 suit_digest_t *digest,
+                                 suit_common_args_t *suit_common_args,
+                                 suit_process_t *suit_process) {
     suit_err_t result = SUIT_SUCCESS;
     QCBORError error;
     QCBORItem item;
     UsefulBufC suit_common_buf;
     suit_common_buf.len = 0;
-    suit_common_args_t suit_common_args = {0};
-
     union {
         int64_t int64;
         uint64_t uint64;
@@ -180,12 +189,14 @@ suit_err_t suit_process_manifest(QCBORDecodeContext *context, suit_digest_t *dig
             break;
         case SUIT_COMMON:
             QCBORDecode_GetByteString(context, &suit_common_buf);
-            suit_process_common(suit_common_buf, -1, 0, suit_process, &suit_common_args);
+            suit_process_common(suit_common_buf, -1, 0, suit_process, suit_common_args);
             break;
         case SUIT_MANIFEST_SEQUENCE_NUMBER:
-            QCBORDecode_GetUInt64(context, &suit_common_args.manifest_sequence_number);
+            QCBORDecode_GetUInt64(context, &suit_common_args->manifest_sequence_number);
             break;
         case SUIT_INSTALL:
+            suit_process_install(context, suit_process);
+            break;
         case SUIT_VALIDATE:
         case SUIT_RUN:
             /* TODO */
@@ -291,6 +302,7 @@ suit_err_t suit_process_envelopes(suit_process_t *suit_process) {
             }
             int64_t label = item.label.int64;
             switch (label) {
+                break;
             case SUIT_AUTHENTICATION:
                 suit_process_authentication_wrapper(&context, suit_inputs, &digests[i]);
                 break;
@@ -304,8 +316,16 @@ suit_err_t suit_process_envelopes(suit_process_t *suit_process) {
                 }
                 break;
             case SUIT_DELEGATION:
+                // fall through
+
+            /* Severed Members */
+            case SUIT_INSTALL:
+            case SUIT_DEPENDENCY_RESOLUTION:
+            case SUIT_PAYLOAD_FETCH:
+            case SUIT_TEXT:
+            case SUIT_COSWID:
                 QCBORDecode_GetByteString(&context, &val.string);
-                break;
+
             default:
                 result = SUIT_ERR_NOT_IMPLEMENTED;
                 break;
@@ -323,6 +343,8 @@ suit_err_t suit_process_envelopes(suit_process_t *suit_process) {
 
     /* second, parse & process fetch & check the digest from each manifest */
     for (size_t i = 0; i < suit_inputs->manifest_len; i++) {
+        suit_common_args_t suit_common_args = {0};
+
         QCBORDecode_Init(&context,
                          (UsefulBufC){suit_inputs->manifests[i].ptr, suit_inputs->manifests[i].len},
                          QCBOR_DECODE_MODE_NORMAL);
@@ -336,13 +358,25 @@ suit_err_t suit_process_envelopes(suit_process_t *suit_process) {
             int64_t label = item.label.int64;
             switch (label) {
             case SUIT_MANIFEST:
-                result = suit_process_manifest(&context, &digests[i], suit_process);
+                result = suit_process_manifest(&context, &digests[i], &suit_common_args, suit_process);
                 break;
             case SUIT_DELEGATION:
                 /* TODO */
             case SUIT_AUTHENTICATION:
                 /* Skip */
                 QCBORDecode_GetByteString(&context, &val.string);
+                break;
+
+            /* Severed Members */
+            case SUIT_INSTALL:
+                //TODO: suit_verify_digest(context, suit_common_args.signatures.install);
+                suit_process_install(&context, suit_process);
+                break;
+            case SUIT_DEPENDENCY_RESOLUTION:
+            case SUIT_PAYLOAD_FETCH:
+            case SUIT_TEXT:
+            case SUIT_COSWID:
+                result = SUIT_ERR_NOT_IMPLEMENTED;
                 break;
             }
             if (result != SUIT_SUCCESS) {

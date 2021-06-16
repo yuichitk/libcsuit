@@ -113,6 +113,15 @@ typedef struct suit_common_args {
            default False if suit-directive-run-sequence is invoked */
         suit_parameter_bool_t       soft_failure;
     } parameter;
+
+    /* SUIT_Digest of severed members */
+    struct {
+        suit_digest_t dependency_resolution;
+        suit_digest_t payload_fetch;
+        suit_digest_t install;
+        suit_digest_t text;
+        suit_digest_t coswid;
+    } signatures;
 } suit_common_args_t;
 
 typedef struct suit_inputs {
