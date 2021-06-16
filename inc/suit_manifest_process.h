@@ -130,6 +130,43 @@ typedef struct suit_process {
 
 void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);
 suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, suit_inputs_t *suit_inputs, suit_digest_t *digest);
+
+/*!
+    \brief  Decode & Process SUIT binary
+
+    \param[in]      suit_process    Input struct of libcsuit including manifests, public keys, callback functions, etc.
+
+    \return         This returns one of the error codes defined by \ref suit_err_t.
+
+    Process one or more SUIT_Envelope(s) like below.
+    Libcsuit call suit_install, suit_run, ... indicated by function pointers in suit_process.
+    If any error occurred, on_error callback function will be called if set.
+
+    \code{.unparsed}
+    +-App---------------------------+
+    | main() {                      |
+    |   prepare_keys();             |
+    |   create_suit_process();      |
+    |   while {                     |
+    |     fetch_manifests();        |
+    |     update_suit_process();    |    +-libcsuit------------------------+
+    |     suit_process_envelopes(); |===>| suit_process_envelops() {       |
+    |   }                           |    |   decode_and_check_digests();   |
+    | }                             |    |   for (m in manifests) {        |
+    |                               |    |     decode_common(m);           |
+    | install_callback() {          |<===|     decode_and_call_install(m); |
+    |   get_image(uri, ptr);        |    |     (wait)                      |
+    |   return SUIT_SUCCESS;        |===>|     if (!install_success)       |
+    | }                             |    |       return SUIT_ERR_FATAL;    |
+    | error_callback() {            |    |     check_image_digest(m, ptr)  |
+    |   // do something             |    |     ...                         |
+    |   if (fatal)                  |    |   }                             |
+    |     return SUIT_ERR_FATAL;    |    | }                               |
+    |   return SUIT_SUCCESS;        |    +---------------------------------+
+    | }                             |
+    +-------------------------------+
+    \endcode
+ */
 suit_err_t suit_process_envelopes(suit_process_t *suit_process);
 
 #endif /* SUIT_MANIFEST_PROCESS_H */
