@@ -20,10 +20,34 @@
     \brief  Declarations of structures and functions
  */
 
-typedef struct suit_install {
+#define BIT(nr) (1UL << (nr))
+#define SUIT_PARAMETER_CONTAINS_VENDOR_IDENTIFIER BIT(SUIT_PARAMETER_VENDOR_IDENTIFIER)
+#define SUIT_PARAMETER_CONTAINS_URI BIT(SUIT_PARAMETER_URI)
+
+typedef struct suit_on_error_args {
+    suit_envelope_key_t level0;
+    union {
+        suit_manifest_key_t manifest_key;
+    } level1;
+    union {
+        suit_rep_policy_key_t condition_directive;
+        suit_text_key_t text_key;
+    } level2;
+    union {
+        suit_parameter_key_t parameter;
+        suit_text_component_key_t text_component_key;
+    } level3;
+
+    QCBORError qcbor_error;
+    suit_err_t suit_error;
+} suit_on_error_args_t;
+
+typedef struct suit_install_args {
     uint64_t                    command_exists;
 
-    suit_component_identifier_t component;
+    uint64_t                    manifest_sequence_number;
+
+    const suit_component_identifier_t *component;
 
     /* image info */
     suit_buf_t                  vendor_id;
@@ -40,7 +64,7 @@ typedef struct suit_install {
         uint64_t                vendor_id;
         uint64_t                class_id;
     } condition;
-} suit_install_t;
+} suit_install_args_t;
 
 /**
  * common commands for a specific component
@@ -77,9 +101,17 @@ typedef struct suit_common_args {
 
     /* SUIT_Parameters */
     struct {
-        uint64_t                    parameter_exists;
+        uint64_t                    exists;
 
+        suit_buf_t                  vendor_id;
+        suit_buf_t                  class_id;
+        suit_digest_t               image_digest;
+        uint64_t                    image_size;
+        uint64_t                    use_before;
+
+        suit_encryption_info_t      encryption_info;
         suit_compression_info_t     compression_info;
+        suit_unpack_info_t          unpack_info;
 
         /* uri is combined in uri-list */
         //suit_buf_t                uri;
@@ -134,7 +166,8 @@ typedef struct suit_inputs {
 typedef struct suit_process {
     uint8_t mode;
     suit_inputs_t suit_inputs;
-    suit_err_t (*suit_install)(suit_install_t *install);
+    suit_err_t (*suit_install)(suit_install_args_t *install);
+    suit_err_t (*suit_on_error)(suit_on_error_args_t *error);
 } suit_process_t;
 
 void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);

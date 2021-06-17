@@ -23,12 +23,140 @@
     One or more manifests may depend other manifests.
  */
 
-suit_err_t suit_process_install(QCBORDecodeContext *context,
-                                suit_process_t *suit_process) {
-    QCBORDecode_EnterBstrWrapped(context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
-    // TODO:
-    QCBORDecode_ExitBstrWrapped(context);
+suit_err_t suit_in_component_index(QCBORDecodeContext *context,
+                                   const uint64_t component_index) {
+    // out of the current-list, by default
+    suit_err_t result = SUIT_ERR_NO_MORE_ITEMS;
+    QCBORItem item;
+    union {
+        int64_t int64;
+        uint64_t uint64;
+    } val;
+
+    QCBORDecode_PeekNext(context, &item);
+    switch (item.uDataType) {
+    case QCBOR_TYPE_INT64:
+        QCBORDecode_GetInt64(context, &val.int64);
+        if (component_index == val.int64) {
+            result = SUIT_SUCCESS;
+        }
+        break;
+    case QCBOR_TYPE_UINT64:
+        QCBORDecode_GetUInt64(context, &val.uint64);
+        if (component_index == val.uint64) {
+            result = SUIT_SUCCESS;
+        }
+        break;
+    case QCBOR_TYPE_ARRAY:
+        QCBORDecode_EnterArray(context, &item);
+        for (size_t i = 0; i < item.val.uCount; i++) {
+            // XXX: may buggy with negative inputs
+            QCBORDecode_GetUInt64(context, &val.uint64);
+            if (component_index == val.uint64) {
+                result = SUIT_SUCCESS;
+                break;
+            }
+        }
+        QCBORDecode_ExitArray(context);
+        break;
+    case QCBOR_TYPE_TRUE:
+        QCBORDecode_GetNext(context, &item);
+        result = SUIT_SUCCESS;
+        break;
+    case QCBOR_TYPE_FALSE:
+        QCBORDecode_GetNext(context, &item);
+        break;
+    default:
+        result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
+    }
+    return result;
+}
+
+suit_err_t suit_set_install_from_install(const uint64_t component_index,
+                                         UsefulBufC suit_install_buf,
+                                         suit_install_args_t *suit_install_args) {
+    suit_err_t result = SUIT_SUCCESS;
+    bool is_the_component = true;
+
+    QCBORDecodeContext context;
+    QCBORItem item;
+    QCBORError error;
+    QCBORDecode_Init(&context, suit_install_buf, QCBOR_DECODE_MODE_NORMAL);
+
+    QCBORDecode_EnterBstrWrapped(&context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
+    QCBORDecode_EnterArray(&context, &item);
+    const size_t length = item.val.uCount;
+    for (size_t i = 0; i < length; i += 2) {
+        int64_t label;
+        QCBORDecode_GetInt64(&context, &label);
+        if (label == SUIT_DIRECTIVE_SET_COMPONENT_INDEX) {
+            result = suit_in_component_index(&context, component_index);
+            is_the_component = (result == SUIT_SUCCESS) ? true : false;
+        }
+        else if (!is_the_component) {
+            QCBORDecode_GetNext(&context, &item);
+
+        }
+        else {
+            switch (label) {
+                // TODO
+
+            }
+            break;
+        }
+    }
+    QCBORDecode_ExitArray(&context);
+    QCBORDecode_ExitBstrWrapped(&context);
+    error = QCBORDecode_Finish(&context);
+
+    if (result == SUIT_SUCCESS && error != QCBOR_SUCCESS) {
+        result = suit_error_from_qcbor_error(error);
+    }
+    return result;
+}
+
+
+suit_err_t suit_set_install_from_common(const uint64_t component_index,
+                                        const suit_common_args_t *suit_common_args,
+                                        suit_install_args_t *suit_install_args) {
+    if (suit_common_args->components.len >= component_index) {
+        return SUIT_ERR_NO_MORE_ITEMS;
+    }
+
+    suit_install_args->manifest_sequence_number = suit_common_args->manifest_sequence_number;
+    suit_install_args->component = &suit_common_args->components.comp_id[component_index];
+
+    if (suit_common_args->parameter.exists & SUIT_PARAMETER_CONTAINS_VENDOR_IDENTIFIER) {
+        suit_install_args->vendor_id = suit_common_args->parameter.vendor_id;
+    }
     return SUIT_SUCCESS;
+}
+
+suit_err_t suit_process_install(QCBORDecodeContext *context,
+                                suit_common_args_t *suit_common_args,
+                                suit_process_t *suit_process) {
+    suit_err_t result = SUIT_SUCCESS;
+    UsefulBufC suit_install_buf;
+    QCBORDecode_GetByteString(context, &suit_install_buf);
+
+    for (size_t i = 0; i < suit_common_args->components.len; i++) {
+        suit_install_args_t suit_install_args = {0};
+
+        result = suit_set_install_from_common(i, suit_common_args, &suit_install_args);
+        if (result != SUIT_SUCCESS) {
+            goto out;
+        }
+        result = suit_set_install_from_install(i, suit_install_buf, &suit_install_args);
+        if (result != SUIT_SUCCESS) {
+            goto out;
+        }
+        result = suit_process->suit_install(&suit_install_args);
+        if (result != SUIT_SUCCESS) {
+            goto out;
+        }
+    }
+out:
+    return result;
 }
 
 /*
@@ -44,7 +172,7 @@ suit_err_t suit_process_common(UsefulBufC common, const int64_t component_index,
 
     suit_components_t components;
     union {
-        suit_install_t install;
+        suit_install_args_t install;
     } action_params = {0};
     size_t params_len;
 
@@ -195,7 +323,7 @@ suit_err_t suit_process_manifest(QCBORDecodeContext *context,
             QCBORDecode_GetUInt64(context, &suit_common_args->manifest_sequence_number);
             break;
         case SUIT_INSTALL:
-            suit_process_install(context, suit_process);
+            suit_process_install(context, suit_common_args, suit_process);
             break;
         case SUIT_VALIDATE:
         case SUIT_RUN:
@@ -370,7 +498,7 @@ suit_err_t suit_process_envelopes(suit_process_t *suit_process) {
             /* Severed Members */
             case SUIT_INSTALL:
                 //TODO: suit_verify_digest(context, suit_common_args.signatures.install);
-                suit_process_install(&context, suit_process);
+                suit_process_install(&context, &suit_common_args, suit_process);
                 break;
             case SUIT_DEPENDENCY_RESOLUTION:
             case SUIT_PAYLOAD_FETCH:

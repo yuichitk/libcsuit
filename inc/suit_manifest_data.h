@@ -144,6 +144,11 @@ typedef enum suit_parameter_key {
     SUIT_PARAMETER_URI_LIST             = 30,
 } suit_parameter_key_t;
 
+// COSE_Encrypt_Tagged/COSE_Encrypt0_Tagged
+typedef struct suit_encryption_info {
+    //? TODO
+} suit_encryption_info_t;
+
 typedef enum suit_compression_info_key {
     SUIT_COMPRESSION_INVALID    = 0,
     SUIT_COMPRESSION_ALGORITHM  = 1,
@@ -168,13 +173,18 @@ typedef enum suit_unpack_algorithm {
     SUIT_UNPACK_ALGORITHM_SREC  = 4,
 } suit_unpack_algorithm_t;
 
+typedef struct suit_unpack_info {
+    suit_unpack_algorithm_t    algorithm;
+    //??                        unpack_info_extensions;
+} suit_unpack_info_t;
+
 typedef enum suit_text_key {
     SUIT_TEXT_TYPE_INVALID          = 0,
     SUIT_TEXT_MANIFEST_DESCRIPTION  = 1,
     SUIT_TEXT_UPDATE_DESCRIPTION    = 2,
     SUIT_TEXT_MANIFEST_JSON_SOURCE  = 3,
     SUIT_TEXT_MANIFEST_YAML_SOURCE  = 4,
-} suit_text_key;
+} suit_text_key_t;
 
 typedef enum suit_text_component_key {
     SUIT_TEXT_CONTENT_INVALID       = 0,
