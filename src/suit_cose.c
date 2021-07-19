@@ -150,7 +150,7 @@ suit_err_t suit_create_es521_public_key(const char *public_key, struct t_cose_ke
 }
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
 
-suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload) {
+suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC returned_payload) {
     suit_err_t result = SUIT_SUCCESS;
     struct t_cose_sign1_verify_ctx verify_ctx;
     struct t_cose_parameters parameters;
@@ -162,10 +162,11 @@ suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_
 
     t_cose_sign1_verify_init(&verify_ctx, 0);
     t_cose_sign1_set_verification_key(&verify_ctx, *public_key);
-    cose_result = t_cose_sign1_verify(&verify_ctx,
-                                      *signed_cose,
-                                      returned_payload,
-                                      &parameters);
+    cose_result = t_cose_sign1_verify_detached(&verify_ctx,
+                                               *signed_cose,
+                                               NULL_Q_USEFUL_BUF_C,
+                                               returned_payload,
+                                               &parameters);
     if (cose_result != T_COSE_SUCCESS) {
         result = SUIT_ERR_FAILED_TO_VERIFY;
     }
@@ -261,7 +262,7 @@ suit_err_t suit_sign_cose_sign1(const UsefulBufC *raw_cbor, const struct t_cose_
 
     t_cose_sign1_sign_init(&sign_ctx, 0, cose_algorithm_id);
     t_cose_sign1_set_signing_key(&sign_ctx, *key_pair, NULL_Q_USEFUL_BUF_C);
-    cose_result = t_cose_sign1_sign(&sign_ctx, *raw_cbor, signed_cose_buffer, &tmp_signed_cose);
+    cose_result = t_cose_sign1_sign_detached(&sign_ctx, NULL_Q_USEFUL_BUF_C, *raw_cbor, signed_cose_buffer, &tmp_signed_cose);
     if (cose_result != T_COSE_SUCCESS) {
         return SUIT_ERR_FATAL;
     }

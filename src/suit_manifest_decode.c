@@ -306,6 +306,7 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
                 case SUIT_DIRECTIVE_FETCH_URI_LIST:
                 case SUIT_DIRECTIVE_SWAP:
                 case SUIT_DIRECTIVE_RUN_SEQUENCE:
+                case SUIT_DIRECTIVE_GARBAGE_COLLECT:
                 default:
                     // TODO
                     suit_debug_print(context, item, "suit_decode_directive_or_condition", QCBOR_TYPE_ANY);
@@ -517,22 +518,15 @@ suit_err_t suit_decode_dependencies_from_item(uint8_t mode, QCBORDecodeContext *
     return result;
 }
 
-suit_err_t suit_decode_authentication_block(uint8_t mode, suit_buf_t *buf, suit_digest_t *digest, const struct t_cose_key *public_key) {
+suit_err_t suit_decode_authentication_block(uint8_t mode, suit_buf_t *buf, suit_buf_t *digest_buf, const struct t_cose_key *public_key) {
     UsefulBufC signed_cose = {buf->ptr, buf->len};
     suit_err_t result;
     cose_tag_key_t cose_tag = suit_judge_cose_tag_from_buf(&signed_cose);
 
-    UsefulBufC returned_payload;
+    UsefulBufC returned_payload = {.ptr = digest_buf->ptr, .len = digest_buf->len};
     switch (cose_tag) {
         case COSE_SIGN1_TAGGED:
-            result = suit_verify_cose_sign1(&signed_cose, public_key, &returned_payload);
-            if (result != SUIT_SUCCESS) {
-                return result;
-            }
-            suit_buf_t payload_buf;
-            payload_buf.ptr = returned_payload.ptr;
-            payload_buf.len = returned_payload.len;
-            result = suit_decode_digest(mode, &payload_buf, digest);
+            result = suit_verify_cose_sign1(&signed_cose, public_key, returned_payload);
             break;
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
@@ -760,6 +754,40 @@ suit_err_t suit_decode_text_from_bstr(uint8_t mode, QCBORDecodeContext *context,
     return result;
 }
 
+suit_err_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
+    suit_err_t result;
+
+    switch (digest->algorithm_id) {
+        case SUIT_ALGORITHM_ID_SHA256:
+            result = suit_verify_sha256(buf->ptr, buf->len, digest->bytes.ptr, digest->bytes.len);
+            break;
+        case SUIT_ALGORITHM_ID_SHA224:
+        case SUIT_ALGORITHM_ID_SHA384:
+        case SUIT_ALGORITHM_ID_SHA512:
+        case SUIT_ALGORITHM_ID_SHA3_224:
+        case SUIT_ALGORITHM_ID_SHA3_256:
+        case SUIT_ALGORITHM_ID_SHA3_384:
+        case SUIT_ALGORITHM_ID_SHA3_512:
+        default:
+            result = SUIT_ERR_NOT_IMPLEMENTED;
+    }
+    return result;
+}
+
+suit_err_t suit_verify_item(QCBORDecodeContext *context, QCBORItem *item, suit_digest_t *digest) {
+    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+        return SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
+    }
+    if (digest->bytes.ptr == NULL) {
+        return SUIT_ERR_FAILED_TO_VERIFY;
+    }
+    suit_buf_t buf;
+    size_t cursor = UsefulInputBuf_Tell(&context->InBuf);
+    buf.len = suit_qcbor_calc_rollback(item);
+    buf.ptr = (uint8_t *)context->InBuf.UB.ptr + (cursor - buf.len);
+    return suit_verify_digest(&buf, digest);
+}
+
 suit_err_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_manifest_t *manifest) {
     manifest->sev_man_mem.dependency_resolution_status = SUIT_SEVERABLE_INVALID;
     manifest->sev_man_mem.payload_fetch_status = SUIT_SEVERABLE_INVALID;
@@ -917,7 +945,7 @@ suit_err_t suit_decode_manifest_from_bstr(uint8_t mode, QCBORDecodeContext *cont
     }
 
     /* verify the SUIT_Manifest with SUIT_Digest */
-    result = suit_verify_item(context, item, digest, true);
+    result = suit_verify_item(context, item, digest);
     if (!suit_continue(mode, result)) {
         return result;
     }
@@ -939,8 +967,20 @@ suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecod
     }
 
     size_t len = item->val.uCount;
-    wrapper->len = 0;
-    for (size_t i = 0; i < len; i++) {
+
+    result = suit_qcbor_get_next(context, item, QCBOR_TYPE_BYTE_STRING);
+    if (!suit_continue(mode, result)) {
+        return result;
+    }
+    suit_buf_t digest_buf;
+    digest_buf.ptr = item->val.string.ptr;
+    digest_buf.len = item->val.string.len;
+    result = suit_decode_digest(mode, &digest_buf, &wrapper->digest);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+
+    for (size_t i = 1; i < len; i++) {
         result = suit_qcbor_get_next(context, item, QCBOR_TYPE_BYTE_STRING);
         if (!suit_continue(mode, result)) {
             break;
@@ -949,19 +989,10 @@ suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecod
         buf.ptr = item->val.string.ptr;
         buf.len = item->val.string.len;
 
-        if (i == 0) {
-            result = suit_decode_digest(mode, &buf, &wrapper->digest[0]);
-        }
-        else {
-            result = suit_decode_authentication_block(mode, &buf, &wrapper->digest[wrapper->len], public_key);
-        }
-        if (!suit_continue(mode, result)) {
+        result = suit_decode_authentication_block(mode, &buf, &digest_buf, public_key);
+        if (result == SUIT_SUCCESS || !suit_continue(mode, result)) {
             break;
         }
-        wrapper->len++;
-    }
-    if (result != SUIT_SUCCESS && !(mode & SUIT_DECODE_MODE_PRESERVE_ON_ERROR)) {
-        wrapper->len = 0;
     }
 
     return result;
@@ -1012,7 +1043,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                      result = SUIT_ERR_FAILED_TO_VERIFY;
                      break;
                 }
-                result = suit_decode_manifest_from_bstr(mode, context, item, false, &envelope->manifest, &envelope->wrapper.digest[envelope->wrapper.len - 1]);
+                result = suit_decode_manifest_from_bstr(mode, context, item, false, &envelope->manifest, &envelope->wrapper.digest);
                 if (!suit_continue(mode, result)) {
                     break;
                 }
@@ -1028,7 +1059,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                         break;
                     }
                 }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.payload_fetch, true);
+                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.payload_fetch);
                 if (!suit_continue(mode, result)) {
                     break;
                 }
@@ -1047,7 +1078,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                         break;
                     }
                 }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.install, true);
+                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.install);
                 if (!suit_continue(mode, result)) {
                     break;
                 }
@@ -1066,7 +1097,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                         break;
                     }
                 }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.text, false);
+                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.text);
                 if (!suit_continue(mode, result)) {
                     break;
                 }
@@ -1085,7 +1116,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                         break;
                     }
                 }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.coswid, true);
+                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.coswid);
                 if (!suit_continue(mode, result)) {
                     break;
                 }

@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
     uint8_t encode_buf[MAX_FILE_BUFFER_SIZE];
     size_t encode_len = MAX_FILE_BUFFER_SIZE;
     printf("\nmain : Encode Manifest.\n");
-    result = suit_encode_envelope(&envelope, &cose_key, encode_buf, &encode_len);
+    result = suit_encode_envelope(mode, &envelope, &cose_key, encode_buf, &encode_len);
     EC_KEY_free(cose_key.k.key_ptr);
     if (result != SUIT_SUCCESS) {
         printf("main : Fail to encode. %d\n", result);
@@ -134,8 +134,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
     else if (memcmp(manifest_buf, encode_buf, manifest_len) != 0) {
-        if (memcmp(&manifest_buf[0], &encode_buf[0], 92) != 0 ||
-            memcmp(&manifest_buf[92 + 64], &encode_buf[92 + 64], manifest_len - (92 + 64))) {
+        if (memcmp(&manifest_buf[0], &encode_buf[0], 55) != 0 ||
+            memcmp(&manifest_buf[55 + 64], &encode_buf[55 + 64], manifest_len - (55 + 64))) {
             printf("main : encoded binary is differ from original\n");
             suit_print_hex_in_max(manifest_buf, manifest_len, manifest_len);
             printf("\n");
