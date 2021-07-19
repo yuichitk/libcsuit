@@ -6,32 +6,27 @@
 
 # SUIT Manifest
     B.5.  Example 4: Load and Decompress from External Storage
-    https://tools.ietf.org/html/draft-ietf-suit-manifest-11#appendix-B.5
+    https://tools.ietf.org/html/draft-ietf-suit-manifest-12#appendix-B.5
 
 
 ## CBOR Diagnostic
     / SUIT_Envelope = /
     {
-        / authentication-wrapper / 2 : bstr .cbor ({
-            digest: bstr .cbor ([
+        / authentication-wrapper / 2 : bstr .cbor ([
+            / digest / bstr .cbor ([
                 / algorithm-id / 2 / "sha256" /,
                 / digest-bytes / h'4b4c7c8c0fda76c9c9591a9db160918e2b3c96a58b0a5e4984fd4e8f9359a928'
-            ])
-            signatures : [
-                bstr .cbor (18([
-                    / protected / bstr .cbor ({
-                        / alg / 1:-7 / "ES256" /,
-                    }),
-                    / unprotected / {
-                    },
-                    / payload / bstr .cbor ([
-                        / algorithm-id / 2 / "sha256" /,
-                        / digest-bytes / h'4b4c7c8c0fda76c9c9591a9db160918e2b3c96a58b0a5e4984fd4e8f9359a928'
-                    ]),
-                    / signature / h'd721cb3415f27cfeb8ef066bb6312ba75832b57410a0c700de71cf8004ea23b9dd3c912a99fab111e9b8f2cc55c7dffcc37012decf72e44f69b3d3db8cc98cb6'
-                ]))
-            ]
-        }),
+            ]),
+            / signature / bstr .cbor (18([
+                / protected / bstr .cbor ({
+                    / alg / 1:-7 / "ES256" /,
+                }),
+                / unprotected / {
+                },
+                / payload / F6 / nil /,
+                / signature / h'd88c4953fe5a0399e69ab37fe654d1f1b957a44a46fde3e9cffdf0cdaa0456ddce9f08bc2a59895ffd70adce0e4aee8690645dcd4b7b77d401bd91e35aa115d2'
+            ]))
+        ]),
         / manifest / 3 : bstr .cbor ({
             / manifest-version / 1 : 1,
             / manifest-sequence-number / 2 : 4,
@@ -105,8 +100,8 @@
 ## CBOR binary
     A2                                      # map(2)
        02                                   # unsigned(2)
-       58 98                                # bytes(152)
-          825824820258204B4C7C8C0FDA76C9C9591A9DB160918E2B3C96A58B0A5E4984FD4E8F9359A928586FD28443A10126A05824820258204B4C7C8C0FDA76C9C9591A9DB160918E2B3C96A58B0A5E4984FD4E8F9359A9285840D721CB3415F27CFEB8EF066BB6312BA75832B57410A0C700DE71CF8004EA23B9DD3C912A99FAB111E9B8F2CC55C7DFFCC37012DECF72E44F69B3D3DB8CC98CB6
+       58 73                                # bytes(115)
+          825824820258204B4C7C8C0FDA76C9C9591A9DB160918E2B3C96A58B0A5E4984FD4E8F9359A928584AD28443A10126A0F65840D88C4953FE5A0399E69AB37FE654D1F1B957A44A46FDE3E9CFFDF0CDAA0456DDCE9F08BC2A59895FFD70ADCE0E4AEE8690645DCD4B7B77D401BD91E35AA115D2
        03                                   # unsigned(3)
        58 F1                                # bytes(241)
           A801010204035867A20283814100814102814101045858880C0014A40150FA6B4A53D5AD5FDFBE9DE663E4D41FFE02501492AF1425695E48BF429B2D51F2AB450358248202582000112233445566778899AABBCCDDEEFF0123456789ABCDEFFEDCBA98765432100E1987D0010F020F085827880C0113A115781B687474703A2F2F6578616D706C652E636F6D2F66696C652E62696E1502030F094B880C0013A116011602030F0A45840C00030F0B583A880C0213A4035824820258200123456789ABCDEFFEDCBA987654321000112233445566778899AABBCCDDEEFF0E1A00012C22130116001602030F0C45840C021702
@@ -115,7 +110,7 @@
 ## CBOR binary (extracted)
     A2                                      # map(2)
        02                                   # unsigned(2) / suit-authentication-wrapper : /
-       58 98                                # bytes(152)
+       58 73                                # bytes(115)
           # SUIT_Authentication #
           82                                # array(2)
              58 24                          # bytes(36)
@@ -124,7 +119,7 @@
                    02                       # unsigned(2) / algorithm-id : "sha256" /
                    58 20                    # bytes(32)   / digest-bytes /
                       4B4C7C8C0FDA76C9C9591A9DB160918E2B3C96A58B0A5E4984FD4E8F9359A928
-             58 6F                          # bytes(111)
+             58 4A                          # bytes(74)
                 # SUIT_Authentication_Block #
                 D2                          # tag(18) / COSE_Sign1 /
                    84                       # array(4)
@@ -134,14 +129,9 @@
                             01              # unsigned(1) / alg /
                             26              # negative(6) / -7 /
                       A0                    # map(0)
-                      58 24                 # bytes(36)
-                         # payload = SUIT_Digest #
-                         82                 # array(2)
-                            02              # unsigned(2) / algorithm-id : "sha256" /
-                            58 20           # bytes(32)   / digest-bytes /
-                               4B4C7C8C0FDA76C9C9591A9DB160918E2B3C96A58B0A5E4984FD4E8F9359A928
+                      F6                    # primitive(22) / null /
                       58 40                 # bytes(64) / signature /
-                         D721CB3415F27CFEB8EF066BB6312BA75832B57410A0C700DE71CF8004EA23B9DD3C912A99FAB111E9B8F2CC55C7DFFCC37012DECF72E44F69B3D3DB8CC98CB6
+                         D88C4953FE5A0399E69AB37FE654D1F1B957A44A46FDE3E9CFFDF0CDAA0456DDCE9F08BC2A59895FFD70ADCE0E4AEE8690645DCD4B7B77D401BD91E35AA115D2
        03                                   # unsigned(3) / manifest : /
        58 F1                                # bytes(241)
           # SUIT_Manifest #
@@ -265,4 +255,4 @@
 
 
 ## Command
-    echo -en "\xA2\x02\x58\x98\x82\x58\x24\x82\x02\x58\x20\x4B\x4C\x7C\x8C\x0F\xDA\x76\xC9\xC9\x59\x1A\x9D\xB1\x60\x91\x8E\x2B\x3C\x96\xA5\x8B\x0A\x5E\x49\x84\xFD\x4E\x8F\x93\x59\xA9\x28\x58\x6F\xD2\x84\x43\xA1\x01\x26\xA0\x58\x24\x82\x02\x58\x20\x4B\x4C\x7C\x8C\x0F\xDA\x76\xC9\xC9\x59\x1A\x9D\xB1\x60\x91\x8E\x2B\x3C\x96\xA5\x8B\x0A\x5E\x49\x84\xFD\x4E\x8F\x93\x59\xA9\x28\x58\x40\xD7\x21\xCB\x34\x15\xF2\x7C\xFE\xB8\xEF\x06\x6B\xB6\x31\x2B\xA7\x58\x32\xB5\x74\x10\xA0\xC7\x00\xDE\x71\xCF\x80\x04\xEA\x23\xB9\xDD\x3C\x91\x2A\x99\xFA\xB1\x11\xE9\xB8\xF2\xCC\x55\xC7\xDF\xFC\xC3\x70\x12\xDE\xCF\x72\xE4\x4F\x69\xB3\xD3\xDB\x8C\xC9\x8C\xB6\x03\x58\xF1\xA8\x01\x01\x02\x04\x03\x58\x67\xA2\x02\x83\x81\x41\x00\x81\x41\x02\x81\x41\x01\x04\x58\x58\x88\x0C\x00\x14\xA4\x01\x50\xFA\x6B\x4A\x53\xD5\xAD\x5F\xDF\xBE\x9D\xE6\x63\xE4\xD4\x1F\xFE\x02\x50\x14\x92\xAF\x14\x25\x69\x5E\x48\xBF\x42\x9B\x2D\x51\xF2\xAB\x45\x03\x58\x24\x82\x02\x58\x20\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF\x01\x23\x45\x67\x89\xAB\xCD\xEF\xFE\xDC\xBA\x98\x76\x54\x32\x10\x0E\x19\x87\xD0\x01\x0F\x02\x0F\x08\x58\x27\x88\x0C\x01\x13\xA1\x15\x78\x1B\x68\x74\x74\x70\x3A\x2F\x2F\x65\x78\x61\x6D\x70\x6C\x65\x2E\x63\x6F\x6D\x2F\x66\x69\x6C\x65\x2E\x62\x69\x6E\x15\x02\x03\x0F\x09\x4B\x88\x0C\x00\x13\xA1\x16\x01\x16\x02\x03\x0F\x0A\x45\x84\x0C\x00\x03\x0F\x0B\x58\x3A\x88\x0C\x02\x13\xA4\x03\x58\x24\x82\x02\x58\x20\x01\x23\x45\x67\x89\xAB\xCD\xEF\xFE\xDC\xBA\x98\x76\x54\x32\x10\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF\x0E\x1A\x00\x01\x2C\x22\x13\x01\x16\x00\x16\x02\x03\x0F\x0C\x45\x84\x0C\x02\x17\x02" > suit_manifest_exp4.cbor
+    echo -en "\xA2\x02\x58\x73\x82\x58\x24\x82\x02\x58\x20\x4B\x4C\x7C\x8C\x0F\xDA\x76\xC9\xC9\x59\x1A\x9D\xB1\x60\x91\x8E\x2B\x3C\x96\xA5\x8B\x0A\x5E\x49\x84\xFD\x4E\x8F\x93\x59\xA9\x28\x58\x4A\xD2\x84\x43\xA1\x01\x26\xA0\xF6\x58\x40\xD8\x8C\x49\x53\xFE\x5A\x03\x99\xE6\x9A\xB3\x7F\xE6\x54\xD1\xF1\xB9\x57\xA4\x4A\x46\xFD\xE3\xE9\xCF\xFD\xF0\xCD\xAA\x04\x56\xDD\xCE\x9F\x08\xBC\x2A\x59\x89\x5F\xFD\x70\xAD\xCE\x0E\x4A\xEE\x86\x90\x64\x5D\xCD\x4B\x7B\x77\xD4\x01\xBD\x91\xE3\x5A\xA1\x15\xD2\x03\x58\xF1\xA8\x01\x01\x02\x04\x03\x58\x67\xA2\x02\x83\x81\x41\x00\x81\x41\x02\x81\x41\x01\x04\x58\x58\x88\x0C\x00\x14\xA4\x01\x50\xFA\x6B\x4A\x53\xD5\xAD\x5F\xDF\xBE\x9D\xE6\x63\xE4\xD4\x1F\xFE\x02\x50\x14\x92\xAF\x14\x25\x69\x5E\x48\xBF\x42\x9B\x2D\x51\xF2\xAB\x45\x03\x58\x24\x82\x02\x58\x20\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF\x01\x23\x45\x67\x89\xAB\xCD\xEF\xFE\xDC\xBA\x98\x76\x54\x32\x10\x0E\x19\x87\xD0\x01\x0F\x02\x0F\x08\x58\x27\x88\x0C\x01\x13\xA1\x15\x78\x1B\x68\x74\x74\x70\x3A\x2F\x2F\x65\x78\x61\x6D\x70\x6C\x65\x2E\x63\x6F\x6D\x2F\x66\x69\x6C\x65\x2E\x62\x69\x6E\x15\x02\x03\x0F\x09\x4B\x88\x0C\x00\x13\xA1\x16\x01\x16\x02\x03\x0F\x0A\x45\x84\x0C\x00\x03\x0F\x0B\x58\x3A\x88\x0C\x02\x13\xA4\x03\x58\x24\x82\x02\x58\x20\x01\x23\x45\x67\x89\xAB\xCD\xEF\xFE\xDC\xBA\x98\x76\x54\x32\x10\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF\x0E\x1A\x00\x01\x2C\x22\x13\x01\x16\x00\x16\x02\x03\x0F\x0C\x45\x84\x0C\x02\x17\x02" > suit_manifest_exp4.cbor

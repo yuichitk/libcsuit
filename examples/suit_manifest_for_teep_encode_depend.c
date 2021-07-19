@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
     uint8_t encode_buf[MAX_FILE_BUFFER_SIZE];
     size_t encode_len = MAX_FILE_BUFFER_SIZE;
     printf("\nmain : Encode Manifest.\n");
-    result = suit_encode_envelope(&envelope, &key_pair, encode_buf, &encode_len);
+    result = suit_encode_envelope(mode, &envelope, &key_pair, encode_buf, &encode_len);
     if (result != SUIT_SUCCESS) {
         printf("main : Fail to encode. %d\n", result);
         return EXIT_FAILURE;
