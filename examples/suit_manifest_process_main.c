@@ -58,10 +58,10 @@ size_t read_file(const char *file_path, const size_t write_buf_len, uint8_t *wri
     return read_len;
 }
 
-suit_err_t print_install(suit_install_t *install)
+suit_err_t print_install(suit_install_args_t *install_args)
 {
     printf("suit-install : {");
-    printf("  uri: %s", install->uri.ptr);
+    printf("  uri: %s", install_args->uri.ptr);
     return SUIT_SUCCESS;
 }
 
@@ -75,14 +75,11 @@ int main(int argc, char *argv[]) {
     int i;
     char char_public_keys[NUM_PUBLIC_KEYS][PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
 
-    suit_process_t suit_process = {0};
-    suit_process.mode = SUIT_DECODE_MODE_STRICT;
-#ifdef SKIP_ERROR
-    suit_process.mode = SUIT_DECODE_MODE_SKIP_ANY_ERROR;
-#endif
-    suit_process.suit_install = print_install;
-    suit_process.suit_inputs.manifest_len = 0;
-    suit_process.suit_inputs.key_len = NUM_PUBLIC_KEYS;
+    suit_inputs_t suit_inputs = {0};
+    suit_callbacks_t suit_callbacks = {0};
+    suit_callbacks.suit_install = print_install;
+    suit_inputs.manifest_len = 0;
+    suit_inputs.key_len = NUM_PUBLIC_KEYS;
 
     // Read key from der file.
     // This code is only available for openssl prime256v1.
@@ -90,13 +87,13 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < NUM_PUBLIC_KEYS; i++) {
         read_prime256v1_public_key(der_public_keys[i], char_public_keys[i]);
         printf("%s\n", char_public_keys[i]);
-        result = suit_create_es256_public_key(char_public_keys[i], &suit_process.suit_inputs.public_keys[i]);
+        result = suit_create_es256_public_key(char_public_keys[i], &suit_inputs.public_keys[i]);
     }
     // Read manifest file.
     printf("\nmain : Read Manifest file.\n");
     uint8_t manifests_buf[SUIT_MAX_ARRAY_LENGTH][MAX_FILE_BUFFER_SIZE];
     for (i = 1; i < argc; i++) {
-        suit_buf_t *manifest = &suit_process.suit_inputs.manifests[i - 1];
+        suit_buf_t *manifest = &suit_inputs.manifests[i - 1];
         size_t manifest_len = read_file(argv[i], MAX_FILE_BUFFER_SIZE, manifests_buf[i - 1]);
         if (!manifest_len) {
             printf("main : Can't read Manifest file.\n");
@@ -104,12 +101,12 @@ int main(int argc, char *argv[]) {
         }
         manifest->ptr = manifests_buf[i - 1];
         manifest->len = manifest_len;
-        suit_process.suit_inputs.manifest_len++;
+        suit_inputs.manifest_len++;
     }
 
     // Decode manifest file.
     printf("\nmain : Decode Manifest file.\n");
-    result = suit_process_envelopes(&suit_process);
+    result = suit_process_envelopes(&suit_inputs, &suit_callbacks);
     if (result != SUIT_SUCCESS) {
         printf("main : Can't parse Manifest file. err=%d\n", result);
         return EXIT_FAILURE;
