@@ -137,14 +137,14 @@ int main(int argc, char *argv[]) {
     cmd_seq->commands[2].value.uint64 = 15; // report all
     */
 
-    /* install */
+    /* process-dependency */
     manifest->sev_man_mem.install_status = SUIT_SEVERABLE_IN_MANIFEST;
     suit_command_sequence_t *install = &manifest->sev_man_mem.install;
-    install->len = 3;
+    install->len = 4;
     install->commands[0].label = SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX;
     install->commands[0].value.uint64 = 0;
 
-    install->commands[1].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
+    install->commands[1].label = SUIT_DIRECTIVE_SET_PARAMETERS;
     params_list = &install->commands[1].value.params_list;
     params_list->len = 1;
 
@@ -155,8 +155,11 @@ int main(int argc, char *argv[]) {
     params_list->params[0].value.string.ptr = (uint8_t *)uri;
     params_list->params[0].value.string.len = strlen(uri);
 
-    install->commands[2].label = SUIT_DIRECTIVE_PROCESS_DEPENDENCY;
-    install->commands[2].value.uint64 = 15; // report all
+    install->commands[2].label = SUIT_DIRECTIVE_FETCH;
+    install->commands[2].value.uint64 = 15;
+
+    install->commands[3].label = SUIT_DIRECTIVE_PROCESS_DEPENDENCY;
+    install->commands[3].value.uint64 = 15; // report all
 
 
     // Print manifest.

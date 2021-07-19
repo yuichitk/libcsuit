@@ -99,16 +99,19 @@ int main(int argc, char *argv[]) {
     /* install */
     manifest->sev_man_mem.install_status = SUIT_SEVERABLE_IN_MANIFEST;
     suit_command_sequence_t *install = &manifest->sev_man_mem.install;
-    install->len = 1;
+    install->len = 2;
     install->commands[0].label = SUIT_DIRECTIVE_SET_PARAMETERS;
 
     params_list = &install->commands[0].value.params_list;
     params_list->len = 1;
 
-    uint8_t uri[] = "http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta";
+    uint8_t uri[] = "http://example.com/file.bin";
     params_list->params[0].label = SUIT_PARAMETER_URI;
     params_list->params[0].value.string.ptr = uri;
     params_list->params[0].value.string.len = sizeof(uri) - 1;
+
+    install->commands[1].label = SUIT_DIRECTIVE_FETCH;
+    install->commands[1].value.uint64 = 15;
 
 
     // Print manifest.
