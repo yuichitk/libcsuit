@@ -87,7 +87,7 @@ suit_err_t suit_sign_cose_sign1(const UsefulBufC *raw_cbor, const struct t_cose_
 
     NOTE: Currently not implemented.
  */
-suit_err_t suit_verify_cose_sign(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload);
+suit_err_t suit_verify_cose_sign(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC returned_payload);
 
 /*!
     \brief  Verify COSE_Sign1 signed payload.
@@ -110,7 +110,7 @@ suit_err_t suit_verify_cose_sign(const UsefulBufC *signed_cose, const struct t_c
     This function verifies whether the payload correspond to the signature,
     and then extracts payload to returned_payload if success.
  */
-suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload);
+suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC returned_payload);
 
 /*!
     \brief  Verify COSE_Mac signed payload.

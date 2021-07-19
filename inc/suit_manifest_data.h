@@ -98,6 +98,7 @@ typedef enum suit_rep_policy_key {
     SUIT_DIRECTIVE_FETCH_URI_LIST       = 30,
     SUIT_DIRECTIVE_SWAP                 = 31,
     SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
+    SUIT_DIRECTIVE_GARBAGE_COLLECT      = 33,
 } suit_rep_policy_key_t;
 
 #define SUIT_SEVERABLE_INVALID               0 // 0b00000000
@@ -327,8 +328,7 @@ typedef struct suit_text {
  * SUIT_Authentication_Wrapper
  */
 typedef struct suit_authentication_wrapper {
-    size_t                          len;
-    suit_digest_t                   digest[SUIT_MAX_ARRAY_LENGTH];
+    suit_digest_t                   digest;
 } suit_authentication_wrapper_t;
 
 /*
@@ -460,6 +460,7 @@ suit_err_t suit_decode_command_sequence(uint8_t mode, const suit_buf_t *buf, sui
 /*!
     \brief  Encode SUIT binary
 
+    \param[in]      mode        Controls parsing behavior, e.g. #SUIT_DECODE_MODE_STRICT.
     \param[in]      envelope    Input struct of libcsuit, correspond to the SUIT_Envelope.
     \param[in]      signing_key The private key (or key pair) to generate COSE_Sign1 signature.
     \param[out]     buf         Output buffer of the binary.
@@ -491,6 +492,6 @@ suit_err_t suit_decode_command_sequence(uint8_t mode, const suit_buf_t *buf, sui
     }
     \endcode
  */
-suit_err_t suit_encode_envelope(const suit_envelope_t *envelope, const t_cose_key *signing_key, uint8_t *buf, size_t *len);
+suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const t_cose_key *signing_key, uint8_t *buf, size_t *len);
 
 #endif  // SUIT_MANIFEST_DATA_H

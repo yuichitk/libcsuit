@@ -109,14 +109,10 @@ suit_err_t suit_generate_encoded_digest(const uint8_t *ptr, const size_t len, Us
     return result;
 }
 
-suit_err_t suit_encode_append_authentication_wrapper(const UsefulBufC *manifest, const struct t_cose_key signing_key, QCBOREncodeContext *context)
+suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, const UsefulBufC *manifest, const struct t_cose_key signing_key, QCBOREncodeContext *context)
 {
     suit_err_t result;
     UsefulBuf_MAKE_STACK_UB(digest, SUIT_ENCODE_MAX_BUFFER_SIZE);
-    struct q_useful_buf_c          signed_cose;
-    struct t_cose_sign1_sign_ctx   sign_ctx;
-
-    t_cose_sign1_sign_init(&sign_ctx, 0, T_COSE_ALGORITHM_ES256);
 
     result = suit_generate_encoded_digest(manifest->ptr, manifest->len, &digest);
     if (result != SUIT_SUCCESS) {
@@ -133,14 +129,13 @@ suit_err_t suit_encode_append_authentication_wrapper(const UsefulBufC *manifest,
 
     UsefulBuf_MAKE_STACK_UB(signature, SUIT_ENCODE_MAX_BUFFER_SIZE);
 
-    t_cose_sign1_set_signing_key(&sign_ctx, signing_key, NULL_Q_USEFUL_BUF_C);
-
-    result = t_cose_sign1_sign(&sign_ctx,
-                        c_digest,
-                        signature,
-                        &signed_cose);
-
-    QCBOREncode_AddBytes(&t_context, (UsefulBufC){.ptr = signed_cose.ptr, .len = signed_cose.len});
+    result = suit_sign_cose_sign1(&c_digest, &signing_key, &signature);
+    if (!suit_continue(mode, result)) {
+        return result;
+    }
+    if (result == SUIT_SUCCESS) {
+        QCBOREncode_AddBytes(&t_context, (UsefulBufC){.ptr = signature.ptr, .len = signature.len});
+    }
 
     QCBOREncode_CloseArray(&t_context);
 
@@ -269,6 +264,7 @@ suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, UsefulB
             case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:
             case SUIT_DIRECTIVE_RUN_SEQUENCE:
+            case SUIT_DIRECTIVE_GARBAGE_COLLECT:
             default:
                 result = SUIT_ERR_NOT_IMPLEMENTED;
         }
@@ -625,7 +621,7 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest(text_buf->ptr, text_buf->len, &digest, hash, sizeof(hash));
+        result = suit_generate_digest_include_header(text_buf->ptr, text_buf->len, &digest, hash, sizeof(hash));
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -729,7 +725,7 @@ out:
 /*
     Public function. See suit_manifest_data.h
  */
-suit_err_t suit_encode_envelope(const suit_envelope_t *envelope, const t_cose_key *signing_key, uint8_t *buf, size_t *len) {
+suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const t_cose_key *signing_key, uint8_t *buf, size_t *len) {
     suit_err_t result;
     UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
     suit_encode_t suit_encode = {
@@ -758,15 +754,16 @@ suit_err_t suit_encode_envelope(const suit_envelope_t *envelope, const t_cose_ke
     }
     */
 
-    result = suit_encode_append_authentication_wrapper(&suit_encode.manifest, *signing_key, &context);
-
+    result = suit_encode_append_authentication_wrapper(mode, &suit_encode.manifest, *signing_key, &context);
     if (result != SUIT_SUCCESS) {
         goto out;
     }
+
     result = suit_encode_append_manifest(&suit_encode, &context);
     if (result != SUIT_SUCCESS) {
         goto out;
     }
+
     result = suit_encode_append_severable_manifest_members(&suit_encode, &context);
     if (result != SUIT_SUCCESS) {
         goto out;
