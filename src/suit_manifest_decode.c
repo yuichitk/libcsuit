@@ -714,7 +714,7 @@ suit_err_t suit_decode_authentication_block(uint8_t mode, suit_buf_t *buf, suit_
     UsefulBufC returned_payload = {.ptr = digest_buf->ptr, .len = digest_buf->len};
     switch (cose_tag) {
         case COSE_SIGN1_TAGGED:
-            result = suit_verify_cose_sign1(&signed_cose, public_key, &returned_payload);
+            result = suit_verify_cose_sign1(&signed_cose, public_key, returned_payload);
             break;
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
