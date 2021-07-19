@@ -43,20 +43,20 @@ typedef struct suit_on_error_args {
 } suit_on_error_args_t;
 
 typedef struct suit_install_args {
-    uint64_t                    command_exists;
+    uint64_t                    parameter_exists;
 
     uint64_t                    manifest_sequence_number;
 
     const suit_component_identifier_t *component;
 
     /* image info */
-    suit_buf_t                  vendor_id;
-    suit_buf_t                  class_id;
+    UsefulBufC                  vendor_id;
+    UsefulBufC                  class_id;
     suit_digest_t               image_digest;
     uint64_t                    image_size;
 
     /* source info */
-    suit_buf_t                  uri;
+    UsefulBufC                  uri;
     uint64_t                    offset;
 
     /* condition info */
@@ -65,6 +65,53 @@ typedef struct suit_install_args {
         uint64_t                class_id;
     } condition;
 } suit_install_args_t;
+
+
+typedef struct suit_parameters {
+    uint64_t                    exists;
+
+    UsefulBufC                  vendor_id;
+    UsefulBufC                  class_id;
+    suit_digest_t               image_digest;
+    uint64_t                    image_size;
+    uint64_t                    use_before;
+
+    suit_encryption_info_t      encryption_info;
+    suit_compression_info_t     compression_info;
+    suit_unpack_info_t          unpack_info;
+
+    /* uri is combined in uri-list */
+    //suit_buf_t                uri;
+
+    //??                        source_component;
+
+    /* used in suit-directive-run */
+    UsefulBufC                  run_args;
+
+    /* positive minimum battery level in mWh */
+    int64_t                     minimum_battery;
+
+    /* the value is not defined, though 0 means "NOT GIVEN" here */
+    int64_t                     update_priority;
+
+    /* processed if suit-condition-version is specified */
+    UsefulBufC                  version;
+
+    //??                        wait_info;
+
+    /* decoded from both suit-parameter-uri and suit-parameter-uri-list,
+       and will be used one-by-one with its array order */
+    UsefulBufC                  uri_list[SUIT_MAX_ARRAY_LENGTH];
+
+    //??                        fetch_arguments;
+
+    /* default True */
+    suit_parameter_bool_t       strict_order;
+
+    /* default True if suit-directive-try-each is involved,
+       default False if suit-directive-run-sequence is invoked */
+    suit_parameter_bool_t       soft_failure;
+} suit_parameters_t;
 
 /**
  * common commands for a specific component
@@ -100,51 +147,7 @@ typedef struct suit_common_args {
     } directive;
 
     /* SUIT_Parameters */
-    struct {
-        uint64_t                    exists;
-
-        suit_buf_t                  vendor_id;
-        suit_buf_t                  class_id;
-        suit_digest_t               image_digest;
-        uint64_t                    image_size;
-        uint64_t                    use_before;
-
-        suit_encryption_info_t      encryption_info;
-        suit_compression_info_t     compression_info;
-        suit_unpack_info_t          unpack_info;
-
-        /* uri is combined in uri-list */
-        //suit_buf_t                uri;
-
-        //??                        source_component;
-
-        /* used in suit-directive-run */
-        suit_buf_t                  run_args;
-
-        /* positive minimum battery level in mWh */
-        int64_t                     minimum_battery;
-
-        /* the value is not defined, though 0 means "NOT GIVEN" here */
-        int64_t                     update_priority;
-
-        /* processed if suit-condition-version is specified */
-        suit_buf_t                  version;
-
-        //??                        wait_info;
-
-        /* decoded from both suit-parameter-uri and suit-parameter-uri-list,
-           and will be used one-by-one with its array order */
-        suit_buf_t                  uri_list[SUIT_MAX_ARRAY_LENGTH];
-
-        //??                        fetch_arguments;
-
-        /* default True */
-        suit_parameter_bool_t       strict_order;
-
-        /* default True if suit-directive-try-each is involved,
-           default False if suit-directive-run-sequence is invoked */
-        suit_parameter_bool_t       soft_failure;
-    } parameter;
+    suit_parameters_t parameters;
 
     /* SUIT_Digest of severed members */
     struct {
@@ -158,17 +161,15 @@ typedef struct suit_common_args {
 
 typedef struct suit_inputs {
     size_t manifest_len;
-    suit_buf_t manifests[SUIT_MAX_ARRAY_LENGTH];
+    UsefulBufC manifests[SUIT_MAX_ARRAY_LENGTH];
     size_t key_len;
     struct t_cose_key public_keys[SUIT_MAX_ARRAY_LENGTH];
 } suit_inputs_t;
 
-typedef struct suit_process {
-    uint8_t mode;
-    suit_inputs_t suit_inputs;
+typedef struct suit_callbacks {
     suit_err_t (*suit_install)(suit_install_args_t *install);
     suit_err_t (*suit_on_error)(suit_on_error_args_t *error);
-} suit_process_t;
+} suit_callbacks_t;
 
 void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);
 suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, suit_inputs_t *suit_inputs, suit_digest_t *digest);
@@ -176,7 +177,8 @@ suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, suit
 /*!
     \brief  Decode & Process SUIT binary
 
-    \param[in]      suit_process    Input struct of libcsuit including manifests, public keys, callback functions, etc.
+    \param[in]      suit_inputs     To be procceed manifests and its public keys to verify.
+    \param[in]      suit_callbacks  Callback function pointers to be called by libcsuit.
 
     \return         This returns one of the error codes defined by \ref suit_err_t.
 
@@ -209,7 +211,7 @@ suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, suit
     +-------------------------------+
     \endcode
  */
-suit_err_t suit_process_envelopes(suit_process_t *suit_process);
+suit_err_t suit_process_envelopes(suit_inputs_t *suit_inputs, suit_callbacks_t *suit_callbacks);
 
 #endif /* SUIT_MANIFEST_PROCESS_H */
 

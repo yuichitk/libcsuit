@@ -72,11 +72,44 @@ suit_err_t suit_in_component_index(QCBORDecodeContext *context,
     return result;
 }
 
-suit_err_t suit_set_install_from_install(const uint64_t component_index,
+suit_err_t suit_set_parameters(QCBORDecodeContext *context,
+                               bool to_override,
+                               suit_parameters_t *parameters) {
+    suit_err_t result = SUIT_SUCCESS;
+    QCBORItem item;
+    QCBORDecode_EnterMap(context, &item);
+
+    size_t length = item.val.uCount;
+    for (size_t i = 0; i < length; i++) {
+        result = suit_qcbor_peek_next(context, &item, QCBOR_TYPE_ANY);
+        if (result != SUIT_SUCCESS) {
+            goto out;
+        }
+        int64_t label = item.label.int64;
+
+        switch (label) {
+        case SUIT_PARAMETER_URI:
+            if (!(suit_install_args->parameter_exists & SUIT_PARAMETER_CONTAINS_URI) || to_override) {
+                QCBORDecode_GetByteString(context, &suit_install_args->uri);
+            }
+            break;
+        default:
+            QCBORDecode_GetNext(context, &item);
+        }
+    }
+
+    QCBORDecode_ExitMap(context);
+out:
+    return result;
+}
+
+suit_err_t suit_process_install_from_install(const uint64_t component_index,
                                          UsefulBufC suit_install_buf,
-                                         suit_install_args_t *suit_install_args) {
+                                         suit_common_args_t *suit_common_args,
+                                         const suit_callbacks_t *suit_callbacks) {
     suit_err_t result = SUIT_SUCCESS;
     bool is_the_component = true;
+    bool to_override = false;
 
     QCBORDecodeContext context;
     QCBORItem item;
@@ -99,6 +132,11 @@ suit_err_t suit_set_install_from_install(const uint64_t component_index,
         }
         else {
             switch (label) {
+            case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
+                override = true;
+            case SUIT_DIRECTIVE_SET_PARAMETERS:
+                suit_set_parameters(&context, override, suit_common_args);
+                override = false;
                 // TODO
 
             }
@@ -133,24 +171,19 @@ suit_err_t suit_set_install_from_common(const uint64_t component_index,
 }
 
 suit_err_t suit_process_install(QCBORDecodeContext *context,
-                                suit_common_args_t *suit_common_args,
-                                suit_process_t *suit_process) {
+                                const suit_common_args_t *suit_common_args,
+                                const suit_inputs_t *suit_inputs,
+                                const suit_callbacks_t *suit_callbacks) {
     suit_err_t result = SUIT_SUCCESS;
     UsefulBufC suit_install_buf;
     QCBORDecode_GetByteString(context, &suit_install_buf);
 
     for (size_t i = 0; i < suit_common_args->components.len; i++) {
-        suit_install_args_t suit_install_args = {0};
-
         result = suit_set_install_from_common(i, suit_common_args, &suit_install_args);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
-        result = suit_set_install_from_install(i, suit_install_buf, &suit_install_args);
-        if (result != SUIT_SUCCESS) {
-            goto out;
-        }
-        result = suit_process->suit_install(&suit_install_args);
+        result = suit_process_install_from_install(i, suit_install_buf, suit_common_args, suit_callbacks);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -164,7 +197,11 @@ out:
         Negative: All
         0 or Positive: Only the target component
  */
-suit_err_t suit_process_common(UsefulBufC common, const int64_t component_index, const suit_manifest_key_t action, suit_process_t *suit_process, suit_common_args_t *suit_common_args) {
+suit_err_t suit_process_common(UsefulBufC common,
+                               const int64_t component_index,
+                               const suit_manifest_key_t action,
+                               suit_callbacks_t *suit_callbacks,
+                               suit_common_args_t *suit_common_args) {
     suit_err_t result = SUIT_SUCCESS;
     QCBORDecodeContext context;
     QCBORError error;
@@ -245,14 +282,19 @@ suit_err_t suit_process_common(UsefulBufC common, const int64_t component_index,
                     QCBORDecode_GetUInt64(&context, &suit_common_args->condition.version);
                     break;
 
+                case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
+                    to_override = true;
+                case SUIT_DIRECTIVE_SET_PARAMETERS:
+                    suit_set_parameters(&context, to_override, &suit_common_args->parameters);
+                    to_override = false;
+                    break;
+
                 case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
                 case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
                 case SUIT_DIRECTIVE_TRY_EACH:
                 case SUIT_DIRECTIVE_DO_EACH:
                 case SUIT_DIRECTIVE_MAP_FILTER:
                 case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
-                case SUIT_DIRECTIVE_SET_PARAMETERS:
-                case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
                 case SUIT_DIRECTIVE_FETCH:
                 case SUIT_DIRECTIVE_COPY:
                 case SUIT_DIRECTIVE_RUN:
@@ -286,7 +328,7 @@ out:
 suit_err_t suit_process_manifest(QCBORDecodeContext *context,
                                  suit_digest_t *digest,
                                  suit_common_args_t *suit_common_args,
-                                 suit_process_t *suit_process) {
+                                 suit_callbacks_t *suit_callbacks) {
     suit_err_t result = SUIT_SUCCESS;
     QCBORError error;
     QCBORItem item;
@@ -367,7 +409,9 @@ void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest) {
     QCBORDecode_ExitBstrWrapped(context);
 }
 
-suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, suit_inputs_t *suit_inputs, suit_digest_t *digest) {
+suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context,
+                                               suit_inputs_t *suit_inputs,
+                                               suit_digest_t *digest) {
     suit_err_t result = SUIT_SUCCESS;
     QCBORError error = QCBOR_SUCCESS;
     QCBORItem item;
@@ -399,8 +443,7 @@ out:
 /*
     Public function. See suit_manifest_process.h
  */
-suit_err_t suit_process_envelopes(suit_process_t *suit_process) {
-    suit_inputs_t *suit_inputs = &suit_process->suit_inputs;
+suit_err_t suit_process_envelopes(suit_inputs_t *suit_inputs, suit_callbacks_t *suit_callbacks) {
     suit_digest_t digests[SUIT_MAX_ARRAY_LENGTH];
     QCBORDecodeContext context;
     QCBORError error;
@@ -453,7 +496,8 @@ suit_err_t suit_process_envelopes(suit_process_t *suit_process) {
             case SUIT_TEXT:
             case SUIT_COSWID:
                 QCBORDecode_GetByteString(&context, &val.string);
-
+                /* TODO: have to check the digest */
+                break;
             default:
                 result = SUIT_ERR_NOT_IMPLEMENTED;
                 break;
@@ -486,7 +530,7 @@ suit_err_t suit_process_envelopes(suit_process_t *suit_process) {
             int64_t label = item.label.int64;
             switch (label) {
             case SUIT_MANIFEST:
-                result = suit_process_manifest(&context, &digests[i], &suit_common_args, suit_process);
+                result = suit_process_manifest(&context, &digests[i], &suit_common_args, suit_callbacks);
                 break;
             case SUIT_DELEGATION:
                 /* TODO */
@@ -498,7 +542,7 @@ suit_err_t suit_process_envelopes(suit_process_t *suit_process) {
             /* Severed Members */
             case SUIT_INSTALL:
                 //TODO: suit_verify_digest(context, suit_common_args.signatures.install);
-                suit_process_install(&context, &suit_common_args, suit_process);
+                suit_process_install(&context, &suit_common_args, suit_callbacks);
                 break;
             case SUIT_DEPENDENCY_RESOLUTION:
             case SUIT_PAYLOAD_FETCH:
