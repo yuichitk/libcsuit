@@ -31,6 +31,8 @@ if(MBEDTLS)
 
 	add_subdirectory(../mbedtls mbedtls)
 
+	include_directories(../QCBOR/inc/)
+
 	add_subdirectory(../QCBOR qcbor)
 
 	set(QCBOR_LIBRARY "qcbor")
@@ -108,6 +110,7 @@ else()
 		src/suit_manifest_encode.c
 		src/suit_manifest_decode.c
 		examples/suit_examples_common.c
+		examples/suit_examples_cose.c	
 		examples/suit_manifest_parser_main.c
 	)
 
@@ -125,6 +128,7 @@ else()
 		src/suit_manifest_encode.c
 		src/suit_manifest_decode.c
 		examples/suit_examples_common.c
+		examples/suit_examples_cose.c	
 		examples/suit_manifest_encode_main.c
 	)
 
