@@ -66,8 +66,7 @@ typedef struct suit_install_args {
     } condition;
 } suit_install_args_t;
 
-
-typedef struct suit_parameters {
+typedef struct suit_parameter_args {
     uint64_t                    exists;
 
     UsefulBufC                  vendor_id;
@@ -102,6 +101,7 @@ typedef struct suit_parameters {
     /* decoded from both suit-parameter-uri and suit-parameter-uri-list,
        and will be used one-by-one with its array order */
     UsefulBufC                  uri_list[SUIT_MAX_ARRAY_LENGTH];
+    size_t                      uri_list_len;
 
     //??                        fetch_arguments;
 
@@ -111,10 +111,10 @@ typedef struct suit_parameters {
     /* default True if suit-directive-try-each is involved,
        default False if suit-directive-run-sequence is invoked */
     suit_parameter_bool_t       soft_failure;
-} suit_parameters_t;
+} suit_parameter_args_t;
 
 /**
- * common commands for a specific component
+ * common command arguments for a specific component
  */
 typedef struct suit_common_args {
     uint64_t                    manifest_sequence_number;
@@ -147,7 +147,7 @@ typedef struct suit_common_args {
     } directive;
 
     /* SUIT_Parameters */
-    suit_parameters_t parameters;
+    suit_parameter_args_t parameters;
 
     /* SUIT_Digest of severed members */
     struct {

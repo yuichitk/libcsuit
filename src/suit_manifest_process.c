@@ -74,7 +74,7 @@ suit_err_t suit_in_component_index(QCBORDecodeContext *context,
 
 suit_err_t suit_set_parameters(QCBORDecodeContext *context,
                                bool to_override,
-                               suit_parameters_t *parameters) {
+                               suit_parameter_args_t *parameters) {
     suit_err_t result = SUIT_SUCCESS;
     QCBORItem item;
     QCBORDecode_EnterMap(context, &item);
@@ -89,8 +89,9 @@ suit_err_t suit_set_parameters(QCBORDecodeContext *context,
 
         switch (label) {
         case SUIT_PARAMETER_URI:
-            if (!(suit_install_args->parameter_exists & SUIT_PARAMETER_CONTAINS_URI) || to_override) {
-                QCBORDecode_GetByteString(context, &suit_install_args->uri);
+            if (!(parameters->exists & SUIT_PARAMETER_CONTAINS_URI) || to_override) {
+                QCBORDecode_GetByteString(context, &parameters->uri_list[0]);
+                parameters->uri_list_len = 1;
             }
             break;
         default:
@@ -105,11 +106,13 @@ out:
 
 suit_err_t suit_process_install_from_install(const uint64_t component_index,
                                          UsefulBufC suit_install_buf,
-                                         suit_common_args_t *suit_common_args,
+                                         const suit_common_args_t *suit_common_args,
                                          const suit_callbacks_t *suit_callbacks) {
     suit_err_t result = SUIT_SUCCESS;
     bool is_the_component = true;
     bool to_override = false;
+    suit_parameter_args_t tmp_parameters;
+    memcpy(&tmp_parameters, &suit_common_args->parameters, sizeof(suit_parameter_args_t));
 
     QCBORDecodeContext context;
     QCBORItem item;
@@ -127,16 +130,16 @@ suit_err_t suit_process_install_from_install(const uint64_t component_index,
             is_the_component = (result == SUIT_SUCCESS) ? true : false;
         }
         else if (!is_the_component) {
+            /* just skip this element */
             QCBORDecode_GetNext(&context, &item);
-
         }
         else {
             switch (label) {
             case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
-                override = true;
+                to_override = true;
             case SUIT_DIRECTIVE_SET_PARAMETERS:
-                suit_set_parameters(&context, override, suit_common_args);
-                override = false;
+                suit_set_parameters(&context, to_override, &tmp_parameters);
+                to_override = false;
                 // TODO
 
             }
@@ -153,7 +156,7 @@ suit_err_t suit_process_install_from_install(const uint64_t component_index,
     return result;
 }
 
-
+/*
 suit_err_t suit_set_install_from_common(const uint64_t component_index,
                                         const suit_common_args_t *suit_common_args,
                                         suit_install_args_t *suit_install_args) {
@@ -164,11 +167,12 @@ suit_err_t suit_set_install_from_common(const uint64_t component_index,
     suit_install_args->manifest_sequence_number = suit_common_args->manifest_sequence_number;
     suit_install_args->component = &suit_common_args->components.comp_id[component_index];
 
-    if (suit_common_args->parameter.exists & SUIT_PARAMETER_CONTAINS_VENDOR_IDENTIFIER) {
-        suit_install_args->vendor_id = suit_common_args->parameter.vendor_id;
+    if (suit_common_args->parameters.exists & SUIT_PARAMETER_CONTAINS_VENDOR_IDENTIFIER) {
+        suit_install_args->vendor_id = suit_common_args->parameters.vendor_id;
     }
     return SUIT_SUCCESS;
 }
+*/
 
 suit_err_t suit_process_install(QCBORDecodeContext *context,
                                 const suit_common_args_t *suit_common_args,
@@ -177,12 +181,9 @@ suit_err_t suit_process_install(QCBORDecodeContext *context,
     suit_err_t result = SUIT_SUCCESS;
     UsefulBufC suit_install_buf;
     QCBORDecode_GetByteString(context, &suit_install_buf);
+    suit_install_args_t suit_install_args = {0};
 
     for (size_t i = 0; i < suit_common_args->components.len; i++) {
-        result = suit_set_install_from_common(i, suit_common_args, &suit_install_args);
-        if (result != SUIT_SUCCESS) {
-            goto out;
-        }
         result = suit_process_install_from_install(i, suit_install_buf, suit_common_args, suit_callbacks);
         if (result != SUIT_SUCCESS) {
             goto out;
@@ -207,10 +208,8 @@ suit_err_t suit_process_common(UsefulBufC common,
     QCBORError error;
     QCBORItem item;
 
+    bool to_override = false;
     suit_components_t components;
-    union {
-        suit_install_args_t install;
-    } action_params = {0};
     size_t params_len;
 
     QCBORDecode_Init(&context, common, QCBOR_DECODE_MODE_NORMAL);
@@ -328,6 +327,7 @@ out:
 suit_err_t suit_process_manifest(QCBORDecodeContext *context,
                                  suit_digest_t *digest,
                                  suit_common_args_t *suit_common_args,
+                                 suit_inputs_t *suit_inputs,
                                  suit_callbacks_t *suit_callbacks) {
     suit_err_t result = SUIT_SUCCESS;
     QCBORError error;
@@ -359,13 +359,13 @@ suit_err_t suit_process_manifest(QCBORDecodeContext *context,
             break;
         case SUIT_COMMON:
             QCBORDecode_GetByteString(context, &suit_common_buf);
-            suit_process_common(suit_common_buf, -1, 0, suit_process, suit_common_args);
+            suit_process_common(suit_common_buf, -1, 0, suit_callbacks, suit_common_args);
             break;
         case SUIT_MANIFEST_SEQUENCE_NUMBER:
             QCBORDecode_GetUInt64(context, &suit_common_args->manifest_sequence_number);
             break;
         case SUIT_INSTALL:
-            suit_process_install(context, suit_common_args, suit_process);
+            suit_process_install(context, suit_common_args, suit_inputs, suit_callbacks);
             break;
         case SUIT_VALIDATE:
         case SUIT_RUN:
@@ -530,7 +530,7 @@ suit_err_t suit_process_envelopes(suit_inputs_t *suit_inputs, suit_callbacks_t *
             int64_t label = item.label.int64;
             switch (label) {
             case SUIT_MANIFEST:
-                result = suit_process_manifest(&context, &digests[i], &suit_common_args, suit_callbacks);
+                result = suit_process_manifest(&context, &digests[i], &suit_common_args, suit_inputs, suit_callbacks);
                 break;
             case SUIT_DELEGATION:
                 /* TODO */
@@ -542,7 +542,7 @@ suit_err_t suit_process_envelopes(suit_inputs_t *suit_inputs, suit_callbacks_t *
             /* Severed Members */
             case SUIT_INSTALL:
                 //TODO: suit_verify_digest(context, suit_common_args.signatures.install);
-                suit_process_install(&context, &suit_common_args, suit_callbacks);
+                suit_process_install(&context, &suit_common_args, suit_inputs, suit_callbacks);
                 break;
             case SUIT_DEPENDENCY_RESOLUTION:
             case SUIT_PAYLOAD_FETCH:

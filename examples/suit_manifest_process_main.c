@@ -61,7 +61,7 @@ size_t read_file(const char *file_path, const size_t write_buf_len, uint8_t *wri
 suit_err_t print_install(suit_install_args_t *install_args)
 {
     printf("suit-install : {");
-    printf("  uri: %s", install_args->uri.ptr);
+    printf("  uri: %.*s", (int)install_args->uri.len, (char *)install_args->uri.ptr);
     return SUIT_SUCCESS;
 }
 
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     printf("\nmain : Read Manifest file.\n");
     uint8_t manifests_buf[SUIT_MAX_ARRAY_LENGTH][MAX_FILE_BUFFER_SIZE];
     for (i = 1; i < argc; i++) {
-        suit_buf_t *manifest = &suit_inputs.manifests[i - 1];
+        UsefulBufC *manifest = &suit_inputs.manifests[i - 1];
         size_t manifest_len = read_file(argv[i], MAX_FILE_BUFFER_SIZE, manifests_buf[i - 1]);
         if (!manifest_len) {
             printf("main : Can't read Manifest file.\n");
