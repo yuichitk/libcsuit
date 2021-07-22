@@ -226,6 +226,7 @@ suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, UsefulB
             case SUIT_CONDITION_COMPONENT_OFFSET:
             case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
             case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
+            case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
             case SUIT_DIRECTIVE_FETCH:
             case SUIT_DIRECTIVE_COPY:
             case SUIT_DIRECTIVE_RUN:
@@ -259,7 +260,6 @@ suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, UsefulB
 
             case SUIT_DIRECTIVE_DO_EACH:
             case SUIT_DIRECTIVE_MAP_FILTER:
-            case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
             case SUIT_DIRECTIVE_WAIT:
             case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:

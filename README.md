@@ -31,6 +31,13 @@ cd QCBOR
 make install
 ```
 
+Installing [t_cose](https://github.com/laurencelundblade/t_cose).
+```bash
+git clone https://github.com/laurencelundblade/t_cose.git
+cd t_cose
+make -f Makefile.ossl install
+```
+
 Make and run sample codes you need.
 
 - suit_manifest_parser
@@ -72,10 +79,10 @@ mbedtls (if used), and libcsuit.
 Here are the commands:
 
 ```
-git clone https://github.com/hannestschofenig/t_cose.git
-git clone https://github.com/hannestschofenig/QCBOR.git
+git clone https://github.com/laurencelundblade/QCBOR.git
+git clone https://github.com/laurencelundblade/t_cose.git
 git clone https://github.com/ARMmbed/mbedtls.git
-git clone https://github.com/hannestschofenig/libcsuit.git
+git clone https://github.com/yuichitk/libcsuit.git
 cd libcsuit
 ```
 

@@ -155,6 +155,8 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
             case SUIT_CONDITION_IMAGE_MATCH:
             case SUIT_CONDITION_COMPONENT_OFFSET:
             case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
+            case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
+            case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
             case SUIT_DIRECTIVE_FETCH:
             case SUIT_DIRECTIVE_COPY:
             case SUIT_DIRECTIVE_RUN:
@@ -188,10 +190,8 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
             case SUIT_CONDITION_UPDATE_AUTHORIZED:
             case SUIT_CONDITION_VERSION:
 
-            case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
             case SUIT_DIRECTIVE_DO_EACH:
             case SUIT_DIRECTIVE_MAP_FILTER:
-            case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
             case SUIT_DIRECTIVE_WAIT:
             case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:
