@@ -161,7 +161,6 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
         switch (item->label) {
             case SUIT_PARAMETER_COMPONENT_OFFSET:
             case SUIT_PARAMETER_IMAGE_SIZE:
-            case SUIT_PARAMETER_COMPRESSION_INFO:
             case SUIT_PARAMETER_SOURCE_COMPONENT:
                 QCBOREncode_AddUInt64ToMapN(context, item->label, item->value.uint64);
                 break;
@@ -175,6 +174,7 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
                 break;
             case SUIT_PARAMETER_VENDOR_IDENTIFIER:
             case SUIT_PARAMETER_CLASS_IDENTIFIER:
+            case SUIT_PARAMETER_COMPRESSION_INFO:
                 QCBOREncode_AddBytesToMapN(context, item->label, (UsefulBufC){.ptr = item->value.string.ptr, .len = item->value.string.len});
                 break;
             case SUIT_PARAMETER_IMAGE_DIGEST:

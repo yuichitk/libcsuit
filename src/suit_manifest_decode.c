@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include "qcbor/qcbor.h"
+#include <qcbor/qcbor_spiffy_decode.h>
 #include "suit_common.h"
 #include "suit_manifest_data.h"
 #include "suit_cose.h"
@@ -271,6 +272,32 @@ suit_err_t suit_decode_digest_from_bstr(uint8_t mode, QCBORDecodeContext *contex
     return suit_decode_digest(mode, &buf, digest);
 }
 
+suit_err_t suit_decode_compression_info(uint8_t mode, const suit_buf_t *buf, suit_compression_info_t *compression_info) {
+    QCBORDecodeContext context;
+    QCBORItem item;
+    QCBORError error;
+
+    QCBORDecode_Init(&context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_EnterMap(&context, &item);
+    size_t map_length = item.val.uCount;
+    for (size_t i = 0; i < map_length; i++) {
+        QCBORDecode_GetNext(&context, &item);
+        switch (item.label.int64) {
+        case SUIT_COMPRESSION_ALGORITHM:
+            compression_info->compression_algorithm = item.val.int64;
+            break;
+        default:
+            return SUIT_ERR_NOT_IMPLEMENTED;
+        }
+    }
+    QCBORDecode_ExitMap(&context);
+    error = QCBORDecode_Finish(&context);
+    if (error != QCBOR_SUCCESS) {
+        return suit_error_from_qcbor_error(error);
+    }
+    return SUIT_SUCCESS;
+}
+
 suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_parameters_list_t *params_list) {
     suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
     if (result != SUIT_SUCCESS) {
@@ -287,7 +314,6 @@ suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContex
         switch (params_list->params[i].label) {
             case SUIT_PARAMETER_COMPONENT_OFFSET:
             case SUIT_PARAMETER_IMAGE_SIZE:
-            case SUIT_PARAMETER_COMPRESSION_INFO:
             case SUIT_PARAMETER_SOURCE_COMPONENT:
                 if (!suit_qcbor_value_is_uint64(item)) {
                     result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
@@ -305,6 +331,7 @@ suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContex
                 break;
             case SUIT_PARAMETER_VENDOR_IDENTIFIER:
             case SUIT_PARAMETER_CLASS_IDENTIFIER:
+            case SUIT_PARAMETER_COMPRESSION_INFO:
                 if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
                     result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
                     break;

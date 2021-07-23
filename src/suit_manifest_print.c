@@ -85,6 +85,21 @@ suit_err_t suit_print_string(const suit_buf_t *string) {
     return SUIT_SUCCESS;
 }
 
+suit_err_t suit_print_compression_info(const suit_buf_t *buf, const uint32_t indent_space) {
+    if (buf == NULL) {
+        return SUIT_ERR_FATAL;
+    }
+    suit_compression_info_t compression_info = {0};
+    suit_err_t result = suit_decode_compression_info(SUIT_DECODE_MODE_STRICT, buf, &compression_info);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+    if (compression_info.compression_algorithm != SUIT_COMPRESSION_ALGORITHM_INVALID) {
+        printf("%*scompression-algorithm : %d\n", indent_space, "", compression_info.compression_algorithm);
+    }
+    return SUIT_SUCCESS;
+}
+
 suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, const uint32_t indent_space) {
     suit_err_t result = SUIT_SUCCESS;
     for (size_t i = 0; i < params_list->len; i++) {
@@ -103,9 +118,8 @@ suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_
                 break;
             case SUIT_PARAMETER_COMPONENT_OFFSET:
             case SUIT_PARAMETER_IMAGE_SIZE:
-            case SUIT_PARAMETER_COMPRESSION_INFO:
             case SUIT_PARAMETER_SOURCE_COMPONENT:
-                printf("%" PRId64 "\n", params_list->params[i].value.uint64);
+                printf("%lu\n", params_list->params[i].value.uint64);
                 break;
             case SUIT_PARAMETER_URI:
                 if (params_list->params[i].value.string.len > 0) {
@@ -115,6 +129,12 @@ suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_
                     printf("NULL");
                 }
                 printf("\n");
+                break;
+            case SUIT_PARAMETER_COMPRESSION_INFO:
+                printf("SUIT_Compression_Info\n");
+                if (params_list->params[i].value.string.len > 0) {
+                    result = suit_print_compression_info(&params_list->params[i].value.string, indent_space + 2);
+                }
                 break;
             case SUIT_PARAMETER_USE_BEFORE:
 
