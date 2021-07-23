@@ -75,7 +75,7 @@ typedef enum suit_rep_policy_key {
     SUIT_CONDITION_CLASS_IDENTIFIER     = 2,
     SUIT_CONDITION_IMAGE_MATCH          = 3,
     SUIT_CONDITION_USE_BEFORE           = 4,
-    SUIT_CONDITION_COMPONENT_OFFSET     = 5,
+    SUIT_CONDITION_COMPONENT_SLOT       = 5,
     SUIT_CONDITION_ABORT                = 14,
     SUIT_CONDITION_DEVICE_IDENTIFIER    = 24,
     SUIT_CONDITION_IMAGE_NOT_MATCH      = 25,
@@ -98,7 +98,7 @@ typedef enum suit_rep_policy_key {
     SUIT_DIRECTIVE_FETCH_URI_LIST       = 30,
     SUIT_DIRECTIVE_SWAP                 = 31,
     SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
-    SUIT_DIRECTIVE_GARBAGE_COLLECT      = 33,
+    SUIT_DIRECTIVE_UNLINK               = 33,
 } suit_rep_policy_key_t;
 
 #define SUIT_SEVERABLE_INVALID               0 // 0b00000000
@@ -123,7 +123,7 @@ typedef enum suit_parameter_key {
     SUIT_PARAMETER_CLASS_IDENTIFIER     = 2,
     SUIT_PARAMETER_IMAGE_DIGEST         = 3,
     SUIT_PARAMETER_USE_BEFORE           = 4,
-    SUIT_PARAMETER_COMPONENT_OFFSET     = 5,
+    SUIT_PARAMETER_COMPONENT_SLOT       = 5,
 
     SUIT_PARAMETER_STRICT_ORDER         = 12,
     SUIT_PARAMETER_SOFT_FAILURE         = 13,

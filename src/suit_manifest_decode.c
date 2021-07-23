@@ -312,7 +312,7 @@ suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContex
         }
         params_list->params[i].label = item->label.uint64;
         switch (params_list->params[i].label) {
-            case SUIT_PARAMETER_COMPONENT_OFFSET:
+            case SUIT_PARAMETER_COMPONENT_SLOT:
             case SUIT_PARAMETER_IMAGE_SIZE:
             case SUIT_PARAMETER_SOURCE_COMPONENT:
                 if (!suit_qcbor_value_is_uint64(item)) {
@@ -442,7 +442,7 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
                 case SUIT_CONDITION_VENDOR_IDENTIFIER:
                 case SUIT_CONDITION_CLASS_IDENTIFIER:
                 case SUIT_CONDITION_IMAGE_MATCH:
-                case SUIT_CONDITION_COMPONENT_OFFSET:
+                case SUIT_CONDITION_COMPONENT_SLOT:
                 case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
                 case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
                 case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
@@ -521,7 +521,7 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
                 case SUIT_DIRECTIVE_FETCH_URI_LIST:
                 case SUIT_DIRECTIVE_SWAP:
                 case SUIT_DIRECTIVE_RUN_SEQUENCE:
-                case SUIT_DIRECTIVE_GARBAGE_COLLECT:
+                case SUIT_DIRECTIVE_UNLINK:
                 default:
                     // TODO
                     suit_debug_print(context, item, "suit_decode_directive_or_condition", QCBOR_TYPE_ANY);

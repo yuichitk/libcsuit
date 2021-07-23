@@ -159,7 +159,7 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
     for (size_t i = 0; i < params_list->len; i++) {
         const suit_parameters_t *item = &params_list->params[i];
         switch (item->label) {
-            case SUIT_PARAMETER_COMPONENT_OFFSET:
+            case SUIT_PARAMETER_COMPONENT_SLOT:
             case SUIT_PARAMETER_IMAGE_SIZE:
             case SUIT_PARAMETER_SOURCE_COMPONENT:
                 QCBOREncode_AddUInt64ToMapN(context, item->label, item->value.uint64);
@@ -223,7 +223,7 @@ suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, UsefulB
             case SUIT_CONDITION_VENDOR_IDENTIFIER:
             case SUIT_CONDITION_CLASS_IDENTIFIER:
             case SUIT_CONDITION_IMAGE_MATCH:
-            case SUIT_CONDITION_COMPONENT_OFFSET:
+            case SUIT_CONDITION_COMPONENT_SLOT:
             case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
             case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
             case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
@@ -264,7 +264,7 @@ suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, UsefulB
             case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:
             case SUIT_DIRECTIVE_RUN_SEQUENCE:
-            case SUIT_DIRECTIVE_GARBAGE_COLLECT:
+            case SUIT_DIRECTIVE_UNLINK:
             default:
                 result = SUIT_ERR_NOT_IMPLEMENTED;
         }
