@@ -134,7 +134,8 @@ int main(int argc, char *argv[])
     key_pair.k.key_handle = key_handle;
     key_pair.crypto_lib   = T_COSE_CRYPTO_LIB_PSA;
 
-    result = suit_encode_envelope(&envelope, &key_pair, encode_buf, &encode_len);
+    uint8_t mode = SUIT_DECODE_MODE_STRICT;
+    result = suit_encode_envelope(mode, &envelope, &key_pair, encode_buf, &encode_len);
     if (result != SUIT_SUCCESS) {
         printf("Fail to encode. %d\n", result);
         return( EXIT_FAILURE );
