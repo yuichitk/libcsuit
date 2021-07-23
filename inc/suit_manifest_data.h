@@ -21,6 +21,8 @@
 
 #define SUIT_MAX_ARRAY_LENGTH           20
 
+#define SUIT_ENVELOPE_CBOR_TAG               107
+
 typedef enum suit_envelope_key {
     SUIT_ENVELOPE_KEY_INVALID           = 0,
     SUIT_DELEGATION                     = 1,

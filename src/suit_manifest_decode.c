@@ -1223,9 +1223,13 @@ suit_err_t suit_decode_authentication_wrapper(uint8_t mode, suit_buf_t *buf, sui
 }
 
 suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
-    suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
-    if (result != SUIT_SUCCESS) {
-        return result;
+    suit_err_t result = SUIT_SUCCESS;
+
+    uint64_t puTags[1];
+    QCBORTagListOut Out = {0, 1, puTags};
+    QCBORDecode_GetNextWithTags(context, item, &Out);
+    if (puTags[0] != SUIT_ENVELOPE_CBOR_TAG || item->uDataType != QCBOR_TYPE_MAP) {
+        return SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
     }
 
     size_t map_count = item->val.uCount;

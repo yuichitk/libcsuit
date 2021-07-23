@@ -746,6 +746,7 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
 
     QCBOREncodeContext context;
     QCBOREncode_Init(&context, (UsefulBuf){buf, *len});
+    QCBOREncode_AddTag(&context, SUIT_ENVELOPE_CBOR_TAG);
     QCBOREncode_OpenMap(&context);
     /* TODO
     result = suit_encode_append_delegation(&envelope->delegation, &context);
