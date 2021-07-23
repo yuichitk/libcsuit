@@ -136,7 +136,7 @@ suit_err_t suit_verify_cose_mac(const UsefulBufC *signed_cose, const struct t_co
 suit_err_t suit_verify_cose_mac0(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload);
 #else
 suit_err_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key);
-suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload);
+suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC returned_payload);
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
 
 #endif  /* SUIT_COSE_H */
