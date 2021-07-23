@@ -248,7 +248,7 @@ suit_err_t suit_print_digest(const suit_digest_t *digest, const uint32_t indent_
     }
     suit_err_t result = SUIT_SUCCESS;
     if (digest->algorithm_id != SUIT_ALGORITHM_ID_INVALID) {
-        printf("%*salgorithm-id : %u\n", indent_space, "", digest->algorithm_id);
+        printf("%*salgorithm-id : %d\n", indent_space, "", digest->algorithm_id);
     }
     if (digest->bytes.len > 0) {
         printf("%*sdigest-bytes : ", indent_space, "");

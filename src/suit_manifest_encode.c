@@ -54,7 +54,7 @@ suit_err_t suit_encode_append_digest(const suit_digest_t *digest, const uint32_t
     else {
         QCBOREncode_OpenArray(context);
     }
-    QCBOREncode_AddUInt64(context, digest->algorithm_id);
+    QCBOREncode_AddInt64(context, digest->algorithm_id);
     QCBOREncode_AddBytes(context, (UsefulBufC){.ptr = digest->bytes.ptr, .len = digest->bytes.len});
     QCBOREncode_CloseArray(context);
     return SUIT_SUCCESS;

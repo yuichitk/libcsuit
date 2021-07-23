@@ -219,12 +219,12 @@ suit_err_t suit_decode_digest_from_item(uint8_t mode, QCBORDecodeContext *contex
     }
     size_t ext_len = (item->val.uCount > 2) ? item->val.uCount - 2 : 0;
 
-    result = suit_qcbor_get_next_uint(context, item);
+    result = suit_qcbor_get_next(context, item, QCBOR_TYPE_INT64);
     if (!suit_continue(mode, result)) {
         suit_debug_print(context, item, "suit_decode_digest@algorithm-id", QCBOR_TYPE_INT64);
         return result;
     }
-    digest->algorithm_id = item->val.uint64;
+    digest->algorithm_id = item->val.int64;
 
     result = suit_qcbor_get_next(context, item, QCBOR_TYPE_BYTE_STRING);
     if (!suit_continue(mode, result)) {
@@ -976,13 +976,10 @@ suit_err_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
         case SUIT_ALGORITHM_ID_SHA256:
             result = suit_verify_sha256(buf->ptr, buf->len, digest->bytes.ptr, digest->bytes.len);
             break;
-        case SUIT_ALGORITHM_ID_SHA224:
+        case SUIT_ALGORITHM_ID_SHAKE128:
         case SUIT_ALGORITHM_ID_SHA384:
         case SUIT_ALGORITHM_ID_SHA512:
-        case SUIT_ALGORITHM_ID_SHA3_224:
-        case SUIT_ALGORITHM_ID_SHA3_256:
-        case SUIT_ALGORITHM_ID_SHA3_384:
-        case SUIT_ALGORITHM_ID_SHA3_512:
+        case SUIT_ALGORITHM_ID_SHAKE256:
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
     }

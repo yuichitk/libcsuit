@@ -30,14 +30,11 @@ typedef enum suit_envelope_key {
 
 typedef enum suit_algorithm_id {
     SUIT_ALGORITHM_ID_INVALID           = 0,
-    SUIT_ALGORITHM_ID_SHA224            = 1,
-    SUIT_ALGORITHM_ID_SHA256            = 2,
-    SUIT_ALGORITHM_ID_SHA384            = 3,
-    SUIT_ALGORITHM_ID_SHA512            = 4,
-    SUIT_ALGORITHM_ID_SHA3_224          = 5,
-    SUIT_ALGORITHM_ID_SHA3_256          = 6,
-    SUIT_ALGORITHM_ID_SHA3_384          = 7,
-    SUIT_ALGORITHM_ID_SHA3_512          = 8,
+    SUIT_ALGORITHM_ID_SHA256            = -16, // cose-alg-sha-256
+    SUIT_ALGORITHM_ID_SHAKE128          = -18, // cose-alg-shake128
+    SUIT_ALGORITHM_ID_SHA384            = -43, // cose-alg-sha-384
+    SUIT_ALGORITHM_ID_SHA512            = -44, // cose-alg-sha-512
+    SUIT_ALGORITHM_ID_SHAKE256          = -45, // cose-alg-shake256
 } suit_algorithm_id_t;
 
 typedef enum suit_manifest_key {
