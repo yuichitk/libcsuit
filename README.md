@@ -14,7 +14,7 @@ This implementation uses
  - the [t_cose] (https://github.com/laurencelundblade/t_cose) library for cryptographic processing of COSE structures, 
  - OpenSSL or Mbed TLS (based on the PSA Crypto API) for cryptographic algorithms.
  
-This implementation offers a subset of the functionality defined in [draft-ietf-suit-manifest-11](https://tools.ietf.org/html/draft-ietf-suit-manifest-11).
+This implementation offers a subset of the functionality defined in [draft-ietf-suit-manifest-14](https://tools.ietf.org/html/draft-ietf-suit-manifest-14).
  
 Example programs are offered for testing. 
 
