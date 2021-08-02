@@ -81,13 +81,10 @@ suit_err_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
         case SUIT_ALGORITHM_ID_SHA256:
             result = suit_verify_sha256(buf->ptr, buf->len, digest->bytes.ptr, digest->bytes.len);
             break;
-        case SUIT_ALGORITHM_ID_SHA224:
+        case SUIT_ALGORITHM_ID_SHAKE128:
         case SUIT_ALGORITHM_ID_SHA384:
         case SUIT_ALGORITHM_ID_SHA512:
-        case SUIT_ALGORITHM_ID_SHA3_224:
-        case SUIT_ALGORITHM_ID_SHA3_256:
-        case SUIT_ALGORITHM_ID_SHA3_384:
-        case SUIT_ALGORITHM_ID_SHA3_512:
+        case SUIT_ALGORITHM_ID_SHAKE256:
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
     }
