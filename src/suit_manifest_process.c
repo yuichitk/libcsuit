@@ -259,7 +259,7 @@ suit_err_t suit_process_common(UsefulBufC common,
                 case SUIT_CONDITION_USE_BEFORE:
                     QCBORDecode_GetUInt64(&context, &suit_common_args->condition.use_before);
                     break;
-                case SUIT_CONDITION_COMPONENT_OFFSET:
+                case SUIT_CONDITION_COMPONENT_SLOT:
                     QCBORDecode_GetUInt64(&context, &suit_common_args->condition.component_offset);
                     break;
                 case SUIT_CONDITION_ABORT:
