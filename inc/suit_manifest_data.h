@@ -21,6 +21,8 @@
 
 #define SUIT_MAX_ARRAY_LENGTH           20
 
+#define SUIT_ENVELOPE_CBOR_TAG               107
+
 typedef enum suit_envelope_key {
     SUIT_ENVELOPE_KEY_INVALID           = 0,
     SUIT_DELEGATION                     = 1,
@@ -30,14 +32,11 @@ typedef enum suit_envelope_key {
 
 typedef enum suit_algorithm_id {
     SUIT_ALGORITHM_ID_INVALID           = 0,
-    SUIT_ALGORITHM_ID_SHA224            = 1,
-    SUIT_ALGORITHM_ID_SHA256            = 2,
-    SUIT_ALGORITHM_ID_SHA384            = 3,
-    SUIT_ALGORITHM_ID_SHA512            = 4,
-    SUIT_ALGORITHM_ID_SHA3_224          = 5,
-    SUIT_ALGORITHM_ID_SHA3_256          = 6,
-    SUIT_ALGORITHM_ID_SHA3_384          = 7,
-    SUIT_ALGORITHM_ID_SHA3_512          = 8,
+    SUIT_ALGORITHM_ID_SHA256            = -16, // cose-alg-sha-256
+    SUIT_ALGORITHM_ID_SHAKE128          = -18, // cose-alg-shake128
+    SUIT_ALGORITHM_ID_SHA384            = -43, // cose-alg-sha-384
+    SUIT_ALGORITHM_ID_SHA512            = -44, // cose-alg-sha-512
+    SUIT_ALGORITHM_ID_SHAKE256          = -45, // cose-alg-shake256
 } suit_algorithm_id_t;
 
 typedef enum suit_manifest_key {
@@ -76,7 +75,7 @@ typedef enum suit_rep_policy_key {
     SUIT_CONDITION_CLASS_IDENTIFIER     = 2,
     SUIT_CONDITION_IMAGE_MATCH          = 3,
     SUIT_CONDITION_USE_BEFORE           = 4,
-    SUIT_CONDITION_COMPONENT_OFFSET     = 5,
+    SUIT_CONDITION_COMPONENT_SLOT       = 5,
     SUIT_CONDITION_ABORT                = 14,
     SUIT_CONDITION_DEVICE_IDENTIFIER    = 24,
     SUIT_CONDITION_IMAGE_NOT_MATCH      = 25,
@@ -99,7 +98,7 @@ typedef enum suit_rep_policy_key {
     SUIT_DIRECTIVE_FETCH_URI_LIST       = 30,
     SUIT_DIRECTIVE_SWAP                 = 31,
     SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
-    SUIT_DIRECTIVE_GARBAGE_COLLECT      = 33,
+    SUIT_DIRECTIVE_UNLINK               = 33,
 } suit_rep_policy_key_t;
 
 #define SUIT_SEVERABLE_INVALID               0 // 0b00000000
@@ -124,7 +123,7 @@ typedef enum suit_parameter_key {
     SUIT_PARAMETER_CLASS_IDENTIFIER     = 2,
     SUIT_PARAMETER_IMAGE_DIGEST         = 3,
     SUIT_PARAMETER_USE_BEFORE           = 4,
-    SUIT_PARAMETER_COMPONENT_OFFSET     = 5,
+    SUIT_PARAMETER_COMPONENT_SLOT       = 5,
 
     SUIT_PARAMETER_STRICT_ORDER         = 12,
     SUIT_PARAMETER_SOFT_FAILURE         = 13,
@@ -163,9 +162,14 @@ typedef enum suit_compression_algorithm {
 } suit_compression_algorithm_t;
 
 typedef struct suit_compression_info {
-    suit_compression_algorithm_t    algorithm;
-    //??                            compression_info_extensions;
+    suit_compression_algorithm_t    compression_algorithm;
+    //TODO:                         $$SUIT_Compression_Info-extensions
 } suit_compression_info_t;
+
+typedef enum suit_unpack_info_key {
+    SUIT_UNPACK_INVALID     = 0,
+    SUIT_UNPACK_ALGORITHM   = 1,
+} suit_unpack_info_key_t;
 
 typedef enum suit_unpack_algorithm {
     SUIT_UNPACK_ALGORITHM_HEX   = 1,
@@ -435,6 +439,17 @@ typedef struct suit_encode {
 } suit_encode_t;
 
 typedef struct t_cose_key t_cose_key;
+
+/*!
+    \brief Decode SUIT_Compression_Info.
+
+    \param[in]  mode                Controls parsing behavior, e.g. #SUIT_DECODE_MODE_STRICT.
+    \param[in]  buf                 Pointer and length of input byte string wrapped SUIT_Compression_Info.
+    \param[out] compression_info    Pointer of output structure to hold the parsing result of SUIT_Compression_Info.
+
+    \return     This returns one of the error codes defined by \ref suit_err_t.
+ */
+suit_err_t suit_decode_compression_info(uint8_t mode, const suit_buf_t *buf, suit_compression_info_t *compression_info);
 
 /*!
     \brief  Decode SUIT binary.

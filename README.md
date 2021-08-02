@@ -14,7 +14,7 @@ This implementation uses
  - the [t_cose] (https://github.com/laurencelundblade/t_cose) library for cryptographic processing of COSE structures, 
  - OpenSSL or Mbed TLS (based on the PSA Crypto API) for cryptographic algorithms.
  
-This implementation offers a subset of the functionality defined in [draft-ietf-suit-manifest-11](https://tools.ietf.org/html/draft-ietf-suit-manifest-11).
+This implementation offers a subset of the functionality defined in [draft-ietf-suit-manifest-14](https://tools.ietf.org/html/draft-ietf-suit-manifest-14).
  
 Example programs are offered for testing. 
 
@@ -79,10 +79,10 @@ mbedtls (if used), and libcsuit.
 Here are the commands:
 
 ```
-git clone https://github.com/hannestschofenig/t_cose.git
-git clone https://github.com/hannestschofenig/QCBOR.git
+git clone https://github.com/laurencelundblade/QCBOR.git
+git clone https://github.com/laurencelundblade/t_cose.git
 git clone https://github.com/ARMmbed/mbedtls.git
-git clone https://github.com/hannestschofenig/libcsuit.git
+git clone https://github.com/yuichitk/libcsuit.git
 cd libcsuit
 ```
 
@@ -100,7 +100,7 @@ If you want to build the code for OpenSSL then omit the '-DMBEDTLS=1' parameter 
 
 
 ## SUIT Protocol Message Examples
-The following description Markdown and CBOR files are compliant with [draft-ietf-suit-manifest-11](https://tools.ietf.org/html/draft-ietf-suit-manifest-11).
+The following description Markdown and CBOR files are compliant with [draft-ietf-suit-manifest-14](https://tools.ietf.org/html/draft-ietf-suit-manifest-14).
 - Example 0
   - [suit_manifest_exp0.md](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp0.md)
   - [suit_manifest_exp0.cbor](https://github.com/yuichitk/libcsuit/blob/master/testfiles/suit_manifest_exp0.cbor)
