@@ -181,7 +181,6 @@ suit_err_t suit_process_install(QCBORDecodeContext *context,
     suit_err_t result = SUIT_SUCCESS;
     UsefulBufC suit_install_buf;
     QCBORDecode_GetByteString(context, &suit_install_buf);
-    suit_install_args_t suit_install_args = {0};
 
     for (size_t i = 0; i < suit_common_args->components.len; i++) {
         result = suit_process_install_from_install(i, suit_install_buf, suit_common_args, suit_callbacks);
@@ -412,14 +411,15 @@ void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest) {
 suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context,
                                                suit_inputs_t *suit_inputs,
                                                suit_digest_t *digest) {
-    suit_err_t result = SUIT_SUCCESS;
-    QCBORError error = QCBOR_SUCCESS;
     QCBORItem item;
 
     /* authentication-wrapper */
     QCBORDecode_EnterBstrWrapped(context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
     QCBORDecode_EnterArray(context, &item);
     size_t length = item.val.uCount;
+    if (length < 1) {
+        return SUIT_ERR_FAILED_TO_VERIFY;
+    }
 
     /* digest */
     suit_process_digest(context, digest);
@@ -433,11 +433,7 @@ suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context,
     QCBORDecode_ExitArray(context);
     QCBORDecode_ExitBstrWrapped(context);
 
-out:
-    if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
-        result = suit_error_from_qcbor_error(error);
-    }
-    return result;
+    return SUIT_SUCCESS;
 }
 
 /*
@@ -475,7 +471,7 @@ suit_err_t suit_process_envelopes(suit_inputs_t *suit_inputs, suit_callbacks_t *
             switch (label) {
                 break;
             case SUIT_AUTHENTICATION:
-                suit_process_authentication_wrapper(&context, suit_inputs, &digests[i]);
+                result = suit_process_authentication_wrapper(&context, suit_inputs, &digests[i]);
                 break;
             case SUIT_MANIFEST:
                 if (digests[i].algorithm_id == SUIT_ALGORITHM_ID_INVALID) {
