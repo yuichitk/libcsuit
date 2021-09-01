@@ -73,3 +73,23 @@ suit_err_t suit_verify_sha256(const uint8_t *tgt_ptr, const size_t tgt_len, cons
     return (memcmp(digest_bytes_ptr, hash, SHA256_DIGEST_LENGTH) == 0) ? SUIT_SUCCESS : SUIT_ERR_FAILED_TO_VERIFY;
 }
 
+suit_err_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_digest_t *digest) {
+    suit_err_t result = SUIT_SUCCESS;
+
+    switch (digest->algorithm_id) {
+    case SUIT_ALGORITHM_ID_SHA256:
+        if (digest->bytes.len < SHA256_DIGEST_WORK_SPACE_LENGTH) {
+            return SUIT_ERR_NO_MEMORY;
+        }
+        result = suit_generate_sha256(ptr, len, (uint8_t *)digest->bytes.ptr, digest->bytes.len);
+        if (result == SUIT_SUCCESS) {
+            /* given length are working memory size, so we must overwrite it into actual hash length */
+            digest->bytes.len = SHA256_DIGEST_LENGTH;
+        }
+        break;
+    default:
+        result = SUIT_ERR_NOT_IMPLEMENTED;
+    }
+    return SUIT_SUCCESS;
+}
+

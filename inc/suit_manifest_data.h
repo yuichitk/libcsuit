@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include "qcbor/qcbor.h"
 #include "t_cose/t_cose_common.h"
+#include "suit_digest.h"
 
 /*!
     \file   suit_manifest_data.h
@@ -390,12 +391,23 @@ typedef struct suit_manifest {
     suit_unseverable_members_t          unsev_mem;
 } suit_manifest_t;
 
+typedef struct suit_integrated_payload {
+    const char *key;
+    UsefulBufC bytes;
+} suit_integrated_payload_t;
+
+typedef struct suit_integrated_payloads {
+    size_t  len;
+    suit_integrated_payload_t payload[SUIT_MAX_ARRAY_LENGTH];
+} suit_integrated_payloads_t;
+
 /*
  * SUIT_Envelope
  */
 typedef struct suit_envelope {
     // TODO :                           suit-delegation
     suit_authentication_wrapper_t       wrapper;
+    suit_integrated_payloads_t          integrated_payload;
     suit_manifest_t                     manifest;
     // TODO :                           SUIT_Severed_Fields
     /* SUIT_Severable_Manifest_Members */

@@ -604,6 +604,17 @@ suit_err_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, ui
     return SUIT_SUCCESS;
 }
 
+suit_err_t suit_print_integrated_payload(uint8_t mode, const suit_integrated_payloads_t *integrated_payloads, const uint32_t indent_space) {
+    for (size_t i = 0; i < integrated_payloads->len; i++) {
+        printf("%*s\"%s\" : ", indent_space, "", integrated_payloads->payload[i].key);
+        suit_print_hex_in_max(integrated_payloads->payload[i].bytes.ptr,
+                                 integrated_payloads->payload[i].bytes.len,
+                                 SUIT_MAX_PRINT_BYTE_COUNT);
+        printf("\n");
+    }
+    return SUIT_SUCCESS;
+}
+
 suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, const uint32_t indent_space) {
     if (envelope == NULL) {
         return SUIT_ERR_FATAL;
@@ -614,6 +625,12 @@ suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, co
     printf("%*sauthentication-wrapper : \n", indent_space + 2, "");
     printf("%*sdigest : SUIT_Digest \n", indent_space + 4, "");
     result = suit_print_digest(&envelope->wrapper.digest, indent_space + 6);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+
+    // integrated-payload
+    result = suit_print_integrated_payload(mode, &envelope->integrated_payload, indent_space + 2);
     if (result != SUIT_SUCCESS) {
         return result;
     }
