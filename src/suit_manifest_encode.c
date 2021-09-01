@@ -99,8 +99,8 @@ suit_err_t suit_generate_encoded_digest(const uint8_t *ptr, const size_t len, Us
 }
 
 suit_err_t suit_encode_append_integrated_payload(uint8_t mode, const suit_envelope_t *envelope, QCBOREncodeContext *context) {
-    for (size_t i = 0; i < envelope->integrated_payloads.len; i++) {
-        QCBOREncode_AddBytesToMap(context, envelope->integrated_payloads.payload[i].key, envelope->integrated_payloads.payload[i].bytes);
+    for (size_t i = 0; i < envelope->integrated_payload.len; i++) {
+        QCBOREncode_AddBytesToMap(context, envelope->integrated_payload.payload[i].key, envelope->integrated_payload.payload[i].bytes);
     }
     return SUIT_SUCCESS;
 }
