@@ -134,8 +134,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
     else if (memcmp(manifest_buf, encode_buf, manifest_len) != 0) {
-        if (memcmp(&manifest_buf[0], &encode_buf[0], 55) != 0 ||
-            memcmp(&manifest_buf[55 + 64], &encode_buf[55 + 64], manifest_len - (55 + 64))) {
+        if (memcmp(&manifest_buf[0], &encode_buf[0], 57) != 0 ||
+            memcmp(&manifest_buf[57 + 64], &encode_buf[57 + 64], manifest_len - (57 + 64))) {
             printf("main : encoded binary is differ from original\n");
             suit_print_hex_in_max(manifest_buf, manifest_len, manifest_len);
             printf("\n");

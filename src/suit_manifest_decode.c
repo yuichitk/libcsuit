@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include "qcbor/qcbor.h"
+#include <qcbor/qcbor_spiffy_decode.h>
 #include "suit_common.h"
 #include "suit_manifest_data.h"
 #include "suit_cose.h"
@@ -218,12 +219,12 @@ suit_err_t suit_decode_digest_from_item(uint8_t mode, QCBORDecodeContext *contex
     }
     size_t ext_len = (item->val.uCount > 2) ? item->val.uCount - 2 : 0;
 
-    result = suit_qcbor_get_next_uint(context, item);
+    result = suit_qcbor_get_next(context, item, QCBOR_TYPE_INT64);
     if (!suit_continue(mode, result)) {
         suit_debug_print(context, item, "suit_decode_digest@algorithm-id", QCBOR_TYPE_INT64);
         return result;
     }
-    digest->algorithm_id = item->val.uint64;
+    digest->algorithm_id = item->val.int64;
 
     result = suit_qcbor_get_next(context, item, QCBOR_TYPE_BYTE_STRING);
     if (!suit_continue(mode, result)) {
@@ -271,6 +272,32 @@ suit_err_t suit_decode_digest_from_bstr(uint8_t mode, QCBORDecodeContext *contex
     return suit_decode_digest(mode, &buf, digest);
 }
 
+suit_err_t suit_decode_compression_info(uint8_t mode, const suit_buf_t *buf, suit_compression_info_t *compression_info) {
+    QCBORDecodeContext context;
+    QCBORItem item;
+    QCBORError error;
+
+    QCBORDecode_Init(&context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_EnterMap(&context, &item);
+    size_t map_length = item.val.uCount;
+    for (size_t i = 0; i < map_length; i++) {
+        QCBORDecode_GetNext(&context, &item);
+        switch (item.label.int64) {
+        case SUIT_COMPRESSION_ALGORITHM:
+            compression_info->compression_algorithm = item.val.int64;
+            break;
+        default:
+            return SUIT_ERR_NOT_IMPLEMENTED;
+        }
+    }
+    QCBORDecode_ExitMap(&context);
+    error = QCBORDecode_Finish(&context);
+    if (error != QCBOR_SUCCESS) {
+        return suit_error_from_qcbor_error(error);
+    }
+    return SUIT_SUCCESS;
+}
+
 suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_parameters_list_t *params_list) {
     suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
     if (result != SUIT_SUCCESS) {
@@ -285,9 +312,8 @@ suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContex
         }
         params_list->params[i].label = item->label.uint64;
         switch (params_list->params[i].label) {
-            case SUIT_PARAMETER_COMPONENT_OFFSET:
+            case SUIT_PARAMETER_COMPONENT_SLOT:
             case SUIT_PARAMETER_IMAGE_SIZE:
-            case SUIT_PARAMETER_COMPRESSION_INFO:
             case SUIT_PARAMETER_SOURCE_COMPONENT:
                 if (!suit_qcbor_value_is_uint64(item)) {
                     result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
@@ -305,6 +331,7 @@ suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContex
                 break;
             case SUIT_PARAMETER_VENDOR_IDENTIFIER:
             case SUIT_PARAMETER_CLASS_IDENTIFIER:
+            case SUIT_PARAMETER_COMPRESSION_INFO:
                 if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
                     result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
                     break;
@@ -415,7 +442,7 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
                 case SUIT_CONDITION_VENDOR_IDENTIFIER:
                 case SUIT_CONDITION_CLASS_IDENTIFIER:
                 case SUIT_CONDITION_IMAGE_MATCH:
-                case SUIT_CONDITION_COMPONENT_OFFSET:
+                case SUIT_CONDITION_COMPONENT_SLOT:
                 case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
                 case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
                 case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
@@ -494,7 +521,7 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
                 case SUIT_DIRECTIVE_FETCH_URI_LIST:
                 case SUIT_DIRECTIVE_SWAP:
                 case SUIT_DIRECTIVE_RUN_SEQUENCE:
-                case SUIT_DIRECTIVE_GARBAGE_COLLECT:
+                case SUIT_DIRECTIVE_UNLINK:
                 default:
                     // TODO
                     suit_debug_print(context, item, "suit_decode_directive_or_condition", QCBOR_TYPE_ANY);
@@ -949,13 +976,10 @@ suit_err_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
         case SUIT_ALGORITHM_ID_SHA256:
             result = suit_verify_sha256(buf->ptr, buf->len, digest->bytes.ptr, digest->bytes.len);
             break;
-        case SUIT_ALGORITHM_ID_SHA224:
+        case SUIT_ALGORITHM_ID_SHAKE128:
         case SUIT_ALGORITHM_ID_SHA384:
         case SUIT_ALGORITHM_ID_SHA512:
-        case SUIT_ALGORITHM_ID_SHA3_224:
-        case SUIT_ALGORITHM_ID_SHA3_256:
-        case SUIT_ALGORITHM_ID_SHA3_384:
-        case SUIT_ALGORITHM_ID_SHA3_512:
+        case SUIT_ALGORITHM_ID_SHAKE256:
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
     }
@@ -1199,9 +1223,13 @@ suit_err_t suit_decode_authentication_wrapper(uint8_t mode, suit_buf_t *buf, sui
 }
 
 suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
-    suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
-    if (result != SUIT_SUCCESS) {
-        return result;
+    suit_err_t result = SUIT_SUCCESS;
+
+    uint64_t puTags[1];
+    QCBORTagListOut Out = {0, 1, puTags};
+    QCBORDecode_GetNextWithTags(context, item, &Out);
+    if (puTags[0] != SUIT_ENVELOPE_CBOR_TAG || item->uDataType != QCBOR_TYPE_MAP) {
+        return SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
     }
 
     size_t map_count = item->val.uCount;

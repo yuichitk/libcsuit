@@ -17,7 +17,7 @@ const char* SUIT_COMMAND_SEQUENCE_NUM_TO_STRING[] = {
     "condition-class-identifier",       //SUIT_CONDITION_CLASS_IDENTIFIER     = 2,
     "condition-image-match",            //SUIT_CONDITION_IMAGE_MATCH          = 3,
     "condition-use-before",             //SUIT_CONDITION_USE_BEFORE           = 4,
-    "condition-componetn-offset",       //SUIT_CONDITION_COMPONENT_OFFSET     = 5,
+    "condition-component-slot",         //SUIT_CONDITION_COMPONENT_SLOT       = 5,
     NULL, NULL, NULL, NULL, NULL, NULL, //6, 7, 8, 9, 10, 11
     "directive-set-component-index",    //SUIT_DIRECTIVE_SET_COMPONENT_INDEX  = 12,
     "directive-set-dependency-index",   //SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX = 13,
@@ -40,7 +40,7 @@ const char* SUIT_COMMAND_SEQUENCE_NUM_TO_STRING[] = {
     "directive-fetch-uri-list",         //SUIT_DIRECTIVE_FETCH_URI_LIST       = 30,
     "directive-swap",                   //SUIT_DIRECTIVE_SWAP                 = 31,
     "directive-run-sequence",           //SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
-    "directive-garbage-collect",        //SUIT_DIRECTIVE_GARBAGE_COLLECT      = 33,
+    "directive-unlink",                 //SUIT_DIRECTIVE_UNLINK               = 33,
 };
 
 const char* SUIT_PARAMETER_NUM_TO_STRING[] = {
@@ -49,7 +49,7 @@ const char* SUIT_PARAMETER_NUM_TO_STRING[] = {
     "class-id",                         //SUIT_PARAMETER_CLASS_IDENTIFIER     = 2,
     "image-digest",                     //SUIT_PARAMETER_IMAGE_DIGEST         = 3,
     "use-before",                       //SUIT_PARAMETER_USE_BEFORE           = 4,
-    "component-offset",                 //SUIT_PARAMETER_COMPONENT_OFFSET     = 5,
+    "component-slot",                   //SUIT_PARAMETER_COMPONENT_SLOT       = 5,
     NULL, NULL, NULL, NULL, NULL, NULL, //6, 7, 8, 9, 10, 11,
     "strict-order",                     //SUIT_PARAMETER_STRICT_ORDER         = 12,
     "soft-failure",                     //SUIT_PARAMETER_SOFT_FAILURE         = 13,
@@ -85,6 +85,21 @@ suit_err_t suit_print_string(const suit_buf_t *string) {
     return SUIT_SUCCESS;
 }
 
+suit_err_t suit_print_compression_info(const suit_buf_t *buf, const uint32_t indent_space) {
+    if (buf == NULL) {
+        return SUIT_ERR_FATAL;
+    }
+    suit_compression_info_t compression_info = {0};
+    suit_err_t result = suit_decode_compression_info(SUIT_DECODE_MODE_STRICT, buf, &compression_info);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+    if (compression_info.compression_algorithm != SUIT_COMPRESSION_ALGORITHM_INVALID) {
+        printf("%*scompression-algorithm : %d\n", indent_space, "", compression_info.compression_algorithm);
+    }
+    return SUIT_SUCCESS;
+}
+
 suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, const uint32_t indent_space) {
     suit_err_t result = SUIT_SUCCESS;
     for (size_t i = 0; i < params_list->len; i++) {
@@ -101,11 +116,10 @@ suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_
                 printf("SUIT_Digest\n");
                 result = suit_print_digest(&params_list->params[i].value.digest, indent_space + 2);
                 break;
-            case SUIT_PARAMETER_COMPONENT_OFFSET:
+            case SUIT_PARAMETER_COMPONENT_SLOT:
             case SUIT_PARAMETER_IMAGE_SIZE:
-            case SUIT_PARAMETER_COMPRESSION_INFO:
             case SUIT_PARAMETER_SOURCE_COMPONENT:
-                printf("%" PRId64 "\n", params_list->params[i].value.uint64);
+                printf("%lu\n", params_list->params[i].value.uint64);
                 break;
             case SUIT_PARAMETER_URI:
                 if (params_list->params[i].value.string.len > 0) {
@@ -115,6 +129,12 @@ suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_
                     printf("NULL");
                 }
                 printf("\n");
+                break;
+            case SUIT_PARAMETER_COMPRESSION_INFO:
+                printf("SUIT_Compression_Info\n");
+                if (params_list->params[i].value.string.len > 0) {
+                    result = suit_print_compression_info(&params_list->params[i].value.string, indent_space + 2);
+                }
                 break;
             case SUIT_PARAMETER_USE_BEFORE:
 
@@ -153,7 +173,7 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
             case SUIT_CONDITION_VENDOR_IDENTIFIER:
             case SUIT_CONDITION_CLASS_IDENTIFIER:
             case SUIT_CONDITION_IMAGE_MATCH:
-            case SUIT_CONDITION_COMPONENT_OFFSET:
+            case SUIT_CONDITION_COMPONENT_SLOT:
             case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
             case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
             case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
@@ -196,7 +216,7 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
             case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:
             case SUIT_DIRECTIVE_RUN_SEQUENCE:
-            case SUIT_DIRECTIVE_GARBAGE_COLLECT:
+            case SUIT_DIRECTIVE_UNLINK:
                 result = SUIT_ERR_FATAL;
                 printf("?\n");
                 break;
@@ -228,7 +248,7 @@ suit_err_t suit_print_digest(const suit_digest_t *digest, const uint32_t indent_
     }
     suit_err_t result = SUIT_SUCCESS;
     if (digest->algorithm_id != SUIT_ALGORITHM_ID_INVALID) {
-        printf("%*salgorithm-id : %u\n", indent_space, "", digest->algorithm_id);
+        printf("%*salgorithm-id : %d\n", indent_space, "", digest->algorithm_id);
     }
     if (digest->bytes.len > 0) {
         printf("%*sdigest-bytes : ", indent_space, "");
