@@ -104,15 +104,35 @@ out:
     return result;
 }
 
-suit_err_t suit_process_install_from_install(const uint64_t component_index,
-                                         UsefulBufC suit_install_buf,
-                                         const suit_common_args_t *suit_common_args,
-                                         const suit_callbacks_t *suit_callbacks) {
+/*
+            QCBORDecode_EnterArray(&context, &item);
+            params_len = item.val.uCount;
+            for (size_t j = 0; j < params_len; j++) {
+                //NOTE: common-sequence is like [ labelA, valueA, labelB, valueB, ... ]
+                int64_t params_label;
+                QCBORDecode_GetInt64(&context, &params_label);
+                switch (params_label) {
+            }
+
+
+*/
+
+suit_err_t suit_process_command(const uint64_t component_index,
+                                const uint8_t command,
+                                UsefulBufC buf,
+                                suit_common_args_t *suit_common_args,
+                                const suit_callbacks_t *suit_callbacks) {
     suit_err_t result = SUIT_SUCCESS;
+    union {
+        suit_install_args_t install;
+        suit_validate_args_t validate;
+    } args;
     bool is_the_component = true;
     bool to_override = false;
     suit_parameter_args_t tmp_parameters;
-    memcpy(&tmp_parameters, &suit_common_args->parameters, sizeof(suit_parameter_args_t));
+    if (command != SUIT_COMMON) {
+        memcpy(&tmp_parameters, &suit_common_args->parameters, sizeof(suit_parameter_args_t));
+    }
 
     QCBORDecodeContext context;
     QCBORItem item;
@@ -135,15 +155,67 @@ suit_err_t suit_process_install_from_install(const uint64_t component_index,
         }
         else {
             switch (label) {
+            case SUIT_CONDITION_VENDOR_IDENTIFIER:
+                QCBORDecode_GetUInt64(&context, &suit_common_args->condition.vendor_identifier);
+                break;
+            case SUIT_CONDITION_CLASS_IDENTIFIER:
+                QCBORDecode_GetUInt64(&context, &suit_common_args->condition.class_identifier);
+                break;
+            case SUIT_CONDITION_IMAGE_MATCH:
+                QCBORDecode_GetUInt64(&context, &suit_common_args->condition.image_match);
+                break;
+            case SUIT_CONDITION_USE_BEFORE:
+                QCBORDecode_GetUInt64(&context, &suit_common_args->condition.use_before);
+                break;
+            case SUIT_CONDITION_COMPONENT_SLOT:
+                QCBORDecode_GetUInt64(&context, &suit_common_args->condition.component_offset);
+                break;
+            case SUIT_CONDITION_ABORT:
+                QCBORDecode_GetUInt64(&context, &suit_common_args->condition.abort);
+                break;
+            case SUIT_CONDITION_DEVICE_IDENTIFIER:
+                QCBORDecode_GetUInt64(&context, &suit_common_args->condition.device_identifier);
+                break;
+            case SUIT_CONDITION_IMAGE_NOT_MATCH:
+                QCBORDecode_GetUInt64(&context, &suit_common_args->condition.image_not_match);
+                break;
+            case SUIT_CONDITION_MINIMUM_BATTERY:
+                QCBORDecode_GetUInt64(&context, &suit_common_args->condition.minimum_battery);
+                break;
+            case SUIT_CONDITION_UPDATE_AUTHORIZED:
+                QCBORDecode_GetUInt64(&context, &suit_common_args->condition.update_authorized);
+                break;
+            case SUIT_CONDITION_VERSION:
+                QCBORDecode_GetUInt64(&context, &suit_common_args->condition.version);
+                break;
+
             case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
                 to_override = true;
             case SUIT_DIRECTIVE_SET_PARAMETERS:
-                suit_set_parameters(&context, to_override, &tmp_parameters);
+                suit_set_parameters(&context, to_override, &suit_common_args->parameters);
                 to_override = false;
-                // TODO
+                break;
 
+            case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
+            case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
+            case SUIT_DIRECTIVE_TRY_EACH:
+            case SUIT_DIRECTIVE_DO_EACH:
+            case SUIT_DIRECTIVE_MAP_FILTER:
+            case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
+            case SUIT_DIRECTIVE_FETCH:
+            case SUIT_DIRECTIVE_COPY:
+            case SUIT_DIRECTIVE_RUN:
+            case SUIT_DIRECTIVE_WAIT:
+            case SUIT_DIRECTIVE_FETCH_URI_LIST:
+            case SUIT_DIRECTIVE_SWAP:
+            case SUIT_DIRECTIVE_RUN_SEQUENCE:
+
+            default:
+                result = SUIT_ERR_NOT_IMPLEMENTED;
             }
-            break;
+            if (result != SUIT_SUCCESS) {
+                goto out;
+            }
         }
     }
     QCBORDecode_ExitArray(&context);
@@ -153,43 +225,51 @@ suit_err_t suit_process_install_from_install(const uint64_t component_index,
     if (result == SUIT_SUCCESS && error != QCBOR_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
     }
+
+    switch (command) {
+    case SUIT_INSTALL:
+        break;
+    case SUIT_VALIDATE:
+        if (suit_callbacks->validate != NULL) {
+            suit_
+            suit_callbacks->validate(
+        }
+        break;
+    }
     return result;
 }
 
-/*
-suit_err_t suit_set_install_from_common(const uint64_t component_index,
-                                        const suit_common_args_t *suit_common_args,
-                                        suit_install_args_t *suit_install_args) {
-    if (suit_common_args->components.len >= component_index) {
-        return SUIT_ERR_NO_MORE_ITEMS;
-    }
-
-    suit_install_args->manifest_sequence_number = suit_common_args->manifest_sequence_number;
-    suit_install_args->component = &suit_common_args->components.comp_id[component_index];
-
-    if (suit_common_args->parameters.exists & SUIT_PARAMETER_CONTAINS_VENDOR_IDENTIFIER) {
-        suit_install_args->vendor_id = suit_common_args->parameters.vendor_id;
-    }
-    return SUIT_SUCCESS;
-}
-*/
-
-suit_err_t suit_process_install(QCBORDecodeContext *context,
-                                const suit_common_args_t *suit_common_args,
-                                const suit_inputs_t *suit_inputs,
-                                const suit_callbacks_t *suit_callbacks) {
+suit_err_t suit_process_each_component(QCBORDecodeContext *context,
+                                           const command,
+                                           const suit_common_args_t *suit_common_args,
+                                           const suit_inputs_t *suit_inputs,
+                                           const suit_callbacks_t *suit_callbacks) {
     suit_err_t result = SUIT_SUCCESS;
-    UsefulBufC suit_install_buf;
-    QCBORDecode_GetByteString(context, &suit_install_buf);
+    UsefulBufC buf;
+    QCBORDecode_GetByteString(context, &buf);
 
     for (size_t i = 0; i < suit_common_args->components.len; i++) {
-        result = suit_process_install_from_install(i, suit_install_buf, suit_common_args, suit_callbacks);
+        result = suit_process_command(i, command, suit_validate_buf, suit_common_args, suit_callbacks);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
     }
 out:
     return result;
+}
+
+suit_err_t inline suit_process_validate(QCBORDecodeContext *context,
+                                 const suit_common_args_t *suit_common_args,
+                                 const suit_inputs_t *suit_inputs,
+                                 const suit_callbacks_t *suit_callbacks) {
+    return suit_process_each_component(context, SUIT_VALIDATE, suit_common_args, suit_inputs, suit_callbacks);
+}
+
+suit_err_t inline suit_process_install(QCBORDecodeContext *context,
+                                const suit_common_args_t *suit_common_args,
+                                const suit_inputs_t *suit_inputs,
+                                const suit_callbacks_t *suit_callbacks) {
+    return suit_process_each_component(context, SUIT_INSTALL, suit_common_args, suit_inputs, suit_callbacks);
 }
 
 /*
@@ -239,76 +319,8 @@ suit_err_t suit_process_common(UsefulBufC common,
             QCBORDecode_ExitArray(&context);
             break;
         case SUIT_COMMON_SEQUENCE:
-            QCBORDecode_EnterArray(&context, &item);
-            params_len = item.val.uCount;
-            for (size_t j = 0; j < params_len; j++) {
-                //NOTE: common-sequence is like [ labelA, valueA, labelB, valueB, ... ]
-                int64_t params_label;
-                QCBORDecode_GetInt64(&context, &params_label);
-                switch (params_label) {
-                case SUIT_CONDITION_VENDOR_IDENTIFIER:
-                    QCBORDecode_GetUInt64(&context, &suit_common_args->condition.vendor_identifier);
-                    break;
-                case SUIT_CONDITION_CLASS_IDENTIFIER:
-                    QCBORDecode_GetUInt64(&context, &suit_common_args->condition.class_identifier);
-                    break;
-                case SUIT_CONDITION_IMAGE_MATCH:
-                    QCBORDecode_GetUInt64(&context, &suit_common_args->condition.image_match);
-                    break;
-                case SUIT_CONDITION_USE_BEFORE:
-                    QCBORDecode_GetUInt64(&context, &suit_common_args->condition.use_before);
-                    break;
-                case SUIT_CONDITION_COMPONENT_SLOT:
-                    QCBORDecode_GetUInt64(&context, &suit_common_args->condition.component_offset);
-                    break;
-                case SUIT_CONDITION_ABORT:
-                    QCBORDecode_GetUInt64(&context, &suit_common_args->condition.abort);
-                    break;
-                case SUIT_CONDITION_DEVICE_IDENTIFIER:
-                    QCBORDecode_GetUInt64(&context, &suit_common_args->condition.device_identifier);
-                    break;
-                case SUIT_CONDITION_IMAGE_NOT_MATCH:
-                    QCBORDecode_GetUInt64(&context, &suit_common_args->condition.image_not_match);
-                    break;
-                case SUIT_CONDITION_MINIMUM_BATTERY:
-                    QCBORDecode_GetUInt64(&context, &suit_common_args->condition.minimum_battery);
-                    break;
-                case SUIT_CONDITION_UPDATE_AUTHORIZED:
-                    QCBORDecode_GetUInt64(&context, &suit_common_args->condition.update_authorized);
-                    break;
-                case SUIT_CONDITION_VERSION:
-                    QCBORDecode_GetUInt64(&context, &suit_common_args->condition.version);
-                    break;
-
-                case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
-                    to_override = true;
-                case SUIT_DIRECTIVE_SET_PARAMETERS:
-                    suit_set_parameters(&context, to_override, &suit_common_args->parameters);
-                    to_override = false;
-                    break;
-
-                case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
-                case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
-                case SUIT_DIRECTIVE_TRY_EACH:
-                case SUIT_DIRECTIVE_DO_EACH:
-                case SUIT_DIRECTIVE_MAP_FILTER:
-                case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
-                case SUIT_DIRECTIVE_FETCH:
-                case SUIT_DIRECTIVE_COPY:
-                case SUIT_DIRECTIVE_RUN:
-                case SUIT_DIRECTIVE_WAIT:
-                case SUIT_DIRECTIVE_FETCH_URI_LIST:
-                case SUIT_DIRECTIVE_SWAP:
-                case SUIT_DIRECTIVE_RUN_SEQUENCE:
-
-                default:
-                    result = SUIT_ERR_NOT_IMPLEMENTED;
-                }
-                if (result != SUIT_SUCCESS) {
-                    goto out;
-                }
-            }
-
+            QCBORDecode_GetByteString(&context, &buf);
+            suit_process_command(-1, SUIT_COMMON, buf, suit_common_)
             break;
         }
     }
@@ -367,6 +379,8 @@ suit_err_t suit_process_manifest(QCBORDecodeContext *context,
             suit_process_install(context, suit_common_args, suit_inputs, suit_callbacks);
             break;
         case SUIT_VALIDATE:
+            suit_process_validate(context, suit_common_args, suit_inputs, suit_callbacks);
+            break;
         case SUIT_RUN:
             /* TODO */
             QCBORDecode_GetNext(context, &item);

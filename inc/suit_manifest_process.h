@@ -61,10 +61,19 @@ typedef struct suit_install_args {
 
     /* condition info */
     struct {
-        uint64_t                vendor_id;
-        uint64_t                class_id;
+        uint8_t                vendor_id;
+        uint8_t                class_id;
     } condition;
 } suit_install_args_t;
+
+typedef struct suit_validate_args {
+    suit_digest_t image_digest;
+
+    /* condition info */
+    struct {
+        uint8_t                image_match;
+    } condition;
+} suit_validate_args_t;
 
 typedef struct suit_parameter_args {
     uint64_t                    exists;
@@ -113,19 +122,7 @@ typedef struct suit_parameter_args {
     suit_parameter_bool_t       soft_failure;
 } suit_parameter_args_t;
 
-/**
- * common command arguments for a specific component
- */
-typedef struct suit_common_args {
-    uint64_t                    manifest_sequence_number;
-
-    /* SUIT_Dependencies */
-    //??
-
-    /* SUIT_Components */
-    suit_components_t           components;
-
-    /* SUIT_Common_Sequence */
+typedef struct suit_common_sequence_args {
     /* SUIT_Conditions */
     struct {
         uint64_t                    vendor_identifier;
@@ -141,10 +138,27 @@ typedef struct suit_common_args {
         uint64_t                    version;
     } condition;
 
+    /* SUIT_Parameters */
+    suit_parameter_args_t           parameters;
+
+
     /* SUIT_Directives */
     struct {
         uint64_t                    directive_exists;
     } directive;
+}
+
+/**
+ * common command arguments for a specific component
+ */
+typedef struct suit_common_args {
+    uint64_t                    manifest_sequence_number;
+
+    /* SUIT_Dependencies */
+    //??
+
+    /* SUIT_Components */
+    suit_components_t           components;
 
     /* SUIT_Parameters */
     suit_parameter_args_t parameters;
@@ -167,7 +181,8 @@ typedef struct suit_inputs {
 } suit_inputs_t;
 
 typedef struct suit_callbacks {
-    suit_err_t (*suit_install)(suit_install_args_t *install);
+    suit_err_t (*suit_fetch)(suit_install_args_t *install);
+    suit_err_t (*suit_image_match)(suit_validate_args_t *validate);
     suit_err_t (*suit_on_error)(suit_on_error_args_t *error);
 } suit_callbacks_t;
 
