@@ -8,9 +8,9 @@ CC		= gcc
 CFLAGS	= -Wall -g
 LDFLAGS	= -lt_cose -lqcbor -lcrypto
 INC		= -I ./inc -I ./examples/inc
-TARGET1	= ./suit_for_teep_dependee
+TARGET1	= ./suit_for_teep_integrated
 TARGET2	= ./suit_for_teep_depending
-SRC1	= examples/suit_manifest_for_teep_encode.c
+SRC1	= examples/suit_manifest_for_teep_integrated.c
 SRC2	= examples/suit_manifest_for_teep_encode_depend.c
 SRCS	= examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_decode.c src/suit_manifest_encode.c src/suit_cose.c src/suit_digest.c
 OBJDIR	= ./obj
@@ -24,7 +24,7 @@ endif
 
 .PHONY: all test clean
 
-all: $(TARGET1) $(TARGET2)
+all: $(TARGET1) #$(TARGET2)
 
 $(TARGET1):	$(OBJ1) $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -43,7 +43,7 @@ PRIV_KEY2	:= ../libteep/testfiles/key/tam_prime256v1.der
 OUTPUT2		:= ./testfiles/suit_manifest_expD.cbor
 test: all
 	$(TARGET1) $(PRIV_KEY1) $(OUTPUT1)
-	$(TARGET2) $(OUTPUT1) $(URI) $(PRIV_KEY2) $(OUTPUT2)
+	#$(TARGET2) $(OUTPUT1) $(URI) $(PRIV_KEY2) $(OUTPUT2)
 
 clean:
 	rm -f $(OBJS) $(TARGET1) $(TARGET2)
