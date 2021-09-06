@@ -60,7 +60,8 @@ int main(int argc, char *argv[]) {
 
     UsefulBufC payload = {.ptr = "Hello, World!", .len = 13};
     envelope.integrated_payload.len = 1;
-    envelope.integrated_payload.payload[0].key = "#tc";
+    char uri[] = "#tc";
+    envelope.integrated_payload.payload[0].key = (UsefulBufC){.ptr = uri, .len = strlen(uri)};
     envelope.integrated_payload.payload[0].bytes = payload;
 
     /* "TEEP-Device" */
@@ -121,10 +122,9 @@ int main(int argc, char *argv[]) {
     params_list = &install->commands[0].value.params_list;
     params_list->len = 1;
 
-    uint8_t uri[] = "#tc";
     params_list->params[0].label = SUIT_PARAMETER_URI;
     params_list->params[0].value.string.ptr = uri;
-    params_list->params[0].value.string.len = sizeof(uri) - 1;
+    params_list->params[0].value.string.len = strlen(uri);
 
     install->commands[1].label = SUIT_DIRECTIVE_FETCH;
     install->commands[1].value.uint64 = 15;

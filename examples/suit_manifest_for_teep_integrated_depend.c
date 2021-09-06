@@ -22,7 +22,7 @@
 int main(int argc, char *argv[]) {
     // check arguments.
     if (argc < 4) {
-        printf("suit_for_teep_depending <manifest to depend> <uri> <private key path> <output manifest file path>");
+        printf("%s <manifest to depend> <manifest uri> <private key path> <output manifest file path>", argv[0]);
         return EXIT_FAILURE;
     }
     char *input_manifest_file = argv[1];
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    suit_digest_t *digest = &read_envelope.wrapper.digest[0];
+    suit_digest_t *digest = &read_envelope.wrapper.digest;
 
     // Read der file.
     printf("\nmain : Read Private&Public Key.\n");
@@ -86,7 +86,15 @@ int main(int argc, char *argv[]) {
     manifest->version = 1;
     manifest->sequence_number = 2;
 
-    uint8_t component_id[] = {0x00};
+#if 0
+    /* "TEEP-Device" */
+    uint8_t component_id_0[] = {0x54, 0x45, 0x45, 0x50, 0x2D, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65};
+    /* "SecureFS" */
+    uint8_t component_id_1[] = {0x53, 0x65, 0x63, 0x75, 0x72, 0x65, 0x46, 0x53};
+    /* UUID(8d82573a-926d-4754-9353-32dc29997f74) */
+    uint8_t component_id_2[] = {0x8D, 0x82, 0x57, 0x3A, 0x92, 0x6D, 0x47, 0x54, 0x93, 0x53, 0x32, 0xDC, 0x29, 0x99, 0x7F, 0x74};
+#endif
+
     suit_common_t *common = &manifest->common;
     /* suit-dependencies */
     common->dependencies.len = 1;
@@ -138,14 +146,14 @@ int main(int argc, char *argv[]) {
     */
 
     /* process-dependency */
-    manifest->sev_man_mem.install_status = SUIT_SEVERABLE_IN_MANIFEST;
-    suit_command_sequence_t *install = &manifest->sev_man_mem.install;
-    install->len = 4;
-    install->commands[0].label = SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX;
-    install->commands[0].value.uint64 = 0;
+    manifest->sev_man_mem.dependency_resolution_status = SUIT_SEVERABLE_IN_MANIFEST;
+    suit_command_sequence_t *dependency_resolution = &manifest->sev_man_mem.dependency_resolution;
+    dependency_resolution->len = 4;
+    dependency_resolution->commands[0].label = SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX;
+    dependency_resolution->commands[0].value.uint64 = 0;
 
-    install->commands[1].label = SUIT_DIRECTIVE_SET_PARAMETERS;
-    params_list = &install->commands[1].value.params_list;
+    dependency_resolution->commands[1].label = SUIT_DIRECTIVE_SET_PARAMETERS;
+    params_list = &dependency_resolution->commands[1].value.params_list;
     params_list->len = 1;
 
     /*
@@ -155,12 +163,20 @@ int main(int argc, char *argv[]) {
     params_list->params[0].value.string.ptr = (uint8_t *)uri;
     params_list->params[0].value.string.len = strlen(uri);
 
-    install->commands[2].label = SUIT_DIRECTIVE_FETCH;
-    install->commands[2].value.uint64 = 15;
+    dependency_resolution->commands[2].label = SUIT_DIRECTIVE_FETCH;
+    dependency_resolution->commands[2].value.uint64 = 15;
 
-    install->commands[3].label = SUIT_DIRECTIVE_PROCESS_DEPENDENCY;
-    install->commands[3].value.uint64 = 15; // report all
+    dependency_resolution->commands[3].label = SUIT_CONDITION_IMAGE_MATCH;
+    dependency_resolution->commands[3].value.uint64 = 15; // report all
 
+    /* install */
+    manifest->sev_man_mem.install_status = SUIT_SEVERABLE_IN_MANIFEST;
+    suit_command_sequence_t *install = &manifest->sev_man_mem.install;
+    install->len = 2;
+    install->commands[0].label = SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX;
+    install->commands[0].value.uint64 = 0;
+    install->commands[1].label = SUIT_DIRECTIVE_PROCESS_DEPENDENCY;
+    install->commands[1].value.uint64 = 15;
 
     // Print manifest.
     printf("\nmain : Print Manifest.\n");
