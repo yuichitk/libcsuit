@@ -180,7 +180,7 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
             case SUIT_DIRECTIVE_FETCH:
             case SUIT_DIRECTIVE_COPY:
             case SUIT_DIRECTIVE_RUN:
-                printf("%" PRId64 "\n", cmd_seq->commands[i].value.uint64);
+                printf("%lu\n", cmd_seq->commands[i].value.uint64);
                 break;
             case SUIT_DIRECTIVE_SET_PARAMETERS:
             case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
@@ -237,6 +237,7 @@ suit_err_t suit_print_component_identifier(const suit_component_identifier_t *id
     printf("[");
     for (size_t j = 0; j < identifier->len; j++) {
         suit_print_hex_in_max(identifier->identifier[j].ptr, identifier->identifier[j].len, SUIT_MAX_PRINT_BYTE_COUNT);
+        printf(", ");
     }
     printf("]");
     return SUIT_SUCCESS;
@@ -626,7 +627,7 @@ suit_err_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, ui
 
 suit_err_t suit_print_integrated_payload(uint8_t mode, const suit_integrated_payloads_t *integrated_payloads, const uint32_t indent_space) {
     for (size_t i = 0; i < integrated_payloads->len; i++) {
-        printf("%*s\"%s\" : ", indent_space, "", integrated_payloads->payload[i].key);
+        printf("%*s\"%.*s\" : ", indent_space, "", (int)integrated_payloads->payload[i].key.len, (char *)integrated_payloads->payload[i].key.ptr);
         suit_print_hex_in_max(integrated_payloads->payload[i].bytes.ptr,
                                  integrated_payloads->payload[i].bytes.len,
                                  SUIT_MAX_PRINT_BYTE_COUNT);

@@ -396,7 +396,7 @@ typedef struct suit_manifest {
 } suit_manifest_t;
 
 typedef struct suit_integrated_payload {
-    const char *key;
+    UsefulBufC key;
     UsefulBufC bytes;
 } suit_integrated_payload_t;
 
