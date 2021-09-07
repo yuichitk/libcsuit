@@ -1036,6 +1036,25 @@ suit_err_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *cont
             case SUIT_COMMON:
                 result = suit_decode_common_from_bstr(mode, context, item, false, &manifest->common);
                 break;
+            case SUIT_DEPENDENCY_RESOLUTION:
+                if (item->uDataType == QCBOR_TYPE_ARRAY) {
+                    /* SUIT_Digest */
+                    result = suit_decode_digest_from_item(mode, context, item, false, &manifest->sev_mem_dig.dependency_resolution);
+                }
+                else if (item->uDataType == QCBOR_TYPE_BYTE_STRING) {
+                    /* bstr .cbor SUIT_Command_Sequence */
+                    result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->sev_man_mem.dependency_resolution);
+                    if (result == SUIT_SUCCESS) {
+                        manifest->sev_man_mem.dependency_resolution_status |= SUIT_SEVERABLE_IN_MANIFEST;
+                        if (manifest->is_verified) {
+                            manifest->sev_man_mem.dependency_resolution_status |= SUIT_SEVERABLE_IS_VERIFIED;
+                        }
+                    }
+                }
+                else {
+                    result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
+                }
+                break;
             case SUIT_PAYLOAD_FETCH:
                 if (item->uDataType == QCBOR_TYPE_ARRAY) {
                     /* SUIT_Digest */
@@ -1117,8 +1136,8 @@ suit_err_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *cont
             case SUIT_RUN:
                 result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->unsev_mem.run);
                 break;
+
             case SUIT_REFERENCE_URI:
-            case SUIT_DEPENDENCY_RESOLUTION:
             default:
                 // TODO
                 result = SUIT_ERR_NOT_IMPLEMENTED;
