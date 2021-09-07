@@ -308,9 +308,8 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         return SUIT_SUCCESS;
     }
     suit_err_t result = SUIT_SUCCESS;
-    printf("%*stext :\n", indent_space, "");
     if (text_component->vendor_name.ptr != NULL) {
-        printf("%*stext-vendor-name : ", indent_space + 2, "");
+        printf("%*stext-vendor-name : ", indent_space, "");
         result = suit_print_string(&text_component->vendor_name);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -318,7 +317,7 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         printf("\n");
     }
     if (text_component->model_name.ptr != NULL) {
-        printf("%*stext-model-name : ", indent_space + 2, "");
+        printf("%*stext-model-name : ", indent_space, "");
         result = suit_print_string(&text_component->model_name);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -326,7 +325,7 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         printf("\n");
     }
     if (text_component->vendor_domain.ptr != NULL) {
-        printf("%*stext-vendor-domain : ", indent_space + 2, "");
+        printf("%*stext-vendor-domain : ", indent_space, "");
         result = suit_print_string(&text_component->vendor_domain);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -334,7 +333,7 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         printf("\n");
     }
     if (text_component->model_info.ptr != NULL) {
-        printf("%*stext-vendor-info : ", indent_space + 2, "");
+        printf("%*stext-vendor-info : ", indent_space, "");
         result = suit_print_string(&text_component->model_info);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -342,14 +341,14 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         printf("\n");
     }
     if (text_component->component_description.ptr != NULL) {
-        printf("%*stext-component-description : ", indent_space + 2, "");
+        printf("%*stext-component-description : ", indent_space, "");
         result = suit_print_string(&text_component->component_description);
         if (result != SUIT_SUCCESS) {
             return result;
         }
     }
     if (text_component->component_version.ptr != NULL) {
-        printf("%*stext-component-version : ", indent_space + 2, "");
+        printf("%*stext-component-version : ", indent_space, "");
         result = suit_print_string(&text_component->component_version);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -357,7 +356,7 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         printf("\n");
     }
     if (text_component->version_required.ptr != NULL) {
-        printf("%*stext-version-required : ", indent_space + 2, "");
+        printf("%*stext-version-required : ", indent_space, "");
         result = suit_print_string(&text_component->version_required);
         if (result != SUIT_SUCCESS) {
             return result;
