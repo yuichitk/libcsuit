@@ -11,6 +11,7 @@
 #include "suit_manifest_print.h"
 #include "suit_cose.h"
 #include "suit_examples_common.h"
+#include "suit_digest.h"
 #include "t_cose/t_cose_sign1_verify.h"
 #include "t_cose/q_useful_buf.h"
 #include "openssl/ecdsa.h"
@@ -21,7 +22,7 @@
 int main(int argc, char *argv[]) {
     // check arguments.
     if (argc < 2) {
-        printf("suit_manifest_encode <private key path> <output manifest file path>");
+        printf("suit_manifest_integrated_payload <private key path> <output manifest file path>");
         return EXIT_FAILURE;
     }
     char *private_key_file = argv[1];
@@ -55,16 +56,29 @@ int main(int argc, char *argv[]) {
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
     suit_manifest_t *manifest = &envelope.manifest;
     manifest->version = 1;
-    manifest->sequence_number = 2;
+    manifest->sequence_number = 3;
 
-    uint8_t component_id[] = {0x00};
+    UsefulBufC payload = {.ptr = "Hello, World!", .len = 13};
+    envelope.integrated_payload.len = 1;
+    char uri[] = "#tc";
+    envelope.integrated_payload.payload[0].key = (UsefulBufC){.ptr = uri, .len = strlen(uri)};
+    envelope.integrated_payload.payload[0].bytes = payload;
+
+    /* "TEEP-Device" */
+    uint8_t component_id_0[] = {0x54, 0x45, 0x45, 0x50, 0x2D, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65};
+    /* "SecureFS" */
+    uint8_t component_id_1[] = {0x53, 0x65, 0x63, 0x75, 0x72, 0x65, 0x46, 0x53};
+    /* UUID(8d82573a-926d-4754-9353-32dc29997f74) */
+    uint8_t component_id_2[] = {0x8D, 0x82, 0x57, 0x3A, 0x92, 0x6D, 0x47, 0x54, 0x93, 0x53, 0x32, 0xDC, 0x29, 0x99, 0x7F, 0x74};
     suit_common_t *common = &manifest->common;
     common->components.len = 1;
-    common->components.comp_id[0].len = 1;
-    common->components.comp_id[0].identifier[0] = (suit_buf_t){.ptr = component_id, .len = sizeof(component_id)};
+    common->components.comp_id[0].len = 3;
+    common->components.comp_id[0].identifier[0] = (suit_buf_t){.ptr = component_id_0, .len = sizeof(component_id_0)};
+    common->components.comp_id[0].identifier[1] = (suit_buf_t){.ptr = component_id_1, .len = sizeof(component_id_1)};
+    common->components.comp_id[0].identifier[2] = (suit_buf_t){.ptr = component_id_2, .len = sizeof(component_id_2)};
 
-    uint8_t vendor_id[] = {0xFA, 0x6B, 0x4A, 0x53, 0xD5, 0xAD, 0x5F, 0xDF, 0xBE, 0x9D, 0xE6, 0x63, 0xE4, 0xD4, 0x1F, 0xFE};
-    uint8_t class_id[] = {0x14, 0x92, 0xAF, 0x14, 0x25, 0x69, 0x5E, 0x48, 0xBF, 0x42, 0x9B, 0x2D, 0x51, 0xF2, 0xAB, 0x45};
+    uint8_t vendor_id[] = {0xC0, 0xDD, 0xD5, 0xF1, 0x52, 0x43, 0x56, 0x60, 0x87, 0xDB, 0x4F, 0x5B, 0x0A, 0xA2, 0x6C, 0x2F};
+    uint8_t class_id[] = {0xDB, 0x42, 0xF7, 0x09, 0x3D, 0x8C, 0x55, 0xBA, 0xA8, 0xC5, 0x26, 0x5F, 0xC5, 0x82, 0x0F, 0x4E};
     suit_command_sequence_t *cmd_seq = &common->cmd_seq;
     cmd_seq->len = 3;
 
@@ -81,14 +95,17 @@ int main(int argc, char *argv[]) {
     params_list->params[1].value.string.ptr = class_id;
     params_list->params[1].value.string.len = sizeof(class_id);
 
-    uint8_t image_digest[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10};
+    uint8_t hash[SHA256_DIGEST_LENGTH];
+    suit_digest_t image_digest;
+    image_digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+    image_digest.bytes.ptr = hash;
+    image_digest.bytes.len = sizeof(hash);
+    result = suit_generate_digest(payload.ptr, payload.len, &image_digest);
     params_list->params[2].label = SUIT_PARAMETER_IMAGE_DIGEST,
-    params_list->params[2].value.digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
-    params_list->params[2].value.digest.bytes.ptr = image_digest;
-    params_list->params[2].value.digest.bytes.len = sizeof(image_digest);
+    params_list->params[2].value.digest = image_digest;;
 
     params_list->params[3].label = SUIT_PARAMETER_IMAGE_SIZE;
-    params_list->params[3].value.uint64 = 34768;
+    params_list->params[3].value.uint64 = payload.len;
 
     cmd_seq->commands[1].label = SUIT_CONDITION_VENDOR_IDENTIFIER;
     cmd_seq->commands[1].value.uint64 = 15; // report all
@@ -99,16 +116,31 @@ int main(int argc, char *argv[]) {
     /* install */
     manifest->sev_man_mem.install_status = SUIT_SEVERABLE_IN_MANIFEST;
     suit_command_sequence_t *install = &manifest->sev_man_mem.install;
-    install->len = 1;
+    install->len = 2;
     install->commands[0].label = SUIT_DIRECTIVE_SET_PARAMETERS;
 
     params_list = &install->commands[0].value.params_list;
     params_list->len = 1;
 
-    uint8_t uri[] = "http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta";
     params_list->params[0].label = SUIT_PARAMETER_URI;
     params_list->params[0].value.string.ptr = uri;
-    params_list->params[0].value.string.len = sizeof(uri) - 1;
+    params_list->params[0].value.string.len = strlen(uri);
+
+    install->commands[1].label = SUIT_DIRECTIVE_FETCH;
+    install->commands[1].value.uint64 = 15;
+
+    install->commands[2].label = SUIT_CONDITION_IMAGE_MATCH;
+    install->commands[2].value.uint64 = 15;
+
+    /* text */
+    manifest->sev_man_mem.text_status = SUIT_SEVERABLE_IN_MANIFEST;
+    suit_text_t *text = &manifest->sev_man_mem.text;
+    text->component_len = 1;
+    text->component[0].key = common->components.comp_id[0];
+    const char model_name[] = "Reference TEEP-Device";
+    const char vendor_domain[] = "ietf-teep.org";
+    text->component[0].text_component.model_name = (suit_buf_t){.ptr = model_name, .len = strlen(model_name)};
+    text->component[0].text_component.vendor_domain = (suit_buf_t){.ptr = vendor_domain, .len = strlen(vendor_domain)};
 
 
     // Print manifest.

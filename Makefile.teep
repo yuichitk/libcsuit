@@ -8,10 +8,10 @@ CC		= gcc
 CFLAGS	= -Wall -g
 LDFLAGS	= -lt_cose -lqcbor -lcrypto
 INC		= -I ./inc -I ./examples/inc
-TARGET1	= ./suit_for_teep_dependee
+TARGET1	= ./suit_for_teep_integrated
 TARGET2	= ./suit_for_teep_depending
-SRC1	= examples/suit_manifest_for_teep_encode.c
-SRC2	= examples/suit_manifest_for_teep_encode_depend.c
+SRC1	= examples/suit_manifest_for_teep_integrated.c
+SRC2	= examples/suit_manifest_for_teep_integrated_depend.c
 SRCS	= examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_decode.c src/suit_manifest_encode.c src/suit_cose.c src/suit_digest.c
 OBJDIR	= ./obj
 OBJ1	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRC1)))
@@ -38,7 +38,7 @@ $(OBJDIR)/%.o:	%.c
 
 PRIV_KEY1	:= ./testfiles/key/trust_anchor_secp256r1.der
 OUTPUT1		:= ./testfiles/suit_manifest_expT.cbor
-URI			:= http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta
+URI			:= http://cdn.ietf-teep.org/children-tam-teep-suit.suit #http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta
 PRIV_KEY2	:= ../libteep/testfiles/key/tam_prime256v1.der
 OUTPUT2		:= ./testfiles/suit_manifest_expD.cbor
 test: all

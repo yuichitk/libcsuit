@@ -72,21 +72,7 @@ suit_err_t suit_encode_digest(const suit_digest_t *digest, UsefulBuf *buf) {
     return SUIT_SUCCESS;
 }
 
-suit_err_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_digest_t *digest, uint8_t *hash, size_t hash_len) {
-    if (hash_len != SHA256_DIGEST_LENGTH) {
-        return SUIT_ERR_FATAL;
-    }
-    suit_err_t result = suit_generate_sha256(ptr, len, hash, hash_len);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
-    digest->algorithm_id = SUIT_ALGORITHM_ID_SHA256;
-    digest->bytes.ptr = hash;
-    digest->bytes.len = SHA256_DIGEST_LENGTH;
-    return SUIT_SUCCESS;
-}
-
-suit_err_t suit_generate_digest_include_header(const uint8_t *ptr, const size_t len, suit_digest_t *digest, uint8_t *hash, size_t hash_len) {
+suit_err_t suit_generate_digest_include_header(const uint8_t *ptr, const size_t len, suit_digest_t *digest) {
     UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
     QCBOREncodeContext context;
     QCBOREncode_Init(&context, tmp_buf);
@@ -96,17 +82,27 @@ suit_err_t suit_generate_digest_include_header(const uint8_t *ptr, const size_t 
     if (error != QCBOR_SUCCESS) {
         return suit_error_from_qcbor_error(error);
     }
-    return suit_generate_digest(t_buf.ptr, t_buf.len, digest, hash, hash_len);
+    return suit_generate_digest(t_buf.ptr, t_buf.len, digest);
 }
 suit_err_t suit_generate_encoded_digest(const uint8_t *ptr, const size_t len, UsefulBuf *buf) {
     uint8_t hash[SHA256_DIGEST_LENGTH];
     suit_digest_t digest;
-    suit_err_t result = suit_generate_digest_include_header(ptr, len, &digest, hash, sizeof(hash));
+    digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+    digest.bytes.ptr = hash;
+    digest.bytes.len = sizeof(hash);
+    suit_err_t result = suit_generate_digest_include_header(ptr, len, &digest);
     if (result != SUIT_SUCCESS) {
         return result;
     }
     result = suit_encode_digest(&digest, buf);
     return result;
+}
+
+suit_err_t suit_encode_append_integrated_payload(uint8_t mode, const suit_envelope_t *envelope, QCBOREncodeContext *context) {
+    for (size_t i = 0; i < envelope->integrated_payload.len; i++) {
+        QCBOREncode_AddBytesToMap(context, envelope->integrated_payload.payload[i].key.ptr, envelope->integrated_payload.payload[i].bytes);
+    }
+    return SUIT_SUCCESS;
 }
 
 suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, const UsefulBufC *manifest, const struct t_cose_key signing_key, QCBOREncodeContext *context)
@@ -510,7 +506,10 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest_include_header(dependency_resolution_buf->ptr, dependency_resolution_buf->len, &digest, hash, sizeof(hash) );
+        digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+        digest.bytes.ptr = hash;
+        digest.bytes.len = sizeof(hash);
+        result = suit_generate_digest_include_header(dependency_resolution_buf->ptr, dependency_resolution_buf->len, &digest);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -537,7 +536,10 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest_include_header(payload_fetch_buf->ptr, payload_fetch_buf->len, &digest, hash, sizeof(hash));
+        digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+        digest.bytes.ptr = hash;
+        digest.bytes.len = sizeof(hash);
+        result = suit_generate_digest_include_header(payload_fetch_buf->ptr, payload_fetch_buf->len, &digest);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -564,7 +566,10 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest_include_header(install_buf->ptr, install_buf->len, &digest, hash, sizeof(hash));
+        digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+        digest.bytes.ptr = hash;
+        digest.bytes.len = sizeof(hash);
+        result = suit_generate_digest_include_header(install_buf->ptr, install_buf->len, &digest);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -621,7 +626,10 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest_include_header(text_buf->ptr, text_buf->len, &digest, hash, sizeof(hash));
+        digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+        digest.bytes.ptr = hash;
+        digest.bytes.len = sizeof(hash);
+        result = suit_generate_digest_include_header(text_buf->ptr, text_buf->len, &digest);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -642,7 +650,10 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
             goto out;
         }
         buf = (UsefulBuf){.ptr = tmp_buf, .len = sizeof(tmp_buf)};
-        result = suit_generate_digest_include_header(payload_fetch_buf->ptr, payload_fetch_buf->len, &digest, hash, sizeof(hash));
+        digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+        digest.bytes.ptr = hash;
+        digest.bytes.len = sizeof(hash);
+        result = suit_generate_digest_include_header(payload_fetch_buf->ptr, payload_fetch_buf->len, &digest);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -756,6 +767,11 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
     */
 
     result = suit_encode_append_authentication_wrapper(mode, &suit_encode.manifest, *signing_key, &context);
+    if (result != SUIT_SUCCESS) {
+        goto out;
+    }
+
+    result = suit_encode_append_integrated_payload(mode, envelope, &context);
     if (result != SUIT_SUCCESS) {
         goto out;
     }

@@ -781,23 +781,6 @@ suit_err_t suit_decode_text_from_bstr(uint8_t mode, QCBORDecodeContext *context,
     return result;
 }
 
-suit_err_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
-    suit_err_t result;
-
-    switch (digest->algorithm_id) {
-        case SUIT_ALGORITHM_ID_SHA256:
-            result = suit_verify_sha256(buf->ptr, buf->len, digest->bytes.ptr, digest->bytes.len);
-            break;
-        case SUIT_ALGORITHM_ID_SHAKE128:
-        case SUIT_ALGORITHM_ID_SHA384:
-        case SUIT_ALGORITHM_ID_SHA512:
-        case SUIT_ALGORITHM_ID_SHAKE256:
-        default:
-            result = SUIT_ERR_NOT_IMPLEMENTED;
-    }
-    return result;
-}
-
 suit_err_t suit_verify_item(QCBORDecodeContext *context, QCBORItem *item, suit_digest_t *digest) {
     if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
         return SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
@@ -847,6 +830,25 @@ suit_err_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *cont
                 break;
             case SUIT_COMMON:
                 result = suit_decode_common_from_bstr(mode, context, item, false, &manifest->common);
+                break;
+            case SUIT_DEPENDENCY_RESOLUTION:
+                if (item->uDataType == QCBOR_TYPE_ARRAY) {
+                    /* SUIT_Digest */
+                    result = suit_decode_digest_from_item(mode, context, item, false, &manifest->sev_mem_dig.dependency_resolution);
+                }
+                else if (item->uDataType == QCBOR_TYPE_BYTE_STRING) {
+                    /* bstr .cbor SUIT_Command_Sequence */
+                    result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->sev_man_mem.dependency_resolution);
+                    if (result == SUIT_SUCCESS) {
+                        manifest->sev_man_mem.dependency_resolution_status |= SUIT_SEVERABLE_IN_MANIFEST;
+                        if (manifest->is_verified) {
+                            manifest->sev_man_mem.dependency_resolution_status |= SUIT_SEVERABLE_IS_VERIFIED;
+                        }
+                    }
+                }
+                else {
+                    result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
+                }
                 break;
             case SUIT_PAYLOAD_FETCH:
                 if (item->uDataType == QCBOR_TYPE_ARRAY) {
@@ -929,8 +931,8 @@ suit_err_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *cont
             case SUIT_RUN:
                 result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->unsev_mem.run);
                 break;
+
             case SUIT_REFERENCE_URI:
-            case SUIT_DEPENDENCY_RESOLUTION:
             default:
                 // TODO
                 result = SUIT_ERR_NOT_IMPLEMENTED;
@@ -1053,122 +1055,130 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
         if (!suit_continue(mode, result)) {
             return result;
         }
-        switch (item->label.uint64) {
-            case SUIT_AUTHENTICATION:
-                if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
-                    result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
-                    break;
-                }
-                buf.ptr = item->val.string.ptr;
-                buf.len = item->val.string.len;
-                result = suit_decode_authentication_wrapper(mode, &buf, &envelope->wrapper, public_key);
-                if (result == SUIT_SUCCESS) {
-                    is_authentication_set = true;
-                }
-                break;
-            case SUIT_MANIFEST:
-                if (!is_authentication_set && !suit_continue(mode, SUIT_ERR_FAILED_TO_VERIFY)) {
-                     result = SUIT_ERR_FAILED_TO_VERIFY;
-                     break;
-                }
-                result = suit_decode_manifest_from_bstr(mode, context, item, false, &envelope->manifest, &envelope->wrapper.digest);
-                if (!suit_continue(mode, result)) {
-                    break;
-                }
-                if (result == SUIT_SUCCESS || result == SUIT_ERR_FAILED_TO_VERIFY) {
-                    is_manifest_set = true;
-                }
-                break;
-            /* SUIT_Severable_Manifest_members */
-            case SUIT_PAYLOAD_FETCH:
-                if (!is_authentication_set || !is_manifest_set) {
-                    result = SUIT_ERR_FAILED_TO_VERIFY;
-                    if (!suit_continue(mode, result)) {
-                        break;
-                    }
-                }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.payload_fetch);
-                if (!suit_continue(mode, result)) {
-                    break;
-                }
-                else if (is_authentication_set && result == SUIT_SUCCESS) {
-                    envelope->manifest.sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IS_VERIFIED;
-                }
-                result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.payload_fetch);
-                if (result == SUIT_SUCCESS) {
-                    envelope->manifest.sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IN_ENVELOPE;
-                }
-                break;
-            case SUIT_INSTALL:
-                if (!is_authentication_set || !is_manifest_set) {
-                    result = SUIT_ERR_FAILED_TO_VERIFY;
-                    if (!suit_continue(mode, result)) {
-                        break;
-                    }
-                }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.install);
-                if (!suit_continue(mode, result)) {
-                    break;
-                }
-                else if (is_authentication_set && result == SUIT_SUCCESS) {
-                    envelope->manifest.sev_man_mem.install_status |= SUIT_SEVERABLE_IS_VERIFIED;
-                }
-                result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.install);
-                if (result == SUIT_SUCCESS) {
-                    envelope->manifest.sev_man_mem.install_status |= SUIT_SEVERABLE_IN_ENVELOPE;
-                }
-                break;
-            case SUIT_TEXT:
-                if (!is_authentication_set || !is_manifest_set) {
-                    result = SUIT_ERR_FAILED_TO_VERIFY;
-                    if (!suit_continue(mode, result)) {
-                        break;
-                    }
-                }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.text);
-                if (!suit_continue(mode, result)) {
-                    break;
-                }
-                else if (is_authentication_set && result == SUIT_SUCCESS) {
-                    envelope->manifest.sev_man_mem.text_status |= SUIT_SEVERABLE_IS_VERIFIED;
-                }
-                result = suit_decode_text_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.text);
-                if (result == SUIT_SUCCESS) {
-                    envelope->manifest.sev_man_mem.text_status |= SUIT_SEVERABLE_IN_ENVELOPE;
-                }
-                break;
-            case SUIT_COSWID:
-                if (!is_authentication_set || !is_manifest_set) {
-                    result = SUIT_ERR_FAILED_TO_VERIFY;
-                    if (!suit_continue(mode, result)) {
-                        break;
-                    }
-                }
-                result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.coswid);
-                if (!suit_continue(mode, result)) {
-                    break;
-                }
-                else if (is_authentication_set && result == SUIT_SUCCESS) {
-                    envelope->manifest.sev_man_mem.coswid_status |= SUIT_SEVERABLE_IS_VERIFIED;
-                }
-                if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
-                    result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
-                    break;
-                }
-                envelope->manifest.sev_man_mem.coswid.ptr = item->val.string.ptr;
-                envelope->manifest.sev_man_mem.coswid.len = item->val.string.len;
-                break;
-            case SUIT_DELEGATION:
-            case SUIT_DEPENDENCY_RESOLUTION:
-            default:
-                // TODO
-                result = SUIT_ERR_NOT_IMPLEMENTED;
-                if (!suit_qcbor_skip_any(context, item)) {
-                    result = SUIT_ERR_NO_MORE_ITEMS;
-                }
+        if (item->uLabelType == QCBOR_TYPE_TEXT_STRING) {
+            suit_integrated_payload_t *payload = &envelope->integrated_payload.payload[envelope->integrated_payload.len];
+            payload->key = item->label.string;
+            payload->bytes = item->val.string;
+            envelope->integrated_payload.len++;
         }
-        if (!suit_continue(mode, result)) {
-            break;
+        else if (item->uLabelType == QCBOR_TYPE_INT64) {
+            switch (item->label.uint64) {
+                case SUIT_AUTHENTICATION:
+                    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+                        result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
+                        break;
+                    }
+                    buf.ptr = item->val.string.ptr;
+                    buf.len = item->val.string.len;
+                    result = suit_decode_authentication_wrapper(mode, &buf, &envelope->wrapper, public_key);
+                    if (result == SUIT_SUCCESS) {
+                        is_authentication_set = true;
+                    }
+                    break;
+                case SUIT_MANIFEST:
+                    if (!is_authentication_set && !suit_continue(mode, SUIT_ERR_FAILED_TO_VERIFY)) {
+                         result = SUIT_ERR_FAILED_TO_VERIFY;
+                         break;
+                    }
+                    result = suit_decode_manifest_from_bstr(mode, context, item, false, &envelope->manifest, &envelope->wrapper.digest);
+                    if (!suit_continue(mode, result)) {
+                        break;
+                    }
+                    if (result == SUIT_SUCCESS || result == SUIT_ERR_FAILED_TO_VERIFY) {
+                        is_manifest_set = true;
+                    }
+                    break;
+                /* SUIT_Severable_Manifest_members */
+                case SUIT_PAYLOAD_FETCH:
+                    if (!is_authentication_set || !is_manifest_set) {
+                        result = SUIT_ERR_FAILED_TO_VERIFY;
+                        if (!suit_continue(mode, result)) {
+                            break;
+                        }
+                    }
+                    result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.payload_fetch);
+                    if (!suit_continue(mode, result)) {
+                        break;
+                    }
+                    else if (is_authentication_set && result == SUIT_SUCCESS) {
+                        envelope->manifest.sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IS_VERIFIED;
+                    }
+                    result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.payload_fetch);
+                    if (result == SUIT_SUCCESS) {
+                        envelope->manifest.sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IN_ENVELOPE;
+                    }
+                    break;
+                case SUIT_INSTALL:
+                    if (!is_authentication_set || !is_manifest_set) {
+                        result = SUIT_ERR_FAILED_TO_VERIFY;
+                        if (!suit_continue(mode, result)) {
+                            break;
+                        }
+                    }
+                    result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.install);
+                    if (!suit_continue(mode, result)) {
+                        break;
+                    }
+                    else if (is_authentication_set && result == SUIT_SUCCESS) {
+                        envelope->manifest.sev_man_mem.install_status |= SUIT_SEVERABLE_IS_VERIFIED;
+                    }
+                    result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.install);
+                    if (result == SUIT_SUCCESS) {
+                        envelope->manifest.sev_man_mem.install_status |= SUIT_SEVERABLE_IN_ENVELOPE;
+                    }
+                    break;
+                case SUIT_TEXT:
+                    if (!is_authentication_set || !is_manifest_set) {
+                        result = SUIT_ERR_FAILED_TO_VERIFY;
+                        if (!suit_continue(mode, result)) {
+                            break;
+                        }
+                    }
+                    result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.text);
+                    if (!suit_continue(mode, result)) {
+                        break;
+                    }
+                    else if (is_authentication_set && result == SUIT_SUCCESS) {
+                        envelope->manifest.sev_man_mem.text_status |= SUIT_SEVERABLE_IS_VERIFIED;
+                    }
+                    result = suit_decode_text_from_bstr(mode, context, item, false, &envelope->manifest.sev_man_mem.text);
+                    if (result == SUIT_SUCCESS) {
+                        envelope->manifest.sev_man_mem.text_status |= SUIT_SEVERABLE_IN_ENVELOPE;
+                    }
+                    break;
+                case SUIT_COSWID:
+                    if (!is_authentication_set || !is_manifest_set) {
+                        result = SUIT_ERR_FAILED_TO_VERIFY;
+                        if (!suit_continue(mode, result)) {
+                            break;
+                        }
+                    }
+                    result = suit_verify_item(context, item, &envelope->manifest.sev_mem_dig.coswid);
+                    if (!suit_continue(mode, result)) {
+                        break;
+                    }
+                    else if (is_authentication_set && result == SUIT_SUCCESS) {
+                        envelope->manifest.sev_man_mem.coswid_status |= SUIT_SEVERABLE_IS_VERIFIED;
+                    }
+                    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+                        result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
+                        break;
+                    }
+                    envelope->manifest.sev_man_mem.coswid.ptr = item->val.string.ptr;
+                    envelope->manifest.sev_man_mem.coswid.len = item->val.string.len;
+                    break;
+                case SUIT_DELEGATION:
+                case SUIT_DEPENDENCY_RESOLUTION:
+                default:
+                    // TODO
+                    result = SUIT_ERR_NOT_IMPLEMENTED;
+                    if (!suit_qcbor_skip_any(context, item)) {
+                        result = SUIT_ERR_NO_MORE_ITEMS;
+                    }
+            }
+            if (!suit_continue(mode, result)) {
+                break;
+            }
         }
     }
 

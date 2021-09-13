@@ -91,19 +91,23 @@ suit_err_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
     return result;
 }
 
-suit_err_t suit_verify_item(QCBORDecodeContext *context, QCBORItem *item, suit_digest_t *digest, bool suit_install) {
-    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
-        return SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
-    }
-    if (digest->bytes.ptr == NULL) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-    suit_buf_t buf;
-    size_t cursor = UsefulInputBuf_Tell(&context->InBuf);
-    buf.len = suit_qcbor_calc_rollback(item);
-    buf.len -= (suit_install) ? 0 : (buf.len - item->val.string.len);
-    buf.ptr = (uint8_t *)context->InBuf.UB.ptr + (cursor - buf.len);
-    return suit_verify_digest(&buf, digest);
-}
+suit_err_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_digest_t *digest) {
+    suit_err_t result = SUIT_SUCCESS;
 
+    switch (digest->algorithm_id) {
+    case SUIT_ALGORITHM_ID_SHA256:
+        if (digest->bytes.len < SHA256_DIGEST_WORK_SPACE_LENGTH) {
+            return SUIT_ERR_NO_MEMORY;
+        }
+        result = suit_generate_sha256(ptr, len, (uint8_t *)digest->bytes.ptr, digest->bytes.len);
+        if (result == SUIT_SUCCESS) {
+            /* given length are working memory size, so we must overwrite it into actual hash length */
+            digest->bytes.len = SHA256_DIGEST_LENGTH;
+        }
+        break;
+    default:
+        result = SUIT_ERR_NOT_IMPLEMENTED;
+    }
+    return SUIT_SUCCESS;
+}
 

@@ -180,7 +180,7 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
             case SUIT_DIRECTIVE_FETCH:
             case SUIT_DIRECTIVE_COPY:
             case SUIT_DIRECTIVE_RUN:
-                printf("%" PRId64 "\n", cmd_seq->commands[i].value.uint64);
+                printf("%lu\n", cmd_seq->commands[i].value.uint64);
                 break;
             case SUIT_DIRECTIVE_SET_PARAMETERS:
             case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
@@ -237,6 +237,7 @@ suit_err_t suit_print_component_identifier(const suit_component_identifier_t *id
     printf("[");
     for (size_t j = 0; j < identifier->len; j++) {
         suit_print_hex_in_max(identifier->identifier[j].ptr, identifier->identifier[j].len, SUIT_MAX_PRINT_BYTE_COUNT);
+        printf(", ");
     }
     printf("]");
     return SUIT_SUCCESS;
@@ -307,9 +308,8 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         return SUIT_SUCCESS;
     }
     suit_err_t result = SUIT_SUCCESS;
-    printf("%*stext :\n", indent_space, "");
     if (text_component->vendor_name.ptr != NULL) {
-        printf("%*stext-vendor-name : ", indent_space + 2, "");
+        printf("%*stext-vendor-name : ", indent_space, "");
         result = suit_print_string(&text_component->vendor_name);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -317,7 +317,7 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         printf("\n");
     }
     if (text_component->model_name.ptr != NULL) {
-        printf("%*stext-model-name : ", indent_space + 2, "");
+        printf("%*stext-model-name : ", indent_space, "");
         result = suit_print_string(&text_component->model_name);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -325,7 +325,7 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         printf("\n");
     }
     if (text_component->vendor_domain.ptr != NULL) {
-        printf("%*stext-vendor-domain : ", indent_space + 2, "");
+        printf("%*stext-vendor-domain : ", indent_space, "");
         result = suit_print_string(&text_component->vendor_domain);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -333,7 +333,7 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         printf("\n");
     }
     if (text_component->model_info.ptr != NULL) {
-        printf("%*stext-vendor-info : ", indent_space + 2, "");
+        printf("%*stext-vendor-info : ", indent_space, "");
         result = suit_print_string(&text_component->model_info);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -341,14 +341,14 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         printf("\n");
     }
     if (text_component->component_description.ptr != NULL) {
-        printf("%*stext-component-description : ", indent_space + 2, "");
+        printf("%*stext-component-description : ", indent_space, "");
         result = suit_print_string(&text_component->component_description);
         if (result != SUIT_SUCCESS) {
             return result;
         }
     }
     if (text_component->component_version.ptr != NULL) {
-        printf("%*stext-component-version : ", indent_space + 2, "");
+        printf("%*stext-component-version : ", indent_space, "");
         result = suit_print_string(&text_component->component_version);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -356,7 +356,7 @@ suit_err_t suit_print_text_component(const suit_text_component_t *text_component
         printf("\n");
     }
     if (text_component->version_required.ptr != NULL) {
-        printf("%*stext-version-required : ", indent_space + 2, "");
+        printf("%*stext-version-required : ", indent_space, "");
         result = suit_print_string(&text_component->version_required);
         if (result != SUIT_SUCCESS) {
             return result;
@@ -624,6 +624,17 @@ suit_err_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, ui
     return SUIT_SUCCESS;
 }
 
+suit_err_t suit_print_integrated_payload(uint8_t mode, const suit_integrated_payloads_t *integrated_payloads, const uint32_t indent_space) {
+    for (size_t i = 0; i < integrated_payloads->len; i++) {
+        printf("%*s\"%.*s\" : ", indent_space, "", (int)integrated_payloads->payload[i].key.len, (char *)integrated_payloads->payload[i].key.ptr);
+        suit_print_hex_in_max(integrated_payloads->payload[i].bytes.ptr,
+                                 integrated_payloads->payload[i].bytes.len,
+                                 SUIT_MAX_PRINT_BYTE_COUNT);
+        printf("\n");
+    }
+    return SUIT_SUCCESS;
+}
+
 suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, const uint32_t indent_space) {
     if (envelope == NULL) {
         return SUIT_ERR_FATAL;
@@ -634,6 +645,12 @@ suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, co
     printf("%*sauthentication-wrapper : \n", indent_space + 2, "");
     printf("%*sdigest : SUIT_Digest \n", indent_space + 4, "");
     result = suit_print_digest(&envelope->wrapper.digest, indent_space + 6);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+
+    // integrated-payload
+    result = suit_print_integrated_payload(mode, &envelope->integrated_payload, indent_space + 2);
     if (result != SUIT_SUCCESS) {
         return result;
     }
