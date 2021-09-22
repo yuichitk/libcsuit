@@ -70,12 +70,16 @@ int main(int argc, char *argv[]) {
     uint8_t component_id_1[] = {0x53, 0x65, 0x63, 0x75, 0x72, 0x65, 0x46, 0x53};
     /* UUID(8d82573a-926d-4754-9353-32dc29997f74) */
     uint8_t component_id_2[] = {0x8D, 0x82, 0x57, 0x3A, 0x92, 0x6D, 0x47, 0x54, 0x93, 0x53, 0x32, 0xDC, 0x29, 0x99, 0x7F, 0x74};
+    /* "ta" */
+    uint8_t component_id_3[] = {0x74, 0x61};
     suit_common_t *common = &manifest->common;
     common->components.len = 1;
-    common->components.comp_id[0].len = 3;
+    common->components.comp_id[0].len = 4;
     common->components.comp_id[0].identifier[0] = (suit_buf_t){.ptr = component_id_0, .len = sizeof(component_id_0)};
     common->components.comp_id[0].identifier[1] = (suit_buf_t){.ptr = component_id_1, .len = sizeof(component_id_1)};
     common->components.comp_id[0].identifier[2] = (suit_buf_t){.ptr = component_id_2, .len = sizeof(component_id_2)};
+    common->components.comp_id[0].identifier[3] = (suit_buf_t){.ptr = component_id_3, .len = sizeof(component_id_3)};
+
 
     uint8_t vendor_id[] = {0xC0, 0xDD, 0xD5, 0xF1, 0x52, 0x43, 0x56, 0x60, 0x87, 0xDB, 0x4F, 0x5B, 0x0A, 0xA2, 0x6C, 0x2F};
     uint8_t class_id[] = {0xDB, 0x42, 0xF7, 0x09, 0x3D, 0x8C, 0x55, 0xBA, 0xA8, 0xC5, 0x26, 0x5F, 0xC5, 0x82, 0x0F, 0x4E};
