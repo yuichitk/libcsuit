@@ -42,37 +42,26 @@ typedef struct suit_on_error_args {
     suit_err_t suit_error;
 } suit_on_error_args_t;
 
-typedef struct suit_install_args {
-    uint64_t                    parameter_exists;
+typedef struct suit_fetch_args {
+    const size_t name_len;
+    char name[SUIT_MAX_NAME_LENGTH];
+    const size_t uri_len;
+    char uri[SUIT_MAX_URI_LENGTH];
 
-    uint64_t                    manifest_sequence_number;
-
-    const suit_component_identifier_t *component;
-
-    /* image info */
-    UsefulBufC                  vendor_id;
-    UsefulBufC                  class_id;
-    suit_digest_t               image_digest;
-    uint64_t                    image_size;
-
-    /* source info */
-    UsefulBufC                  uri;
-    uint64_t                    offset;
-
-    /* condition info */
-    struct {
-        uint8_t                vendor_id;
-        uint8_t                class_id;
-    } condition;
-} suit_install_args_t;
+    const size_t buf_len;
+    /**
+        Pointer to allocated memory in the caller.
+        This could be NULL if the caller did not allocate buffer,
+        i.e. the caller requests the callee to allocate space in the buffer (or storage).
+    */
+    void *ptr;
+} suit_fetch_args_t;
 
 typedef struct suit_validate_args {
-    suit_digest_t image_digest;
+    const size_t name_len;
+    char name[SUIT_MAX_NAME_LENGTH];
 
-    /* condition info */
-    struct {
-        uint8_t                image_match;
-    } condition;
+    suit_digest_t image_digest;
 } suit_validate_args_t;
 
 typedef struct suit_parameter_args {
@@ -146,7 +135,7 @@ typedef struct suit_common_sequence_args {
     struct {
         uint64_t                    directive_exists;
     } directive;
-}
+} suit_common_sequence_args_t;
 
 /**
  * common command arguments for a specific component
@@ -181,8 +170,8 @@ typedef struct suit_inputs {
 } suit_inputs_t;
 
 typedef struct suit_callbacks {
-    suit_err_t (*suit_fetch)(suit_install_args_t *install);
-    suit_err_t (*suit_image_match)(suit_validate_args_t *validate);
+    suit_err_t (*suit_fetch)(suit_fetch_args_t *fetch);
+    suit_err_t (*suit_digest_match)(suit_validate_args_t *validate);
     suit_err_t (*suit_on_error)(suit_on_error_args_t *error);
 } suit_callbacks_t;
 
@@ -198,7 +187,7 @@ suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, suit
     \return         This returns one of the error codes defined by \ref suit_err_t.
 
     Process one or more SUIT_Envelope(s) like below.
-    Libcsuit call suit_install, suit_run, ... indicated by function pointers in suit_process.
+    Libcsuit parse suit-install, suit-run, ... and call some callback functions respectively.
     If any error occurred, on_error callback function will be called if set.
 
     \code{.unparsed}
@@ -208,20 +197,20 @@ suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, suit
     |   create_suit_process();      |
     |   while {                     |
     |     fetch_manifests();        |
-    |     update_suit_process();    |    +-libcsuit------------------------+
-    |     suit_process_envelopes(); |===>| suit_process_envelops() {       |
-    |   }                           |    |   decode_and_check_digests();   |
-    | }                             |    |   for (m in manifests) {        |
-    |                               |    |     decode_common(m);           |
-    | install_callback() {          |<===|     decode_and_call_install(m); |
-    |   get_image(uri, ptr);        |    |     (wait)                      |
-    |   return SUIT_SUCCESS;        |===>|     if (!install_success)       |
-    | }                             |    |       return SUIT_ERR_FATAL;    |
-    | error_callback() {            |    |     check_image_digest(m, ptr)  |
-    |   // do something             |    |     ...                         |
-    |   if (fatal)                  |    |   }                             |
-    |     return SUIT_ERR_FATAL;    |    | }                               |
-    |   return SUIT_SUCCESS;        |    +---------------------------------+
+    |     update_suit_process();    |    +-libcsuit--------------------------+
+    |     suit_process_envelopes(); |===>| suit_process_envelops() {         |
+    |   }                           |    |   decode_and_check_digests();     |
+    | }                             |    |   for (m in manifests) {          |
+    |                               |    |     decode_common(m);             |
+    | fetch_callback() {            |<===|     callbacks.fetch(m.uri);       |
+    |   get_image(uri, ptr);        |    |     (wait)                        |
+    |   return SUIT_SUCCESS;        |===>|     if (!install_success)         |
+    | }                             |    |       callbacks.on_error();       |
+    | error_callback() {            |    |     check_image_digest(m, ptr)    |
+    |   // do something             |    |     ...                           |
+    |   if (fatal)                  |    |   }                               |
+    |     return SUIT_ERR_FATAL;    |    | }                                 |
+    |   return SUIT_SUCCESS;        |    +-----------------------------------+
     | }                             |
     +-------------------------------+
     \endcode

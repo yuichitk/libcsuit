@@ -124,8 +124,8 @@ suit_err_t suit_process_command(const uint64_t component_index,
                                 const suit_callbacks_t *suit_callbacks) {
     suit_err_t result = SUIT_SUCCESS;
     union {
-        suit_install_args_t install;
-        suit_validate_args_t validate;
+        suit_fetch_args_t fetch;
+        suit_validate_args_t digest_match;
     } args;
     bool is_the_component = true;
     bool to_override = false;
@@ -137,7 +137,7 @@ suit_err_t suit_process_command(const uint64_t component_index,
     QCBORDecodeContext context;
     QCBORItem item;
     QCBORError error;
-    QCBORDecode_Init(&context, suit_install_buf, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_Init(&context, buf, QCBOR_DECODE_MODE_NORMAL);
 
     QCBORDecode_EnterBstrWrapped(&context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
     QCBORDecode_EnterArray(&context, &item);

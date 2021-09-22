@@ -21,6 +21,8 @@
  */
 
 #define SUIT_MAX_ARRAY_LENGTH           20
+#define SUIT_MAX_NAME_LENGTH            256 /* the length of path or name such as component_identifier */
+#define SUIT_MAX_URI_LENGTH             256 /* the length of uri to fetch something */
 
 #define SUIT_ENVELOPE_CBOR_TAG               107
 

@@ -58,21 +58,21 @@ size_t read_file(const char *file_path, const size_t write_buf_len, uint8_t *wri
     return read_len;
 }
 
-suit_err_t print_install(suit_install_args_t *install_args)
+suit_err_t print_fetch(suit_fetch_args_t *fetch_args)
 {
-    printf("suit-install : {\n");
+    printf("fetch callback : {\n");
     int print_len = 16;
-    if (0 <= install_args && install_args->uri.len < print_len) {
-        print_len = (int)install_args->uri.len;
+    if (fetch_args->uri_len < print_len) {
+        print_len = (int)fetch_args->uri_len;
     }
-    printf("  uri: %.*s", print_len, (char *)install_args->uri.ptr);
+    printf("  uri: %.*s", print_len, (char *)fetch_args->uri);
     printf("}\n");
     return SUIT_SUCCESS;
 }
 
 suit_err_t print_validate(suit_validate_args_t *validate_args)
 {
-    printf("suit-validate : {\n");
+    printf("suit-image-match : {\n");
     suit_digest_t *digest = &validate_args->image_digest;
     printf("  suit-digest: {alg: %d, digest: ", digest->algorithm_id);
     suit_print_hex_in_max(digest->bytes.ptr, digest->bytes.len, digest->bytes.len);
@@ -92,8 +92,8 @@ int main(int argc, char *argv[]) {
 
     suit_inputs_t suit_inputs = {0};
     suit_callbacks_t suit_callbacks = {0};
-    suit_callbacks.suit_install = print_install;
-    suit_callbacks.suit_validate = print_validate;
+    suit_callbacks.suit_fetch = print_fetch;
+    suit_callbacks.suit_digest_match = print_validate;
     suit_inputs.manifest_len = 0;
     suit_inputs.key_len = NUM_PUBLIC_KEYS;
 

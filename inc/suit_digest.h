@@ -10,6 +10,7 @@
 
 #include "suit_manifest_data.h"
 struct suit_digest;
+struct suit_buf;
 
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
 #include "psa/crypto.h"
@@ -220,8 +221,8 @@ suit_err_t suit_verify_sha3_384(const uint8_t *tgt_ptr, const size_t tgt_len, co
  */
 suit_err_t suit_verify_sha3_512(const uint8_t *tgt_ptr, const size_t tgt_len, const uint8_t *digest_bytes_ptr, const size_t digest_bytes_len);
 
-suit_err_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest);
-suit_err_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest);
+suit_err_t suit_verify_digest(struct suit_buf *buf, struct suit_digest *digest);
+suit_err_t suit_verify_digest(struct suit_buf *buf, struct suit_digest *digest);
 suit_err_t suit_generate_digest(const uint8_t *ptr, const size_t len, struct suit_digest *digest);
 
 #endif /* SUIT_DIGEST_H */
