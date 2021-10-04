@@ -8,14 +8,17 @@ CC		= gcc
 CFLAGS	= -Wall -g
 LDFLAGS	= -lt_cose -lqcbor -lcrypto
 INC		= -I ./inc -I ./examples/inc
-TARGET1	= ./suit_for_teep_integrated
-TARGET2	= ./suit_for_teep_depending
-SRC1	= examples/suit_manifest_for_teep_integrated.c
-SRC2	= examples/suit_manifest_for_teep_integrated_depend.c
+TARGETu	= ./suit_for_teep_uri
+TARGETi	= ./suit_for_teep_integrated
+TARGETd	= ./suit_for_teep_depending
+SRCu	= examples/suit_manifest_for_teep_uri.c
+SRCi	= examples/suit_manifest_for_teep_integrated.c
+SRCd	= examples/suit_manifest_for_teep_depend_uri.c
 SRCS	= examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_decode.c src/suit_manifest_encode.c src/suit_cose.c src/suit_digest.c
 OBJDIR	= ./obj
-OBJ1	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRC1)))
-OBJ2	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRC2)))
+OBJu	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCu)))
+OBJi	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCi)))
+OBJd	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCd)))
 OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
 ifdef debug
@@ -24,12 +27,15 @@ endif
 
 .PHONY: all test clean
 
-all: $(TARGET1) $(TARGET2)
+all: $(TARGETu) $(TARGETi) $(TARGETd)
 
-$(TARGET1):	$(OBJ1) $(OBJS)
+$(TARGETu):	$(OBJu) $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-$(TARGET2):	$(OBJ2) $(OBJS)
+$(TARGETi):	$(OBJi) $(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(TARGETd):	$(OBJd) $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o:	%.c
@@ -37,13 +43,15 @@ $(OBJDIR)/%.o:	%.c
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
 PRIV_KEY1	:= ./testfiles/key/trust_anchor_secp256r1.der
-OUTPUT1		:= ./testfiles/suit_manifest_expT.cbor
-URI			:= http://cdn.ietf-teep.org/children-tam-teep-suit.suit #http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta
+OUTPUTu		:= ./testfiles/suit_manifest_expU.cbor
+OUTPUTi		:= ./testfiles/suit_manifest_expI.cbor
+URI			:= https://tam.org/8d82573a-926d-4754-9353-32dc29997f74.suit #http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta
 PRIV_KEY2	:= ../libteep/testfiles/key/tam_prime256v1.der
-OUTPUT2		:= ./testfiles/suit_manifest_expD.cbor
+OUTPUTd		:= ./testfiles/suit_manifest_expD.cbor
 test: all
-	$(TARGET1) $(PRIV_KEY1) $(OUTPUT1)
-	$(TARGET2) $(OUTPUT1) $(URI) $(PRIV_KEY2) $(OUTPUT2)
+	$(TARGETu) $(PRIV_KEY1) $(OUTPUTu)
+	$(TARGETi) $(PRIV_KEY1) $(OUTPUTi)
+	$(TARGETd) $(OUTPUTu) $(URI) $(PRIV_KEY2) $(OUTPUTd)
 
 clean:
 	rm -f $(OBJS) $(TARGET1) $(TARGET2)
