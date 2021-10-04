@@ -60,8 +60,8 @@ int main(int argc, char *argv[]) {
 
     char trusted_component[] = "Hello, Secure World!";
     UsefulBufC payload = {.ptr = trusted_component, .len = strlen(trusted_component)};
-    envelope.integrated_payload.len = 1;
-    char uri[] = "#tc";
+    envelope.integrated_payload.len = 0;
+    char uri[] = "https://tc.org/8d82573a-926d-4754-9353-32dc29997f74.ta";
     envelope.integrated_payload.payload[0].key = (UsefulBufC){.ptr = uri, .len = strlen(uri)};
     envelope.integrated_payload.payload[0].bytes = payload;
 
