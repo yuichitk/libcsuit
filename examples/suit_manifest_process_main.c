@@ -66,16 +66,7 @@ suit_err_t print_fetch(suit_fetch_args_t *fetch_args)
         print_len = (int)fetch_args->uri_len;
     }
     printf("  uri: %.*s", print_len, (char *)fetch_args->uri);
-    printf("}\n");
-    return SUIT_SUCCESS;
-}
-
-suit_err_t print_validate(suit_validate_args_t *validate_args)
-{
-    printf("suit-image-match : {\n");
-    suit_digest_t *digest = &validate_args->image_digest;
-    printf("  suit-digest: {alg: %d, digest: ", digest->algorithm_id);
-    suit_print_hex_in_max(digest->bytes.ptr, digest->bytes.len, digest->bytes.len);
+    printf("  ptr: %p (%ld)\n", fetch_args->ptr, fetch_args->buf_len);
     printf("}\n");
     return SUIT_SUCCESS;
 }
@@ -93,7 +84,6 @@ int main(int argc, char *argv[]) {
     suit_inputs_t suit_inputs = {0};
     suit_callbacks_t suit_callbacks = {0};
     suit_callbacks.suit_fetch = print_fetch;
-    suit_callbacks.suit_digest_match = print_validate;
     suit_inputs.manifest_len = 0;
     suit_inputs.key_len = NUM_PUBLIC_KEYS;
 

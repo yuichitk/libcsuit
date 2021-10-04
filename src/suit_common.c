@@ -5,6 +5,7 @@
  */
 
 #include "suit_common.h"
+#include "suit_digest.h"
 
 suit_err_t suit_error_from_qcbor_error(QCBORError error) {
     switch (error) {
@@ -318,6 +319,20 @@ size_t suit_qcbor_calc_rollback(QCBORItem *item) {
             return 9;
     }
     return 0;
+}
+
+suit_err_t suit_verify_item(QCBORDecodeContext *context, QCBORItem *item, suit_digest_t *digest) {
+    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
+        return SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
+    }
+    if (digest->bytes.ptr == NULL) {
+        return SUIT_ERR_FAILED_TO_VERIFY;
+    }
+    suit_buf_t buf;
+    size_t cursor = UsefulInputBuf_Tell(&context->InBuf);
+    buf.len = suit_qcbor_calc_rollback(item);
+    buf.ptr = (uint8_t *)context->InBuf.UB.ptr + (cursor - buf.len);
+    return suit_verify_digest(&buf, digest);
 }
 
 

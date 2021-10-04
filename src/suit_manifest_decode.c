@@ -781,20 +781,6 @@ suit_err_t suit_decode_text_from_bstr(uint8_t mode, QCBORDecodeContext *context,
     return result;
 }
 
-suit_err_t suit_verify_item(QCBORDecodeContext *context, QCBORItem *item, suit_digest_t *digest) {
-    if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
-        return SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
-    }
-    if (digest->bytes.ptr == NULL) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-    suit_buf_t buf;
-    size_t cursor = UsefulInputBuf_Tell(&context->InBuf);
-    buf.len = suit_qcbor_calc_rollback(item);
-    buf.ptr = (uint8_t *)context->InBuf.UB.ptr + (cursor - buf.len);
-    return suit_verify_digest(&buf, digest);
-}
-
 suit_err_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_manifest_t *manifest) {
     manifest->sev_man_mem.dependency_resolution_status = SUIT_SEVERABLE_INVALID;
     manifest->sev_man_mem.payload_fetch_status = SUIT_SEVERABLE_INVALID;

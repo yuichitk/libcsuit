@@ -111,22 +111,19 @@ typedef struct suit_parameter_args {
     suit_parameter_bool_t       soft_failure;
 } suit_parameter_args_t;
 
-typedef struct suit_common_sequence_args {
-    /* SUIT_Conditions */
-    struct {
-        uint64_t                    vendor_identifier;
-        uint64_t                    class_identifier;
-        uint64_t                    image_match;
-        uint64_t                    use_before;
-        uint64_t                    component_offset;
-        uint64_t                    abort;
-        uint64_t                    device_identifier;
-        uint64_t                    image_not_match;
-        uint64_t                    minimum_battery;
-        uint64_t                    update_authorized;
-        uint64_t                    version;
-    } condition;
+typedef struct report {
+    union {
+        uint64_t val; // NOTE: 4 bits are enough but reserve 64 bits for QCBOR
+        struct {
+            uint64_t record_on_success: 1;
+            uint64_t record_on_failure: 1;
+            uint64_t sysinfo_success: 1;
+            uint64_t sysinfo_failure: 1;
+        };
+    };
+} report_t;
 
+typedef struct suit_common_sequence_args {
     /* SUIT_Parameters */
     suit_parameter_args_t           parameters;
 
@@ -171,7 +168,6 @@ typedef struct suit_inputs {
 
 typedef struct suit_callbacks {
     suit_err_t (*suit_fetch)(suit_fetch_args_t *fetch);
-    suit_err_t (*suit_digest_match)(suit_validate_args_t *validate);
     suit_err_t (*suit_on_error)(suit_on_error_args_t *error);
 } suit_callbacks_t;
 
@@ -197,20 +193,20 @@ suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, suit
     |   create_suit_process();      |
     |   while {                     |
     |     fetch_manifests();        |
-    |     update_suit_process();    |    +-libcsuit--------------------------+
-    |     suit_process_envelopes(); |===>| suit_process_envelops() {         |
-    |   }                           |    |   decode_and_check_digests();     |
-    | }                             |    |   for (m in manifests) {          |
-    |                               |    |     decode_common(m);             |
-    | fetch_callback() {            |<===|     callbacks.fetch(m.uri);       |
-    |   get_image(uri, ptr);        |    |     (wait)                        |
-    |   return SUIT_SUCCESS;        |===>|     if (!install_success)         |
-    | }                             |    |       callbacks.on_error();       |
-    | error_callback() {            |    |     check_image_digest(m, ptr)    |
-    |   // do something             |    |     ...                           |
-    |   if (fatal)                  |    |   }                               |
-    |     return SUIT_ERR_FATAL;    |    | }                                 |
-    |   return SUIT_SUCCESS;        |    +-----------------------------------+
+    |     update_suit_process();    |    +-libcsuit-------------------------------+
+    |     suit_process_envelopes(); |===>| suit_process_envelops() {              |
+    |   }                           |    |   decode_and_check_digests();          |
+    | }                             |    |   for (m in manifests) {               |
+    |                               |    |     decode_common(m);                  |
+    | fetch_callback() {            |<===|     err = callbacks.fetch(m.uri, ptr); |
+    |   get_image(uri, ptr);        |    |     (wait)                             |
+    |   return SUIT_SUCCESS;        |===>|     if (!err)                          |
+    | }                             |    |       callbacks.on_error(err);         |
+    | error_callback() {            |    |     check_image_digest(m, ptr);        |
+    |   // do something             |    |     ...                                |
+    |   if (fatal)                  |    |   }                                    |
+    |     return SUIT_ERR_FATAL;    |    | }                                      |
+    |   return SUIT_SUCCESS;        |    +----------------------------------------+
     | }                             |
     +-------------------------------+
     \endcode
