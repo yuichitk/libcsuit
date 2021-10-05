@@ -43,12 +43,12 @@ typedef struct suit_on_error_args {
 } suit_on_error_args_t;
 
 typedef struct suit_fetch_args {
-    const size_t name_len;
+    size_t name_len;
     char name[SUIT_MAX_NAME_LENGTH];
-    const size_t uri_len;
+    size_t uri_len;
     char uri[SUIT_MAX_URI_LENGTH];
 
-    const size_t buf_len;
+    size_t buf_len;
     /**
         Pointer to allocated memory in the caller.
         This could be NULL if the caller did not allocate buffer,

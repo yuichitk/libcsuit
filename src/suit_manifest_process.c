@@ -73,7 +73,7 @@ suit_err_t suit_set_parameters(QCBORDecodeContext *context,
 
     size_t length = item.val.uCount;
     for (size_t i = 0; i < length; i++) {
-        result = suit_qcbor_peek_next(context, &item, QCBOR_TYPE_ANY);
+        result = suit_qcbor_get_next(context, &item, QCBOR_TYPE_ANY);
         if (result != SUIT_SUCCESS) {
             goto out;
         }
@@ -81,8 +81,12 @@ suit_err_t suit_set_parameters(QCBORDecodeContext *context,
 
         switch (label) {
         case SUIT_PARAMETER_URI:
+            if (item.uDataType != QCBOR_TYPE_TEXT_STRING) {
+                result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
+                goto out;
+            }
             if (!(parameters->exists & SUIT_PARAMETER_CONTAINS_URI) || to_override) {
-                QCBORDecode_GetByteString(context, &parameters->uri_list[0]);
+                parameters->uri_list[0] = item.val.string;
                 parameters->uri_list_len = 1;
             }
             break;
@@ -114,9 +118,9 @@ suit_err_t suit_process_command(const uint8_t command,
                                 suit_common_args_t *suit_common_args,
                                 const suit_callbacks_t *suit_callbacks) {
     suit_err_t result = SUIT_SUCCESS;
-/*    union {
+    union {
         suit_fetch_args_t fetch;
-    } args; */
+    } args;
     bool to_override = false;
     suit_parameter_args_t tmp_parameters;
     uint64_t component_index = 0;
@@ -129,7 +133,7 @@ suit_err_t suit_process_command(const uint8_t command,
     QCBORError error;
     QCBORDecode_Init(&context, buf, QCBOR_DECODE_MODE_NORMAL);
 
-    QCBORDecode_EnterBstrWrapped(&context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
+    //QCBORDecode_EnterBstrWrapped(&context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
     QCBORDecode_EnterArray(&context, &item);
     const size_t length = item.val.uCount;
     for (size_t i = 0; i < length; i += 2) {
@@ -182,13 +186,25 @@ suit_err_t suit_process_command(const uint8_t command,
             suit_set_parameters(&context, to_override, &suit_common_args->parameters);
             to_override = false;
             break;
-
+        case SUIT_DIRECTIVE_FETCH:
+            if (suit_callbacks->suit_fetch != NULL && suit_common_args->parameters.uri_list_len > 0) {
+                if (suit_common_args->parameters.uri_list[0].len >= SUIT_MAX_NAME_LENGTH) {
+                    result = SUIT_ERR_NO_MEMORY;
+                }
+                else {
+                    args.fetch = (suit_fetch_args_t){0};
+                    memcpy(args.fetch.uri, suit_common_args->parameters.uri_list[0].ptr, suit_common_args->parameters.uri_list[0].len);
+                    args.fetch.uri[suit_common_args->parameters.uri_list[0].len] = '\0';
+                    args.fetch.uri_len = suit_common_args->parameters.uri_list[0].len;
+                    result = suit_callbacks->suit_fetch(&args.fetch);
+                }
+            }
+            break;
         case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
         case SUIT_DIRECTIVE_TRY_EACH:
         case SUIT_DIRECTIVE_DO_EACH:
         case SUIT_DIRECTIVE_MAP_FILTER:
         case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
-        case SUIT_DIRECTIVE_FETCH:
         case SUIT_DIRECTIVE_COPY:
         case SUIT_DIRECTIVE_RUN:
         case SUIT_DIRECTIVE_WAIT:
@@ -204,7 +220,7 @@ suit_err_t suit_process_command(const uint8_t command,
         }
     }
     QCBORDecode_ExitArray(&context);
-    QCBORDecode_ExitBstrWrapped(&context);
+    //QCBORDecode_ExitBstrWrapped(&context);
     error = QCBORDecode_Finish(&context);
 
     if (result == SUIT_SUCCESS && error != QCBOR_SUCCESS) {
@@ -352,10 +368,10 @@ suit_err_t suit_process_manifest(QCBORDecodeContext *context,
             QCBORDecode_GetUInt64(context, &suit_common_args->manifest_sequence_number);
             break;
         case SUIT_INSTALL:
-            suit_process_install(context, suit_common_args, suit_inputs, suit_callbacks);
+            result = suit_process_install(context, suit_common_args, suit_inputs, suit_callbacks);
             break;
         case SUIT_VALIDATE:
-            suit_process_validate(context, suit_common_args, suit_inputs, suit_callbacks);
+            result = suit_process_validate(context, suit_common_args, suit_inputs, suit_callbacks);
             break;
         case SUIT_RUN:
             /* TODO */
