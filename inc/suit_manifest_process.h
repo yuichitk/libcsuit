@@ -167,8 +167,8 @@ typedef struct suit_inputs {
 } suit_inputs_t;
 
 typedef struct suit_callbacks {
-    suit_err_t (*suit_fetch)(suit_fetch_args_t *fetch);
-    suit_err_t (*suit_on_error)(suit_on_error_args_t *error);
+    suit_err_t (*fetch)(suit_fetch_args_t fetch);
+    suit_err_t (*on_error)(suit_on_error_args_t error);
 } suit_callbacks_t;
 
 void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);

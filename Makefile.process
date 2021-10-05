@@ -8,7 +8,7 @@ CFLAGS	= -Wall -g
 LDFLAGS	= -lt_cose -lqcbor -lcrypto
 INC		= -I ./inc -I ./examples/inc
 TARGET	= ./suit_manifest_process
-SRCS	= examples/suit_manifest_process_main.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_common.c src/suit_manifest_process.c src/suit_cose.c src/suit_digest.c
+SRCS	= examples/suit_manifest_process_main.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_common.c src/suit_manifest_process.c src/suit_cose.c src/suit_digest.c src/suit_manifest_print.c src/suit_manifest_decode.c
 OBJDIR	= ./obj
 OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
@@ -27,7 +27,7 @@ $(OBJDIR)/%.o:	%.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
-TEST_NUM	:= 0 1 2
+TEST_NUM	:= 0 1 3
 
 define test-one
 	$(TARGET) ./testfiles/suit_manifest_exp$(1).cbor

@@ -29,6 +29,7 @@ typedef enum {
     SUIT_ERR_NOT_IMPLEMENTED            = 5, /*! parser is not implemented */
     SUIT_ERR_FAILED_TO_VERIFY           = 6, /*! COSE or hash digest verification failure */
     SUIT_ERR_AUTHENTICATION_POSITION    = 7, /*! suit-authentication-block MUST come before any element, except suit-delegation */
+    SUIT_ERR_ABORT                      = 31,
 } suit_err_t;
 
 /*! \brief abort immediately on any error */

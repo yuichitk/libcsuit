@@ -16,9 +16,12 @@
 #define SUIT_MAX_PRINT_BYTE_COUNT        5
 #define SUIT_MAX_PRINT_TEXT_COUNT        64
 
+extern const char* SUIT_ENVELOPE_KEY_NUM_TO_STRING[];
+extern const char* SUIT_MANIFEST_KEY_NUM_TO_STRING[];
 extern const char* SUIT_COMMAND_SEQUENCE_NUM_TO_STRING[];
 extern const char* SUIT_PARAMETER_NUM_TO_STRING[];
 
+const char* suit_err_to_str(suit_err_t error);
 suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, const uint32_t indent_space);
 suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_seq, const uint32_t indent_space);
 suit_err_t suit_print_component_identifier(const suit_component_identifier_t *identifier);

@@ -132,16 +132,15 @@ suit_err_t suit_process_command(const uint8_t command,
     QCBORItem item;
     QCBORError error;
     QCBORDecode_Init(&context, buf, QCBOR_DECODE_MODE_NORMAL);
+    int64_t condition_directive_key = SUIT_CONDITION_INVALID;
 
-    //QCBORDecode_EnterBstrWrapped(&context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
     QCBORDecode_EnterArray(&context, &item);
     const size_t length = item.val.uCount;
     for (size_t i = 0; i < length; i += 2) {
-        int64_t label;
         report_t reporting_policy;
-        QCBORDecode_GetInt64(&context, &label);
+        QCBORDecode_GetInt64(&context, &condition_directive_key);
 
-        switch (label) {
+        switch (condition_directive_key) {
         case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
             result = suit_in_component_index(&context, &component_index);
             break;
@@ -187,7 +186,7 @@ suit_err_t suit_process_command(const uint8_t command,
             to_override = false;
             break;
         case SUIT_DIRECTIVE_FETCH:
-            if (suit_callbacks->suit_fetch != NULL && suit_common_args->parameters.uri_list_len > 0) {
+            if (suit_callbacks->fetch != NULL && suit_common_args->parameters.uri_list_len > 0) {
                 if (suit_common_args->parameters.uri_list[0].len >= SUIT_MAX_NAME_LENGTH) {
                     result = SUIT_ERR_NO_MEMORY;
                 }
@@ -196,7 +195,7 @@ suit_err_t suit_process_command(const uint8_t command,
                     memcpy(args.fetch.uri, suit_common_args->parameters.uri_list[0].ptr, suit_common_args->parameters.uri_list[0].len);
                     args.fetch.uri[suit_common_args->parameters.uri_list[0].len] = '\0';
                     args.fetch.uri_len = suit_common_args->parameters.uri_list[0].len;
-                    result = suit_callbacks->suit_fetch(&args.fetch);
+                    result = suit_callbacks->fetch(args.fetch);
                 }
             }
             break;
@@ -215,16 +214,16 @@ suit_err_t suit_process_command(const uint8_t command,
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
         }
+        error = QCBORDecode_GetError(&context);
         if (result != SUIT_SUCCESS) {
-            goto out;
+            goto error;
         }
     }
     QCBORDecode_ExitArray(&context);
-    //QCBORDecode_ExitBstrWrapped(&context);
     error = QCBORDecode_Finish(&context);
 
-    if (result == SUIT_SUCCESS && error != QCBOR_SUCCESS) {
-        result = suit_error_from_qcbor_error(error);
+    if (result != SUIT_SUCCESS || error != QCBOR_SUCCESS) {
+        goto error;
     }
 
     switch (command) {
@@ -233,7 +232,22 @@ suit_err_t suit_process_command(const uint8_t command,
     case SUIT_VALIDATE:
         break;
     }
-out:
+    return result;
+
+error:
+    if (suit_callbacks->on_error != NULL || result != SUIT_ERR_ABORT) {
+        suit_callbacks->on_error(
+            (suit_on_error_args_t) {
+                .level0 = SUIT_MANIFEST,
+                .level1.manifest_key = command,
+                .level2.condition_directive = condition_directive_key,
+                .level3.parameter = SUIT_PARAMETER_INVALID,
+                .qcbor_error = error,
+                .suit_error = result
+            }
+        );
+        return SUIT_ERR_ABORT;
+    }
     return result;
 }
 
@@ -362,7 +376,7 @@ suit_err_t suit_process_manifest(QCBORDecodeContext *context,
             break;
         case SUIT_COMMON:
             QCBORDecode_GetByteString(context, &suit_common_buf);
-            suit_process_common(suit_common_buf, -1, 0, suit_callbacks, suit_common_args);
+            result = suit_process_common(suit_common_buf, -1, 0, suit_callbacks, suit_common_args);
             break;
         case SUIT_MANIFEST_SEQUENCE_NUMBER:
             QCBORDecode_GetUInt64(context, &suit_common_args->manifest_sequence_number);
@@ -388,13 +402,13 @@ suit_err_t suit_process_manifest(QCBORDecodeContext *context,
             goto out;
         }
         if (result != SUIT_SUCCESS) {
-            goto out;
+            return result;
         }
     }
     QCBORDecode_ExitMap(context);
     QCBORDecode_ExitBstrWrapped(context);
 out:
-    if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
+    if (error != QCBOR_SUCCESS || result != SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
     }
     return result;

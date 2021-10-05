@@ -5,9 +5,11 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "qcbor/qcbor.h"
 #include "suit_common.h"
 #include "suit_manifest_data.h"
+#include "suit_manifest_print.h"
 #include "suit_manifest_process.h"
 #include "suit_cose.h"
 #include "suit_examples_common.h"
@@ -58,21 +60,66 @@ size_t read_file(const char *file_path, const size_t write_buf_len, uint8_t *wri
     return read_len;
 }
 
-suit_err_t print_fetch(suit_fetch_args_t *fetch_args)
+suit_err_t print_fetch(suit_fetch_args_t fetch_args)
 {
     printf("fetch callback : {\n");
     int print_len = 32;
-    if (fetch_args->uri_len < print_len) {
-        print_len = (int)fetch_args->uri_len;
+    if (fetch_args.uri_len < print_len) {
+        print_len = (int)fetch_args.uri_len;
     }
-    printf("  uri: %.*s", print_len, (char *)fetch_args->uri);
-    if (fetch_args->uri_len > 32) {
+    printf("  uri: %.*s", print_len, (char *)fetch_args.uri);
+    if (fetch_args.uri_len > 32) {
         printf(" ...");
     }
-    printf(" (%ld)\n", fetch_args->uri_len);
-    printf("  ptr: %p (%ld)\n", fetch_args->ptr, fetch_args->buf_len);
+    printf(" (%ld)\n", fetch_args.uri_len);
+    printf("  ptr: %p (%ld)\n", fetch_args.ptr, fetch_args.buf_len);
     printf("}\n");
     return SUIT_SUCCESS;
+}
+
+suit_err_t print_error(suit_on_error_args_t error_args)
+{
+    printf("error callback : {\n");
+    printf("  at: %d(%s)", error_args.level0, SUIT_ENVELOPE_KEY_NUM_TO_STRING[error_args.level0]);
+
+    switch (error_args.level0) {
+    case SUIT_AUTHENTICATION:
+        break;
+    case SUIT_MANIFEST:
+        printf(", %d(%s)", error_args.level1.manifest_key, SUIT_MANIFEST_KEY_NUM_TO_STRING[error_args.level1.manifest_key]);
+        switch (error_args.level1.manifest_key) {
+        case SUIT_COMMON:
+        case SUIT_INSTALL:
+        case SUIT_VALIDATE:
+        case SUIT_RUN:
+            printf(", %d(%s)", error_args.level2.condition_directive, SUIT_COMMAND_SEQUENCE_NUM_TO_STRING[error_args.level2.condition_directive]);
+            switch (error_args.level2.condition_directive) {
+            case SUIT_DIRECTIVE_SET_PARAMETERS:
+            case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
+                printf(", %d(%s)", error_args.level3.parameter, SUIT_PARAMETER_NUM_TO_STRING[error_args.level3.parameter]);
+                break;
+            default:
+                break;
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case SUIT_DELEGATION:
+        break;
+    default:
+        break;
+    }
+    printf("\n");
+
+    printf("  QCBORError: %d(%s)\n", error_args.qcbor_error, qcbor_err_to_str(error_args.qcbor_error));
+    printf("  suit_err_t: %d(%s)\n", error_args.suit_error, suit_err_to_str(error_args.suit_error));
+
+    printf("}\n");
+
+    exit(EXIT_FAILURE);
+    return SUIT_ERR_FATAL;
 }
 
 int main(int argc, char *argv[]) {
@@ -87,7 +134,8 @@ int main(int argc, char *argv[]) {
 
     suit_inputs_t suit_inputs = {0};
     suit_callbacks_t suit_callbacks = {0};
-    suit_callbacks.suit_fetch = print_fetch;
+    suit_callbacks.fetch = print_fetch;
+    suit_callbacks.on_error = print_error;
     suit_inputs.manifest_len = 0;
     suit_inputs.key_len = NUM_PUBLIC_KEYS;
 

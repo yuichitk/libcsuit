@@ -8,8 +8,58 @@
 #include <string.h>
 #include <assert.h>
 #include "suit_common.h"
+#include "suit_manifest_data.h"
 #include "suit_manifest_print.h"
 #include <inttypes.h>
+
+const char* suit_err_to_str(suit_err_t error) {
+    switch(error) {
+    case SUIT_SUCCESS:
+        return "SUIT_SUCCESS";
+    case SUIT_ERR_FATAL:
+        return "SUIT_ERR_FATAL";
+    case SUIT_ERR_NO_MEMORY:
+        return "SUIT_ERR_NO_MEMORY";
+    case SUIT_ERR_INVALID_TYPE_OF_ARGUMENT:
+        return "SUIT_INVALID_TYPE_OF_ARGUMENT";
+    case SUIT_ERR_NO_MORE_ITEMS:
+        return "SUIT_ERR_NO_MORE_ITEMS";
+    case SUIT_ERR_NOT_IMPLEMENTED:
+        return "SUIT_ERR_NOT_IMPLEMENTED";
+    case SUIT_ERR_FAILED_TO_VERIFY:
+        return "SUIT_ERR_FAILED_TO_VERIFY";
+    case SUIT_ERR_AUTHENTICATION_POSITION:
+        return "SUIT_ERR_AUTHENTICATION_POSITION";
+    case SUIT_ERR_ABORT:
+        return "SUIT_ERR_ABORT";
+    default:
+        return "SUIT_ERR_UNKNOWN";
+    }
+}
+
+const char* SUIT_ENVELOPE_KEY_NUM_TO_STRING[] = {
+    NULL,                               // SUIT_ENVELOPE_KEY_INVALID           = 0,
+    "delegation",                       // SUIT_DELEGATION                     = 1,
+    "authentication",                   // SUIT_AUTHENTICATION                 = 2,
+    "manifest",                         // SUIT_MANIFEST                       = 3,
+};
+
+const char* SUIT_MANIFEST_KEY_NUM_TO_STRING[] = {
+    NULL,                               // SUIT_MANIFEST_KEY_INVALID           = 0,
+    "manifest-version",                 // SUIT_MANIFEST_VERSION               = 1,
+    "manifest-sequence-number",         // SUIT_MANIFEST_SEQUENCE_NUMBER       = 2,
+    "common",                           // SUIT_COMMON                         = 3,
+    "reference-uri",                    // SUIT_REFERENCE_URI                  = 4,
+    NULL, NULL,                         // 5, 6,
+    "dependency-resolution",            // SUIT_DEPENDENCY_RESOLUTION          = 7,
+    "payload-fetch",                    // SUIT_PAYLOAD_FETCH                  = 8,
+    "install",                          // SUIT_INSTALL                        = 9,
+    "validate",                         // SUIT_VALIDATE                       = 10,
+    "load",                             // SUIT_LOAD                           = 11,
+    "run",                              // SUIT_RUN                            = 12,
+    "text",                             // SUIT_TEXT                           = 13,
+    "coswid",                           // SUIT_COSWID                         = 14,
+};
 
 const char* SUIT_COMMAND_SEQUENCE_NUM_TO_STRING[] = {
     NULL,                               //SUIT_CONDITION_INVALID              = 0,
