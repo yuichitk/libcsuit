@@ -61,11 +61,15 @@ size_t read_file(const char *file_path, const size_t write_buf_len, uint8_t *wri
 suit_err_t print_fetch(suit_fetch_args_t *fetch_args)
 {
     printf("fetch callback : {\n");
-    int print_len = 16;
+    int print_len = 32;
     if (fetch_args->uri_len < print_len) {
         print_len = (int)fetch_args->uri_len;
     }
     printf("  uri: %.*s", print_len, (char *)fetch_args->uri);
+    if (fetch_args->uri_len > 32) {
+        printf(" ...");
+    }
+    printf(" (%ld)\n", fetch_args->uri_len);
     printf("  ptr: %p (%ld)\n", fetch_args->ptr, fetch_args->buf_len);
     printf("}\n");
     return SUIT_SUCCESS;
