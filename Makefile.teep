@@ -45,13 +45,14 @@ $(OBJDIR)/%.o:	%.c
 PRIV_KEY1	:= ./testfiles/key/trust_anchor_secp256r1.der
 OUTPUTu		:= ./testfiles/suit_manifest_expU.cbor
 OUTPUTi		:= ./testfiles/suit_manifest_expI.cbor
-URI			:= https://tam.org/8d82573a-926d-4754-9353-32dc29997f74.suit #http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta
+URI			:= https://tc.org/8d82573a-926d-4754-9353-32dc29997f74.suit
 PRIV_KEY2	:= ../libteep/testfiles/key/tam_prime256v1.der
 OUTPUTd		:= ./testfiles/suit_manifest_expD.cbor
+DEPENDENCY	:= ./testfiles/suit_manifest_expU_fixed.cbor
 test: all
 	$(TARGETu) $(PRIV_KEY1) $(OUTPUTu)
 	$(TARGETi) $(PRIV_KEY1) $(OUTPUTi)
-	$(TARGETd) $(OUTPUTu) $(URI) $(PRIV_KEY2) $(OUTPUTd)
+	$(TARGETd) $(DEPENDENCY) $(URI) $(PRIV_KEY2) $(OUTPUTd)
 
 clean:
 	rm -f $(OBJS) $(TARGET1) $(TARGET2)

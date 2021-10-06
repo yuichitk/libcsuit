@@ -84,16 +84,14 @@ int main(int argc, char *argv[]) {
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
     suit_manifest_t *manifest = &envelope.manifest;
     manifest->version = 1;
-    manifest->sequence_number = 2;
+    manifest->sequence_number = 3;
 
-#if 0
     /* "TEEP-Device" */
     uint8_t component_id_0[] = {0x54, 0x45, 0x45, 0x50, 0x2D, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65};
     /* "SecureFS" */
     uint8_t component_id_1[] = {0x53, 0x65, 0x63, 0x75, 0x72, 0x65, 0x46, 0x53};
-    /* UUID(8d82573a-926d-4754-9353-32dc29997f74) */
-    uint8_t component_id_2[] = {0x8D, 0x82, 0x57, 0x3A, 0x92, 0x6D, 0x47, 0x54, 0x93, 0x53, 0x32, 0xDC, 0x29, 0x99, 0x7F, 0x74};
-#endif
+    /* "config.json" */
+    uint8_t component_id_2[] = {0x63, 0x6F, 0x6E, 0x66, 0x69, 0x67, 0x2E, 0x6A, 0x73, 0x6F, 0x6E};
 
     suit_common_t *common = &manifest->common;
     /* suit-dependencies */
@@ -107,18 +105,23 @@ int main(int argc, char *argv[]) {
     */
 
     /* suit-components */
-    /*
     common->components.len = 1;
-    common->components.comp_id[0].len = 1;
-    common->components.comp_id[0].identifier[0] = (suit_buf_t){.ptr = component_id, .len = sizeof(component_id)};
-    */
+    common->components.comp_id[0].len = 3;
+    common->components.comp_id[0].identifier[0] = (suit_buf_t){.ptr = component_id_0, .len = sizeof(component_id_0)};
+    common->components.comp_id[0].identifier[1] = (suit_buf_t){.ptr = component_id_1, .len = sizeof(component_id_1)};
+    common->components.comp_id[0].identifier[2] = (suit_buf_t){.ptr = component_id_2, .len = sizeof(component_id_2)};
+
+    /* suit-common-sequence */
+    uint8_t vendor_id[] = {0xC0, 0xDD, 0xD5, 0xF1, 0x52, 0x43, 0x56, 0x60, 0x87, 0xDB, 0x4F, 0x5B, 0x0A, 0xA2, 0x6C, 0x2F};
+    uint8_t class_id[] = {0xDB, 0x42, 0xF7, 0x09, 0x3D, 0x8C, 0x55, 0xBA, 0xA8, 0xC5, 0x26, 0x5F, 0xC5, 0x82, 0x0F, 0x4E};
+    suit_command_sequence_t *cmd_seq = &common->cmd_seq;
+    cmd_seq->len = 4;
 
     suit_parameters_list_t *params_list;
-
-    /*
-    suit_parameters_list_t *params_list;
-    cmd_seq->commands[0].label = SUIT_DIRECTIVE_SET_PARAMETERS;
-    params_list = &cmd_seq->commands[0].value.params_list;
+    cmd_seq->commands[0].label = SUIT_DIRECTIVE_SET_COMPONENT_INDEX;
+    cmd_seq->commands[0].value.uint64 = 0;
+    cmd_seq->commands[1].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
+    params_list = &cmd_seq->commands[1].value.params_list;
     params_list->len = 4;
 
     params_list->params[0].label = SUIT_CONDITION_VENDOR_IDENTIFIER;
@@ -129,21 +132,22 @@ int main(int argc, char *argv[]) {
     params_list->params[1].value.string.ptr = class_id;
     params_list->params[1].value.string.len = sizeof(class_id);
 
-    uint8_t image_digest[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10};
+    uint8_t image_digest_sha256[] = {0xAA, 0xAB, 0xCC, 0xCD, 0xEE, 0xEF, 0x00, 0x01, 0x22, 0x23, 0x44, 0x45, 0x66, 0x67, 0x88, 0x89, 0xAB, 0xBB, 0xCD, 0xDD, 0xEF, 0xFF, 0x01, 0x11, 0x23, 0x33, 0x45, 0x55, 0x67, 0x77, 0x89, 0x99};
+    suit_digest_t image_digest;
+    image_digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+    image_digest.bytes.ptr = image_digest_sha256;
+    image_digest.bytes.len = sizeof(image_digest_sha256);
     params_list->params[2].label = SUIT_PARAMETER_IMAGE_DIGEST,
-    params_list->params[2].value.digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
-    params_list->params[2].value.digest.bytes.ptr = image_digest;
-    params_list->params[2].value.digest.bytes.len = sizeof(image_digest);
+    params_list->params[2].value.digest = image_digest;;
 
     params_list->params[3].label = SUIT_PARAMETER_IMAGE_SIZE;
-    params_list->params[3].value.uint64 = 34768;
+    params_list->params[3].value.uint64 = 64;
 
-    cmd_seq->commands[1].label = SUIT_CONDITION_VENDOR_IDENTIFIER;
-    cmd_seq->commands[1].value.uint64 = 15; // report all
-
-    cmd_seq->commands[2].label = SUIT_CONDITION_CLASS_IDENTIFIER;
+    cmd_seq->commands[2].label = SUIT_CONDITION_VENDOR_IDENTIFIER;
     cmd_seq->commands[2].value.uint64 = 15; // report all
-    */
+
+    cmd_seq->commands[3].label = SUIT_CONDITION_CLASS_IDENTIFIER;
+    cmd_seq->commands[3].value.uint64 = 15; // report all
 
     /* process-dependency */
     manifest->sev_man_mem.dependency_resolution_status = SUIT_SEVERABLE_IN_MANIFEST;
@@ -155,28 +159,57 @@ int main(int argc, char *argv[]) {
     dependency_resolution->commands[1].label = SUIT_DIRECTIVE_SET_PARAMETERS;
     params_list = &dependency_resolution->commands[1].value.params_list;
     params_list->len = 1;
-
-    /*
-    uint8_t uri[] = "http://localhost:8888/TAs/8d82573a-926d-4754-9353-32dc29997f74.ta";
-    */
     params_list->params[0].label = SUIT_PARAMETER_URI;
     params_list->params[0].value.string.ptr = (uint8_t *)uri;
     params_list->params[0].value.string.len = strlen(uri);
 
     dependency_resolution->commands[2].label = SUIT_DIRECTIVE_FETCH;
-    dependency_resolution->commands[2].value.uint64 = 15;
-
+    dependency_resolution->commands[2].value.uint64 = 2;
     dependency_resolution->commands[3].label = SUIT_CONDITION_IMAGE_MATCH;
-    dependency_resolution->commands[3].value.uint64 = 15; // report all
+    dependency_resolution->commands[3].value.uint64 = 15;
 
     /* install */
+    const char data_uri[] = "https://tc.org/config.json";
     manifest->sev_man_mem.install_status = SUIT_SEVERABLE_IN_MANIFEST;
     suit_command_sequence_t *install = &manifest->sev_man_mem.install;
-    install->len = 2;
+    install->len = 6;
     install->commands[0].label = SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX;
     install->commands[0].value.uint64 = 0;
     install->commands[1].label = SUIT_DIRECTIVE_PROCESS_DEPENDENCY;
-    install->commands[1].value.uint64 = 15;
+    install->commands[1].value.uint64 = 0;
+
+    install->commands[2].label = SUIT_DIRECTIVE_SET_COMPONENT_INDEX;
+    install->commands[2].value.uint64 = 0;
+    install->commands[3].label = SUIT_DIRECTIVE_SET_PARAMETERS;
+    params_list = &install->commands[3].value.params_list;
+    params_list->len = 1;
+    params_list->params[0].label = SUIT_PARAMETER_URI;
+    params_list->params[0].value.string.ptr = (uint8_t *)data_uri;
+    params_list->params[0].value.string.len = strlen(data_uri);
+
+    install->commands[4].label = SUIT_DIRECTIVE_FETCH;
+    install->commands[4].value.uint64 = 2;
+    install->commands[5].label = SUIT_CONDITION_IMAGE_MATCH;
+    install->commands[5].value.uint64 = 15;
+
+    /* validate */
+    suit_command_sequence_t *validate = &manifest->unsev_mem.validate;
+    validate->len = 2;
+    validate->commands[0].label = SUIT_DIRECTIVE_SET_COMPONENT_INDEX;
+    validate->commands[0].value.uint64 = 0;
+    validate->commands[1].label = SUIT_CONDITION_IMAGE_MATCH;
+    validate->commands[1].value.uint64 = 15;
+
+    /* text */
+    manifest->sev_man_mem.text_status = SUIT_SEVERABLE_IN_MANIFEST;
+    suit_text_t *text = &manifest->sev_man_mem.text;
+    text->component_len = 1;
+    text->component[0].key = common->components.comp_id[0];
+    const char model_name[] = "Reference TEEP-Device";
+    const char vendor_domain[] = "tc.org";
+    text->component[0].text_component.model_name = (suit_buf_t){.ptr = (uint8_t *)model_name, .len = strlen(model_name)};
+    text->component[0].text_component.vendor_domain = (suit_buf_t){.ptr = (uint8_t *)vendor_domain, .len = strlen(vendor_domain)};
+
 
     // Print manifest.
     printf("\nmain : Print Manifest.\n");
