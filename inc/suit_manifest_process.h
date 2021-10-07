@@ -31,16 +31,28 @@ typedef struct suit_on_error_args {
     } level1;
     union {
         suit_rep_policy_key_t condition_directive;
+        suit_common_key_t common_key;
         suit_text_key_t text_key;
     } level2;
     union {
+        suit_rep_policy_key_t condition_directive;
         suit_parameter_key_t parameter;
         suit_text_component_key_t text_component_key;
     } level3;
+    union {
+        suit_parameter_key_t parameter;
+    } level4;
 
     QCBORError qcbor_error;
     suit_err_t suit_error;
 } suit_on_error_args_t;
+
+typedef struct suit_run_args {
+    suit_component_identifier_t component_identifier;
+    /* basically byte-string value, so may not '\0' terminated */
+    uint8_t args[SUIT_MAX_ARGS_LENGTH];
+    size_t args_len;
+} suit_run_args_t;
 
 typedef struct suit_fetch_args {
     size_t name_len;
@@ -160,19 +172,42 @@ typedef struct suit_common_args {
 } suit_common_args_t;
 
 typedef struct suit_inputs {
-    size_t manifest_len;
-    UsefulBufC manifests[SUIT_MAX_ARRAY_LENGTH];
+    UsefulBufC manifest;
     size_t key_len;
     struct t_cose_key public_keys[SUIT_MAX_ARRAY_LENGTH];
 } suit_inputs_t;
 
 typedef struct suit_callbacks {
     suit_err_t (*fetch)(suit_fetch_args_t fetch);
+    suit_err_t (*run)(suit_run_args_t run);
     suit_err_t (*on_error)(suit_on_error_args_t error);
 } suit_callbacks_t;
 
 void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);
 suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, suit_inputs_t *suit_inputs, suit_digest_t *digest);
+
+typedef struct suit_extracted {
+    suit_dependencies_t dependencies;
+    suit_components_t components;
+
+    UsefulBufC common_sequence;
+    // UsefulBufC reference_uri;
+    UsefulBufC dependency_resolution;
+    suit_digest_t dependency_resolution_digest;
+    UsefulBufC payload_fetch;
+    suit_digest_t payload_fetch_digest;
+    UsefulBufC install;
+    suit_digest_t install_digest;
+    UsefulBufC validate;
+    UsefulBufC load;
+    UsefulBufC run;
+    UsefulBufC text;
+    suit_digest_t text_digest;
+    UsefulBufC coswid;
+    suit_digest_t coswid_digest;
+    suit_integrated_payload_t payloads[SUIT_MAX_ARRAY_LENGTH];
+    size_t payloads_len;
+} suit_extracted_t;
 
 /*!
     \brief  Decode & Process SUIT binary

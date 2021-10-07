@@ -25,10 +25,16 @@ typedef enum {
     SUIT_ERR_FATAL                      = 1, /*! unknown error, e.g. occurred out of SUIT */
     SUIT_ERR_NO_MEMORY                  = 2, /*! exceed the allocated memory */
     SUIT_ERR_INVALID_TYPE_OF_ARGUMENT   = 3, /*! type of an item is not expected */
-    SUIT_ERR_NO_MORE_ITEMS              = 4, /*! mandatory items in array is not appeared */
+    SUIT_ERR_NO_MORE_ITEMS              = 4, /*! mandatory items in array did not appeare */
     SUIT_ERR_NOT_IMPLEMENTED            = 5, /*! parser is not implemented */
     SUIT_ERR_FAILED_TO_VERIFY           = 6, /*! COSE or hash digest verification failure */
     SUIT_ERR_AUTHENTICATION_POSITION    = 7, /*! suit-authentication-block MUST come before any element, except suit-delegation */
+    SUIT_ERR_REDUNDANT                  = 8, /*! same key appears, e.g. suit-install exists in both suit-manifest and suit-envelope */
+    SUIT_ERR_INVALID_TYPE_OF_KEY        = 9, /*! type of an key is not expected */
+    SUIT_ERR_INVALID_MANIFEST_VERSION   = 10, /*! suit-manifest-version is not supported */
+    SUIT_ERR_INVALID_KEY                = 11, /*! invalid map key */
+    SUIT_ERR_NO_CALLBACK                = 12, /*! callback function to be called does not provided */
+    SUIT_ERR_NO_ARGUMENT                = 13, /*! arguments for callback function did not appear */
     SUIT_ERR_ABORT                      = 31,
 } suit_err_t;
 
@@ -46,6 +52,8 @@ typedef enum {
 #define SUIT_MAX_ARRAY_LENGTH           20
 #define SUIT_MAX_NAME_LENGTH            256 /* the length of path or name such as component_identifier */
 #define SUIT_MAX_URI_LENGTH             256 /* the length of uri to fetch something */
+#define SUIT_MAX_COMPONENT_NUM          3
+#define SUIT_MAX_ARGS_LENGTH            64
 
 #define SUIT_ENVELOPE_CBOR_TAG               107
 
@@ -54,6 +62,12 @@ typedef enum suit_envelope_key {
     SUIT_DELEGATION                     = 1,
     SUIT_AUTHENTICATION                 = 2,
     SUIT_MANIFEST                       = 3,
+    SUIT_SEVERED_DEPENDENCY_RESOLUTION  = 7,
+    SUIT_SEVERED_PAYLOAD_FETCH          = 8,
+    SUIT_SEVERED_INSTALL                = 9,
+    SUIT_SEVERED_TEXT                   = 13,
+    SUIT_SEVERED_COSWID                 = 14,
+    SUIT_INTEGRATED_PAYLOAD             = 24,
 } suit_envelope_key_t;
 
 typedef enum suit_algorithm_id {
@@ -66,7 +80,6 @@ typedef enum suit_algorithm_id {
 } suit_algorithm_id_t;
 
 typedef enum suit_manifest_key {
-    SUIT_MANIFEST_KEY_ALL               = 0,
     SUIT_MANIFEST_KEY_INVALID           = 0,
     SUIT_MANIFEST_VERSION               = 1,
     SUIT_MANIFEST_SEQUENCE_NUMBER       = 2,

@@ -30,6 +30,18 @@ const char* suit_err_to_str(suit_err_t error) {
         return "SUIT_ERR_FAILED_TO_VERIFY";
     case SUIT_ERR_AUTHENTICATION_POSITION:
         return "SUIT_ERR_AUTHENTICATION_POSITION";
+    case SUIT_ERR_REDUNDANT:
+        return "SUIT_ERR_REDUNDANT";
+    case SUIT_ERR_INVALID_TYPE_OF_KEY:
+        return "SUIT_ERR_INVALID_TYPE_OF_KEY";
+    case SUIT_ERR_INVALID_MANIFEST_VERSION:
+        return "SUIT_ERR_INVALID_MANIFEST_VERSION";
+    case SUIT_ERR_INVALID_KEY:
+        return "SUIT_ERR_INVALID_KEY";
+    case SUIT_ERR_NO_CALLBACK:
+        return "SUIT_ERR_NO_CALLBACK";
+    case SUIT_ERR_NO_ARGUMENT:
+        return "SUIT_ERR_NO_ARGUMENT";
     case SUIT_ERR_ABORT:
         return "SUIT_ERR_ABORT";
     default:
@@ -37,87 +49,170 @@ const char* suit_err_to_str(suit_err_t error) {
     }
 }
 
-const char* SUIT_ENVELOPE_KEY_NUM_TO_STRING[] = {
-    NULL,                               // SUIT_ENVELOPE_KEY_INVALID           = 0,
-    "delegation",                       // SUIT_DELEGATION                     = 1,
-    "authentication",                   // SUIT_AUTHENTICATION                 = 2,
-    "manifest",                         // SUIT_MANIFEST                       = 3,
-};
+const char* suit_envelope_key_to_str(suit_envelope_key_t envelope_key) {
+    switch (envelope_key) {
+    case SUIT_DELEGATION:
+        return "delegation";
+    case SUIT_AUTHENTICATION:
+        return "authentication";
+    case SUIT_MANIFEST:
+        return "manifest";
+    default:
+        return NULL;
+    }
+}
 
-const char* SUIT_MANIFEST_KEY_NUM_TO_STRING[] = {
-    NULL,                               // SUIT_MANIFEST_KEY_INVALID           = 0,
-    "manifest-version",                 // SUIT_MANIFEST_VERSION               = 1,
-    "manifest-sequence-number",         // SUIT_MANIFEST_SEQUENCE_NUMBER       = 2,
-    "common",                           // SUIT_COMMON                         = 3,
-    "reference-uri",                    // SUIT_REFERENCE_URI                  = 4,
-    NULL, NULL,                         // 5, 6,
-    "dependency-resolution",            // SUIT_DEPENDENCY_RESOLUTION          = 7,
-    "payload-fetch",                    // SUIT_PAYLOAD_FETCH                  = 8,
-    "install",                          // SUIT_INSTALL                        = 9,
-    "validate",                         // SUIT_VALIDATE                       = 10,
-    "load",                             // SUIT_LOAD                           = 11,
-    "run",                              // SUIT_RUN                            = 12,
-    "text",                             // SUIT_TEXT                           = 13,
-    "coswid",                           // SUIT_COSWID                         = 14,
-};
+const char* suit_manifest_key_to_str(suit_manifest_key_t manifest_key) {
+    switch (manifest_key) {
+    case SUIT_MANIFEST_VERSION:
+        return "manifest-version";
+    case SUIT_MANIFEST_SEQUENCE_NUMBER:
+        return "manifest-sequence-number";
+    case SUIT_COMMON:
+        return "common";
+    case SUIT_REFERENCE_URI:
+        return "reference-uri";
+    case SUIT_DEPENDENCY_RESOLUTION:
+        return "dependency-resolution";
+    case SUIT_PAYLOAD_FETCH:
+        return "payload-fetch";
+    case SUIT_INSTALL:
+        return "install";
+    case SUIT_VALIDATE:
+        return "validate";
+    case SUIT_LOAD:
+        return "load";
+    case SUIT_RUN:
+        return "run";
+    case SUIT_TEXT:
+        return "text";
+    case SUIT_COSWID:
+        return "coswid";
+    default:
+        return NULL;
+    }
+}
 
-const char* SUIT_COMMAND_SEQUENCE_NUM_TO_STRING[] = {
-    NULL,                               //SUIT_CONDITION_INVALID              = 0,
-    "condition-vendor-identifier",      //SUIT_CONDITION_VENDOR_IDENTIFIER    = 1,
-    "condition-class-identifier",       //SUIT_CONDITION_CLASS_IDENTIFIER     = 2,
-    "condition-image-match",            //SUIT_CONDITION_IMAGE_MATCH          = 3,
-    "condition-use-before",             //SUIT_CONDITION_USE_BEFORE           = 4,
-    "condition-component-slot",         //SUIT_CONDITION_COMPONENT_SLOT       = 5,
-    NULL, NULL, NULL, NULL, NULL, NULL, //6, 7, 8, 9, 10, 11
-    "directive-set-component-index",    //SUIT_DIRECTIVE_SET_COMPONENT_INDEX  = 12,
-    "directive-set-dependency-index",   //SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX = 13,
-    "condition-abort",                  //SUIT_CONDITION_ABORT                = 14,
-    "directive-try-each",               //SUIT_DIRECTIVE_TRY_EACH             = 15,
-    "directive-do-each",                //SUIT_DIRECTIVE_DO_EACH              = 16,
-    "directive-map-filter",             //SUIT_DIRECTIVE_MAP_FILTER           = 17,
-    "directive-process-dependency",     //SUIT_DIRECTIVE_PROCESS_DEPENDENCY   = 18,
-    "directive-set-parameters",         //SUIT_DIRECTIVE_SET_PARAMETERS       = 19,
-    "directive-override-parameters",    //SUIT_DIRECTIVE_OVERRIDE_PARAMETERS  = 20,
-    "directive-fetch",                  //SUIT_DIRECTIVE_FETCH                = 21,
-    "directive-copy",                   //SUIT_DIRECTIVE_COPY                 = 22,
-    "directive-run",                    //SUIT_DIRECTIVE_RUN                  = 23,
-    "condition-device-identifier",      //SUIT_CONDITION_DEVICE_IDENTIFIER    = 24,
-    "condition-image-not-match",        //SUIT_CONDITION_IMAGE_NOT_MATCH      = 25,
-    "condition-minimum-batterh",        //SUIT_CONDITION_MINIMUM_BATTERY      = 26,
-    "condition-update-authorized",      //SUIT_CONDITION_UPDATE_AUTHORIZED    = 27,
-    "condition-version",                //SUIT_CONDITION_VERSION              = 28,
-    "directive-wait",                   //SUIT_DIRECTIVE_WAIT                 = 29,
-    "directive-fetch-uri-list",         //SUIT_DIRECTIVE_FETCH_URI_LIST       = 30,
-    "directive-swap",                   //SUIT_DIRECTIVE_SWAP                 = 31,
-    "directive-run-sequence",           //SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
-    "directive-unlink",                 //SUIT_DIRECTIVE_UNLINK               = 33,
-};
+const char* suit_common_key_to_str(suit_common_key_t common_key) {
+    switch (common_key) {
+    case SUIT_DEPENDENCIES:
+        return "dependencies";
+    case SUIT_COMPONENTS:
+        return "components";
+    case SUIT_COMMON_SEQUENCE:
+        return "common-sequence";
+    default:
+        return NULL;
+    }
+}
 
-const char* SUIT_PARAMETER_NUM_TO_STRING[] = {
-    NULL,                               //SUIT_PARAMETER_INVALID              = 0,
-    "vendor-id",                        //SUIT_PARAMETER_VENDOR_IDENTIFIER    = 1,
-    "class-id",                         //SUIT_PARAMETER_CLASS_IDENTIFIER     = 2,
-    "image-digest",                     //SUIT_PARAMETER_IMAGE_DIGEST         = 3,
-    "use-before",                       //SUIT_PARAMETER_USE_BEFORE           = 4,
-    "component-slot",                   //SUIT_PARAMETER_COMPONENT_SLOT       = 5,
-    NULL, NULL, NULL, NULL, NULL, NULL, //6, 7, 8, 9, 10, 11,
-    "strict-order",                     //SUIT_PARAMETER_STRICT_ORDER         = 12,
-    "soft-failure",                     //SUIT_PARAMETER_SOFT_FAILURE         = 13,
-    "image-size",                       //SUIT_PARAMETER_IMAGE_SIZE           = 14,
-    NULL, NULL, NULL,                   //15, 16, 17
-    "encryption-info",                  //SUIT_PARAMETER_ENCRYPTION_INFO      = 18,
-    "compression-info",                 //SUIT_PARAMETER_COMPRESSION_INFO     = 19,
-    "unpack-info",                      //SUIT_PARAMETER_UNPACK_INFO          = 20,
-    "uri",                              //SUIT_PARAMETER_URI                  = 21,
-    "source-component",                 //SUIT_PARAMETER_SOURCE_COMPONENT     = 22,
-    "run-args",                         //SUIT_PARAMETER_RUN_ARGS             = 23,
-    "device-identifier",                //SUIT_PARAMETER_DEVICE_IDENTIFIER    = 24,
-    "minimum-battery",                  //SUIT_PARAMETER_MINIMUM_BATTERY      = 26,
-    "update-priority",                  //SUIT_PARAMETER_UPDATE_PRIORITY      = 27,
-    "version",                          //SUIT_PARAMETER_VERSION              = 28,
-    "wait-info",                        //SUIT_PARAMETER_WAIT_INFO            = 29,
-    "uri-list",                         //SUIT_PARAMETER_URI_LIST             = 30,
-};
+const char* suit_command_sequence_key_to_str(suit_rep_policy_key_t condition_directive) {
+    switch (condition_directive) {
+    case SUIT_CONDITION_VENDOR_IDENTIFIER:
+        return "condition-vendor-identifier";
+    case SUIT_CONDITION_CLASS_IDENTIFIER:
+        return "condition-class-identifier";
+    case SUIT_CONDITION_IMAGE_MATCH:
+        return "condition-image-match";
+    case SUIT_CONDITION_USE_BEFORE:
+        return "condition-use-before";
+    case SUIT_CONDITION_COMPONENT_SLOT:
+        return "condition-component-slot";
+    case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
+        return "directive-set-component-index";
+    case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
+        return "directive-set-dependency-index";
+    case SUIT_CONDITION_ABORT:
+        return "condition-abort";
+    case SUIT_DIRECTIVE_TRY_EACH:
+        return "directive-try-each";
+    case SUIT_DIRECTIVE_DO_EACH:
+        return "directive-do-each";
+    case SUIT_DIRECTIVE_MAP_FILTER:
+        return "directive-map-filter";
+    case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
+        return "directive-process-dependency";
+    case SUIT_DIRECTIVE_SET_PARAMETERS:
+        return "directive-set-parameters";
+    case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
+        return "directive-override-parameters";
+    case SUIT_DIRECTIVE_FETCH:
+        return "directive-fetch";
+    case SUIT_DIRECTIVE_COPY:
+        return "directive-copy";
+    case SUIT_DIRECTIVE_RUN:
+        return "directive-run";
+    case SUIT_CONDITION_DEVICE_IDENTIFIER:
+        return "condition-device-identifier";
+    case SUIT_CONDITION_IMAGE_NOT_MATCH:
+        return "condition-image-not-match";
+    case SUIT_CONDITION_MINIMUM_BATTERY:
+        return "condition-minimum-battery";
+    case SUIT_CONDITION_UPDATE_AUTHORIZED:
+        return "condition-update-authorized";
+    case SUIT_CONDITION_VERSION:
+        return "condition-version";
+    case SUIT_DIRECTIVE_WAIT:
+        return "directive-wait";
+    case SUIT_DIRECTIVE_FETCH_URI_LIST:
+        return "directive-fetch-uri-list";
+    case SUIT_DIRECTIVE_SWAP:
+        return "directive-swap";
+    case SUIT_DIRECTIVE_RUN_SEQUENCE:
+        return "directive-run-sequence";
+    case SUIT_DIRECTIVE_UNLINK:
+        return "directive-unlink";
+    default:
+        return NULL;
+    }
+}
+
+const char* suit_parameter_key_to_str(suit_parameter_key_t parameter) {
+    switch (parameter) {
+    case SUIT_PARAMETER_VENDOR_IDENTIFIER:
+        return "vendor-id";
+    case SUIT_PARAMETER_CLASS_IDENTIFIER:
+        return "class-id";
+    case SUIT_PARAMETER_IMAGE_DIGEST:
+        return "image-digest";
+    case SUIT_PARAMETER_USE_BEFORE:
+        return "use-before";
+    case SUIT_PARAMETER_COMPONENT_SLOT:
+        return "component-slot";
+    case SUIT_PARAMETER_STRICT_ORDER:
+        return "strict-order";
+    case SUIT_PARAMETER_SOFT_FAILURE:
+        return "soft-failure";
+    case SUIT_PARAMETER_IMAGE_SIZE:
+        return "image-size";
+    case SUIT_PARAMETER_ENCRYPTION_INFO:
+        return "encryption-info";
+    case SUIT_PARAMETER_COMPRESSION_INFO:
+        return "compression-info";
+    case SUIT_PARAMETER_UNPACK_INFO:
+        return "unpack-info";
+    case SUIT_PARAMETER_URI:
+        return "uri";
+    case SUIT_PARAMETER_SOURCE_COMPONENT:
+        return "source-component";
+    case SUIT_PARAMETER_RUN_ARGS:
+        return "run-args";
+    case SUIT_PARAMETER_DEVICE_IDENTIFIER:
+        return "device-identifier";
+    case SUIT_PARAMETER_MINIMUM_BATTERY:
+        return "minimum-battery";
+    case SUIT_PARAMETER_UPDATE_PRIORITY:
+        return "update-priority";
+    case SUIT_PARAMETER_VERSION:
+        return "version";
+    case SUIT_PARAMETER_WAIT_INFO:
+        return "wait-info";
+    case SUIT_PARAMETER_URI_LIST:
+        return "uri-list";
+    default:
+        return NULL;
+    }
+}
 
 suit_err_t suit_print_string(const suit_buf_t *string) {
     if (string == NULL) {
@@ -153,7 +248,7 @@ suit_err_t suit_print_compression_info(const suit_buf_t *buf, const uint32_t ind
 suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, const uint32_t indent_space) {
     suit_err_t result = SUIT_SUCCESS;
     for (size_t i = 0; i < params_list->len; i++) {
-        printf("%*s%s : ", indent_space, "", SUIT_PARAMETER_NUM_TO_STRING[params_list->params[i].label]);
+        printf("%*s%s : ", indent_space, "", suit_parameter_key_to_str(params_list->params[i].label));
         switch (params_list->params[i].label) {
             case SUIT_PARAMETER_VENDOR_IDENTIFIER:
             case SUIT_PARAMETER_CLASS_IDENTIFIER:
@@ -218,7 +313,7 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
     suit_err_t result = SUIT_SUCCESS;
     suit_command_sequence_t tmp_cmd_seq;
     for (size_t i = 0; i < cmd_seq->len; i++) {
-        printf("%*s%s : ", indent_space, "", SUIT_COMMAND_SEQUENCE_NUM_TO_STRING[cmd_seq->commands[i].label]);
+        printf("%*s%s : ", indent_space, "", suit_command_sequence_key_to_str(cmd_seq->commands[i].label));
         switch (cmd_seq->commands[i].label) {
             case SUIT_CONDITION_VENDOR_IDENTIFIER:
             case SUIT_CONDITION_CLASS_IDENTIFIER:

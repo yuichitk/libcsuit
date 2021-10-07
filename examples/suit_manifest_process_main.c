@@ -60,6 +60,18 @@ size_t read_file(const char *file_path, const size_t write_buf_len, uint8_t *wri
     return read_len;
 }
 
+suit_err_t print_run(suit_run_args_t run_args)
+{
+    printf("run callback : {\n");
+    printf("  component-identifier : ");
+    suit_print_component_identifier(&run_args.component_identifier);
+    printf("\n");
+    printf("  argument(len=%ld) : h'", run_args.args_len);
+    suit_print_hex(run_args.args, run_args.args_len);
+    printf("'\n}\n");
+    return SUIT_SUCCESS;
+}
+
 suit_err_t print_fetch(suit_fetch_args_t fetch_args)
 {
     printf("fetch callback : {\n");
@@ -80,23 +92,36 @@ suit_err_t print_fetch(suit_fetch_args_t fetch_args)
 suit_err_t print_error(suit_on_error_args_t error_args)
 {
     printf("error callback : {\n");
-    printf("  at: %d(%s)", error_args.level0, SUIT_ENVELOPE_KEY_NUM_TO_STRING[error_args.level0]);
+    printf("  at: %d(%s)", error_args.level0, suit_envelope_key_to_str(error_args.level0));
 
     switch (error_args.level0) {
     case SUIT_AUTHENTICATION:
         break;
     case SUIT_MANIFEST:
-        printf(", %d(%s)", error_args.level1.manifest_key, SUIT_MANIFEST_KEY_NUM_TO_STRING[error_args.level1.manifest_key]);
+        printf(", %d(%s)", error_args.level1.manifest_key, suit_manifest_key_to_str(error_args.level1.manifest_key));
         switch (error_args.level1.manifest_key) {
         case SUIT_COMMON:
+            printf(", %d(%s)", error_args.level2.common_key, suit_common_key_to_str(error_args.level2.common_key));
+            if (error_args.level2.common_key == SUIT_COMMON_SEQUENCE) {
+                printf(", %d(%s)", error_args.level3.condition_directive, suit_command_sequence_key_to_str(error_args.level3.condition_directive));
+                switch (error_args.level3.condition_directive) {
+                case SUIT_DIRECTIVE_SET_PARAMETERS:
+                case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
+                    printf(", %d(%s)", error_args.level4.parameter, suit_parameter_key_to_str(error_args.level4.parameter));
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
         case SUIT_INSTALL:
         case SUIT_VALIDATE:
         case SUIT_RUN:
-            printf(", %d(%s)", error_args.level2.condition_directive, SUIT_COMMAND_SEQUENCE_NUM_TO_STRING[error_args.level2.condition_directive]);
+            printf(", %d(%s)", error_args.level2.condition_directive, suit_command_sequence_key_to_str(error_args.level2.condition_directive));
             switch (error_args.level2.condition_directive) {
             case SUIT_DIRECTIVE_SET_PARAMETERS:
             case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
-                printf(", %d(%s)", error_args.level3.parameter, SUIT_PARAMETER_NUM_TO_STRING[error_args.level3.parameter]);
+                printf(", %d(%s)", error_args.level3.parameter, suit_parameter_key_to_str(error_args.level3.parameter));
                 break;
             default:
                 break;
@@ -125,7 +150,7 @@ suit_err_t print_error(suit_on_error_args_t error_args)
 int main(int argc, char *argv[]) {
     // check arguments.
     if (argc < 2) {
-        printf("suit_manifest_process <manifest file path> ...");
+        printf("suit_manifest_process <manifest file path>");
         return EXIT_FAILURE;
     }
     int32_t result = 0;
@@ -135,8 +160,8 @@ int main(int argc, char *argv[]) {
     suit_inputs_t suit_inputs = {0};
     suit_callbacks_t suit_callbacks = {0};
     suit_callbacks.fetch = print_fetch;
+    suit_callbacks.run = print_run;
     suit_callbacks.on_error = print_error;
-    suit_inputs.manifest_len = 0;
     suit_inputs.key_len = NUM_PUBLIC_KEYS;
 
     // Read key from der file.
@@ -149,18 +174,13 @@ int main(int argc, char *argv[]) {
     }
     // Read manifest file.
     printf("\nmain : Read Manifest file.\n");
-    uint8_t manifests_buf[SUIT_MAX_ARRAY_LENGTH][MAX_FILE_BUFFER_SIZE];
-    for (i = 1; i < argc; i++) {
-        UsefulBufC *manifest = &suit_inputs.manifests[i - 1];
-        size_t manifest_len = read_file(argv[i], MAX_FILE_BUFFER_SIZE, manifests_buf[i - 1]);
-        if (!manifest_len) {
-            printf("main : Can't read Manifest file.\n");
-            goto out;
-        }
-        manifest->ptr = manifests_buf[i - 1];
-        manifest->len = manifest_len;
-        suit_inputs.manifest_len++;
+    uint8_t manifest_buf[MAX_FILE_BUFFER_SIZE];
+    suit_inputs.manifest.len = read_file(argv[1], MAX_FILE_BUFFER_SIZE, manifest_buf);
+    if (suit_inputs.manifest.len <= 0) {
+        printf("main : Can't read Manifest file.\n");
+        goto out;
     }
+    suit_inputs.manifest.ptr = manifest_buf;
 
     // Decode manifest file.
     printf("\nmain : Decode Manifest file.\n");
