@@ -426,6 +426,7 @@ suit_err_t suit_process_command_sequence(const suit_manifest_key_t command,
                 goto error;
             }
             args.fetch = (suit_fetch_args_t){0};
+            QCBORDecode_GetUInt64(&context, &args.fetch.report.val);
             memcpy(args.fetch.uri, common_parameters[component_index].uri_list[0].ptr, common_parameters[component_index].uri_list[0].len);
             args.fetch.uri[common_parameters[component_index].uri_list[0].len] = '\0';
             args.fetch.uri_len = common_parameters[component_index].uri_list[0].len;
@@ -441,6 +442,8 @@ suit_err_t suit_process_command_sequence(const suit_manifest_key_t command,
                 goto error;
             }
             args.run = (suit_run_args_t){0};
+            QCBORDecode_GetUInt64(&context, &args.run.report.val);
+
             args.run.component_identifier = extracted->components.comp_id[component_index];
             args.run.args_len = common_parameters[component_index].run_args.len;
             if (args.run.args_len > 0) {
@@ -462,8 +465,11 @@ suit_err_t suit_process_command_sequence(const suit_manifest_key_t command,
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
         }
-        error = QCBORDecode_GetError(&context);
         if (result != SUIT_SUCCESS) {
+            goto error;
+        }
+        error = QCBORDecode_GetError(&context);
+        if (error != QCBOR_SUCCESS) {
             goto error;
         }
     }
