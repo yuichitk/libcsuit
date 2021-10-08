@@ -68,7 +68,9 @@ suit_err_t print_run(suit_run_args_t run_args)
     printf("\n");
     printf("  argument(len=%ld) : h'", run_args.args_len);
     suit_print_hex(run_args.args, run_args.args_len);
-    printf("'\n}\n");
+    printf("'\n");
+    printf("  suit_report_t: RecPass%x RecFail%x SysPass%x SysFail%x\n", run_args.report.record_on_success, run_args.report.record_on_failure, run_args.report.sysinfo_success, run_args.report.sysinfo_failure);
+    printf("}\n");
     return SUIT_SUCCESS;
 }
 
@@ -79,12 +81,13 @@ suit_err_t print_fetch(suit_fetch_args_t fetch_args)
     if (fetch_args.uri_len < print_len) {
         print_len = (int)fetch_args.uri_len;
     }
-    printf("  uri: %.*s", print_len, (char *)fetch_args.uri);
+    printf("  uri: \"%.*s\"", print_len, (char *)fetch_args.uri);
     if (fetch_args.uri_len > 32) {
-        printf(" ...");
+        printf("...");
     }
     printf(" (%ld)\n", fetch_args.uri_len);
     printf("  ptr: %p (%ld)\n", fetch_args.ptr, fetch_args.buf_len);
+    printf("  suit_report_t: RecPass%x RecFail%x SysPass%x SysFail%x\n", fetch_args.report.record_on_success, fetch_args.report.record_on_failure, fetch_args.report.sysinfo_success, fetch_args.report.sysinfo_failure);
     printf("}\n");
     return SUIT_SUCCESS;
 }
@@ -138,8 +141,9 @@ suit_err_t print_error(suit_on_error_args_t error_args)
     }
     printf("\n");
 
-    printf("  QCBORError: %d(%s)\n", error_args.qcbor_error, qcbor_err_to_str(error_args.qcbor_error));
-    printf("  suit_err_t: %d(%s)\n", error_args.suit_error, suit_err_to_str(error_args.suit_error));
+    printf("  QCBORError:    %d(%s)\n", error_args.qcbor_error, qcbor_err_to_str(error_args.qcbor_error));
+    printf("  suit_err_t:    %d(%s)\n", error_args.suit_error, suit_err_to_str(error_args.suit_error));
+    printf("  suit_report_t: RecPass%x RecFail%x SysPass%x SysFail%x\n", error_args.report.record_on_success, error_args.report.record_on_failure, error_args.report.sysinfo_success, error_args.report.sysinfo_failure);
 
     printf("}\n");
 

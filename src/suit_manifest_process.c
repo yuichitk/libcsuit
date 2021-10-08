@@ -167,6 +167,7 @@ suit_err_t suit_process_common_sequence(const suit_extracted_t *extracted,
     QCBORError error = QCBOR_SUCCESS;
     suit_rep_policy_key_t condition_directive_key;
     size_t component_index = 0;
+    suit_report_t report;
 
     QCBORDecode_Init(&context, extracted->common_sequence, QCBOR_DECODE_MODE_NORMAL);
     QCBORDecode_EnterArray(&context, &item);
@@ -180,7 +181,6 @@ suit_err_t suit_process_common_sequence(const suit_extracted_t *extracted,
         goto error;
     }
     for (size_t i = 0; i < length; i += 2) {
-        report_t reporting_policy;
         result = suit_qcbor_get_next_uint(&context, &item);
         if (result != SUIT_SUCCESS) {
             goto error;
@@ -205,47 +205,47 @@ suit_err_t suit_process_common_sequence(const suit_extracted_t *extracted,
             result = suit_set_parameters(&context, SUIT_DIRECTIVE_OVERRIDE_PARAMETERS, &common_parameters[component_index], suit_callbacks);
             break;
         case SUIT_CONDITION_VENDOR_IDENTIFIER:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_CLASS_IDENTIFIER:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_IMAGE_MATCH:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_USE_BEFORE:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_COMPONENT_SLOT:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_ABORT:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_DEVICE_IDENTIFIER:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_IMAGE_NOT_MATCH:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_MINIMUM_BATTERY:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_UPDATE_AUTHORIZED:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_VERSION:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
 
@@ -302,6 +302,9 @@ suit_err_t suit_process_command_sequence(const suit_manifest_key_t command,
     size_t component_index = 0;
     suit_parameter_args_t common_parameters[SUIT_MAX_COMPONENT_NUM];
 
+    suit_rep_policy_key_t condition_directive_key = SUIT_CONDITION_INVALID;
+    suit_report_t report;
+
     switch (command) {
     case SUIT_DEPENDENCY_RESOLUTION:
         buf = extracted->dependency_resolution;
@@ -339,12 +342,10 @@ suit_err_t suit_process_command_sequence(const suit_manifest_key_t command,
     QCBORItem item;
     QCBORError error = QCBOR_SUCCESS;
     QCBORDecode_Init(&context, buf, QCBOR_DECODE_MODE_NORMAL);
-    suit_rep_policy_key_t condition_directive_key = SUIT_CONDITION_INVALID;
 
     QCBORDecode_EnterArray(&context, &item);
     const size_t length = item.val.uCount;
     for (size_t i = 0; i < length; i += 2) {
-        report_t reporting_policy;
         result = suit_qcbor_get_next_uint(&context, &item);
         if (result != SUIT_SUCCESS) {
             goto error;
@@ -361,47 +362,47 @@ suit_err_t suit_process_command_sequence(const suit_manifest_key_t command,
             break;
 
         case SUIT_CONDITION_VENDOR_IDENTIFIER:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_CLASS_IDENTIFIER:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_IMAGE_MATCH:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_USE_BEFORE:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_COMPONENT_SLOT:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_ABORT:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_DEVICE_IDENTIFIER:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_IMAGE_NOT_MATCH:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_MINIMUM_BATTERY:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_UPDATE_AUTHORIZED:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
         case SUIT_CONDITION_VERSION:
-            QCBORDecode_GetUInt64(&context, &reporting_policy.val);
+            QCBORDecode_GetUInt64(&context, &report.val);
             // TODO: check condition
             break;
 
@@ -491,7 +492,8 @@ error:
                 .level2.condition_directive = condition_directive_key,
                 .level3.parameter = SUIT_PARAMETER_INVALID,
                 .qcbor_error = error,
-                .suit_error = result
+                .suit_error = result,
+                .report = report
             }
         );
         return SUIT_ERR_ABORT;

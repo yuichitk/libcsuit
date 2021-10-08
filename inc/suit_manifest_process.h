@@ -24,6 +24,17 @@
 #define SUIT_PARAMETER_CONTAINS_VENDOR_IDENTIFIER BIT(SUIT_PARAMETER_VENDOR_IDENTIFIER)
 #define SUIT_PARAMETER_CONTAINS_URI BIT(SUIT_PARAMETER_URI)
 
+typedef union suit_report {
+    uint64_t val;
+    struct {
+        uint64_t record_on_success: 1;
+        uint64_t record_on_failure: 1;
+        uint64_t sysinfo_success: 1;
+        uint64_t sysinfo_failure: 1;
+        uint64_t padding: 60;
+    };
+} suit_report_t;
+
 typedef struct suit_on_error_args {
     suit_envelope_key_t level0;
     union {
@@ -45,6 +56,8 @@ typedef struct suit_on_error_args {
 
     QCBORError qcbor_error;
     suit_err_t suit_error;
+
+    suit_report_t report;
 } suit_on_error_args_t;
 
 typedef struct suit_run_args {
@@ -52,6 +65,8 @@ typedef struct suit_run_args {
     /* basically byte-string value, so may not '\0' terminated */
     uint8_t args[SUIT_MAX_ARGS_LENGTH];
     size_t args_len;
+
+    suit_report_t report;
 } suit_run_args_t;
 
 typedef struct suit_fetch_args {
@@ -67,6 +82,8 @@ typedef struct suit_fetch_args {
         i.e. the caller requests the callee to allocate space in the buffer (or storage).
     */
     void *ptr;
+
+    suit_report_t report;
 } suit_fetch_args_t;
 
 typedef struct suit_validate_args {
@@ -122,18 +139,6 @@ typedef struct suit_parameter_args {
        default False if suit-directive-run-sequence is invoked */
     suit_parameter_bool_t       soft_failure;
 } suit_parameter_args_t;
-
-typedef struct report {
-    union {
-        uint64_t val; // NOTE: 4 bits are enough but reserve 64 bits for QCBOR
-        struct {
-            uint64_t record_on_success: 1;
-            uint64_t record_on_failure: 1;
-            uint64_t sysinfo_success: 1;
-            uint64_t sysinfo_failure: 1;
-        };
-    };
-} report_t;
 
 typedef struct suit_common_sequence_args {
     /* SUIT_Parameters */
