@@ -112,8 +112,17 @@ typedef struct suit_parameter_args {
     UsefulBufC                  vendor_id;
     UsefulBufC                  class_id;
     suit_digest_t               image_digest;
-    uint64_t                    image_size;
     uint64_t                    use_before;
+    uint64_t                    component_slot;
+
+    /* default True */
+    suit_parameter_bool_t       strict_order;
+
+    /* default True if suit-directive-try-each is involved,
+       default False if suit-directive-run-sequence is invoked */
+    suit_parameter_bool_t       soft_failure;
+
+    uint64_t                    image_size;
 
     suit_encryption_info_t      encryption_info;
     suit_compression_info_t     compression_info;
@@ -144,13 +153,6 @@ typedef struct suit_parameter_args {
     size_t                      uri_list_len;
 
     //??                        fetch_arguments;
-
-    /* default True */
-    suit_parameter_bool_t       strict_order;
-
-    /* default True if suit-directive-try-each is involved,
-       default False if suit-directive-run-sequence is invoked */
-    suit_parameter_bool_t       soft_failure;
 } suit_parameter_args_t;
 
 typedef struct suit_common_sequence_args {

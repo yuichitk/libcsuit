@@ -156,8 +156,10 @@ suit_err_t suit_set_parameters(QCBORDecodeContext *context,
         case SUIT_PARAMETER_COMPRESSION_INFO:
             result = suit_set_compression_info(context, parameters);
             break;
-        case SUIT_PARAMETER_USE_BEFORE:
         case SUIT_PARAMETER_COMPONENT_SLOT:
+            QCBORDecode_GetUInt64(context, &parameters->component_slot);
+            break;
+        case SUIT_PARAMETER_USE_BEFORE:
 
         case SUIT_PARAMETER_STRICT_ORDER:
 
