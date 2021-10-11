@@ -24,6 +24,17 @@
 #define SUIT_PARAMETER_CONTAINS_VENDOR_IDENTIFIER BIT(SUIT_PARAMETER_VENDOR_IDENTIFIER)
 #define SUIT_PARAMETER_CONTAINS_URI BIT(SUIT_PARAMETER_URI)
 
+typedef union suit_report {
+    uint64_t val;
+    struct {
+        uint64_t record_on_success: 1;
+        uint64_t record_on_failure: 1;
+        uint64_t sysinfo_success: 1;
+        uint64_t sysinfo_failure: 1;
+        uint64_t padding: 60;
+    };
+} suit_report_t;
+
 typedef struct suit_on_error_args {
     suit_envelope_key_t level0;
     union {
@@ -31,30 +42,61 @@ typedef struct suit_on_error_args {
     } level1;
     union {
         suit_rep_policy_key_t condition_directive;
+        suit_common_key_t common_key;
         suit_text_key_t text_key;
     } level2;
     union {
+        suit_rep_policy_key_t condition_directive;
         suit_parameter_key_t parameter;
         suit_text_component_key_t text_component_key;
     } level3;
+    union {
+        suit_parameter_key_t parameter;
+    } level4;
 
     QCBORError qcbor_error;
     suit_err_t suit_error;
+
+    suit_report_t report;
 } suit_on_error_args_t;
 
+typedef struct suit_run_args {
+    suit_component_identifier_t component_identifier;
+    /* basically byte-string value, so may not '\0' terminated */
+    uint8_t args[SUIT_MAX_ARGS_LENGTH];
+    size_t args_len;
+
+    suit_report_t report;
+} suit_run_args_t;
+
+typedef struct suit_copy_args {
+    suit_component_identifier_t src;
+    suit_component_identifier_t dst;
+
+    suit_info_key_t info_key;
+    union {
+        suit_encryption_info_t encryption;
+        suit_compression_info_t compression;
+        suit_unpack_info_t unpack;
+    } info;
+
+    suit_report_t report;
+} suit_copy_args_t;
+
 typedef struct suit_fetch_args {
-    size_t name_len;
-    char name[SUIT_MAX_NAME_LENGTH];
     size_t uri_len;
     char uri[SUIT_MAX_URI_LENGTH];
+    suit_component_identifier_t dst;
 
-    size_t buf_len;
     /**
         Pointer to allocated memory in the caller.
-        This could be NULL if the caller did not allocate buffer,
-        i.e. the caller requests the callee to allocate space in the buffer (or storage).
+        This could be NULL if the caller wants callee
+        to allocate space corresponding to the component identifier.
     */
     void *ptr;
+    size_t buf_len;
+
+    suit_report_t report;
 } suit_fetch_args_t;
 
 typedef struct suit_validate_args {
@@ -70,8 +112,17 @@ typedef struct suit_parameter_args {
     UsefulBufC                  vendor_id;
     UsefulBufC                  class_id;
     suit_digest_t               image_digest;
-    uint64_t                    image_size;
     uint64_t                    use_before;
+    uint64_t                    component_slot;
+
+    /* default True */
+    suit_parameter_bool_t       strict_order;
+
+    /* default True if suit-directive-try-each is involved,
+       default False if suit-directive-run-sequence is invoked */
+    suit_parameter_bool_t       soft_failure;
+
+    uint64_t                    image_size;
 
     suit_encryption_info_t      encryption_info;
     suit_compression_info_t     compression_info;
@@ -80,7 +131,7 @@ typedef struct suit_parameter_args {
     /* uri is combined in uri-list */
     //suit_buf_t                uri;
 
-    //??                        source_component;
+    uint64_t                    source_component;
 
     /* used in suit-directive-run */
     UsefulBufC                  run_args;
@@ -102,26 +153,7 @@ typedef struct suit_parameter_args {
     size_t                      uri_list_len;
 
     //??                        fetch_arguments;
-
-    /* default True */
-    suit_parameter_bool_t       strict_order;
-
-    /* default True if suit-directive-try-each is involved,
-       default False if suit-directive-run-sequence is invoked */
-    suit_parameter_bool_t       soft_failure;
 } suit_parameter_args_t;
-
-typedef struct report {
-    union {
-        uint64_t val; // NOTE: 4 bits are enough but reserve 64 bits for QCBOR
-        struct {
-            uint64_t record_on_success: 1;
-            uint64_t record_on_failure: 1;
-            uint64_t sysinfo_success: 1;
-            uint64_t sysinfo_failure: 1;
-        };
-    };
-} report_t;
 
 typedef struct suit_common_sequence_args {
     /* SUIT_Parameters */
@@ -160,19 +192,43 @@ typedef struct suit_common_args {
 } suit_common_args_t;
 
 typedef struct suit_inputs {
-    size_t manifest_len;
-    UsefulBufC manifests[SUIT_MAX_ARRAY_LENGTH];
+    UsefulBufC manifest;
     size_t key_len;
     struct t_cose_key public_keys[SUIT_MAX_ARRAY_LENGTH];
 } suit_inputs_t;
 
 typedef struct suit_callbacks {
     suit_err_t (*fetch)(suit_fetch_args_t fetch);
+    suit_err_t (*copy)(suit_copy_args_t copy);
+    suit_err_t (*run)(suit_run_args_t run);
     suit_err_t (*on_error)(suit_on_error_args_t error);
 } suit_callbacks_t;
 
 void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);
 suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, suit_inputs_t *suit_inputs, suit_digest_t *digest);
+
+typedef struct suit_extracted {
+    suit_dependencies_t dependencies;
+    suit_components_t components;
+
+    UsefulBufC common_sequence;
+    // UsefulBufC reference_uri;
+    UsefulBufC dependency_resolution;
+    suit_digest_t dependency_resolution_digest;
+    UsefulBufC payload_fetch;
+    suit_digest_t payload_fetch_digest;
+    UsefulBufC install;
+    suit_digest_t install_digest;
+    UsefulBufC validate;
+    UsefulBufC load;
+    UsefulBufC run;
+    UsefulBufC text;
+    suit_digest_t text_digest;
+    UsefulBufC coswid;
+    suit_digest_t coswid_digest;
+    suit_integrated_payload_t payloads[SUIT_MAX_ARRAY_LENGTH];
+    size_t payloads_len;
+} suit_extracted_t;
 
 /*!
     \brief  Decode & Process SUIT binary
