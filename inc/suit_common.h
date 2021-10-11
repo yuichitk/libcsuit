@@ -35,6 +35,7 @@ typedef enum {
     SUIT_ERR_INVALID_KEY                = 11, /*! invalid map key */
     SUIT_ERR_NO_CALLBACK                = 12, /*! callback function to be called does not provided */
     SUIT_ERR_NO_ARGUMENT                = 13, /*! arguments for callback function did not appear */
+    SUIT_ERR_TRY_OUT                    = 14, /*! all command_sequence in try-each section failed */
     SUIT_ERR_ABORT                      = 31,
 } suit_err_t;
 
@@ -183,6 +184,13 @@ typedef enum suit_parameter_key {
     SUIT_PARAMETER_URI_LIST             = 30,
 } suit_parameter_key_t;
 
+typedef enum suit_info_key {
+    SUIT_INFO_DEFAULT               = 0,
+    SUIT_INFO_ENCRYPTION            = 1,
+    SUIT_INFO_COMPRESSION           = 2,
+    SUIT_INFO_UNPACK                = 3,
+} suit_info_key_t;
+
 // COSE_Encrypt_Tagged/COSE_Encrypt0_Tagged
 typedef struct suit_encryption_info {
     //? TODO
@@ -201,24 +209,20 @@ typedef enum suit_compression_algorithm {
 } suit_compression_algorithm_t;
 
 typedef struct suit_compression_info {
-    suit_compression_algorithm_t    compression_algorithm;
+    suit_compression_algorithm_t    algorithm;
     //TODO:                         $$SUIT_Compression_Info-extensions
 } suit_compression_info_t;
 
-typedef enum suit_unpack_info_key {
-    SUIT_UNPACK_INVALID     = 0,
-    SUIT_UNPACK_ALGORITHM   = 1,
-} suit_unpack_info_key_t;
-
 typedef enum suit_unpack_algorithm {
-    SUIT_UNPACK_ALGORITHM_HEX   = 1,
-    SUIT_UNPACK_ALGORITHM_ELF   = 2,
-    SUIT_UNPACK_ALGORITHM_COFF  = 3,
-    SUIT_UNPACK_ALGORITHM_SREC  = 4,
+    SUIT_UNPACK_ALGORITHM_INVALID   = 0,
+    SUIT_UNPACK_ALGORITHM_HEX       = 1,
+    SUIT_UNPACK_ALGORITHM_ELF       = 2,
+    SUIT_UNPACK_ALGORITHM_COFF      = 3,
+    SUIT_UNPACK_ALGORITHM_SREC      = 4,
 } suit_unpack_algorithm_t;
 
 typedef struct suit_unpack_info {
-    suit_unpack_algorithm_t    algorithm;
+    suit_unpack_algorithm_t     algorithm;
     //??                        unpack_info_extensions;
 } suit_unpack_info_t;
 
@@ -278,7 +282,7 @@ typedef struct suit_component_identifier {
  */
 typedef struct suit_components {
     size_t                          len;
-    suit_component_identifier_t     comp_id[SUIT_MAX_ARRAY_LENGTH];
+    suit_component_identifier_t     comp_id[SUIT_MAX_COMPONENT_NUM];
 } suit_components_t;
 
 

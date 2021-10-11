@@ -21,6 +21,9 @@ const char* suit_manifest_key_to_str(suit_manifest_key_t manifest_key);
 const char* suit_common_key_to_str(suit_common_key_t common_key);
 const char* suit_command_sequence_key_to_str(suit_rep_policy_key_t condition_directive);
 const char* suit_parameter_key_to_str(suit_parameter_key_t parameter);
+const char* suit_info_key_to_str(const suit_info_key_t info_key);
+const char* suit_compression_algorithm_to_str(const suit_compression_algorithm_t algorithm);
+const char* suit_unpack_algorithm_to_str(const suit_unpack_algorithm_t algorithm);
 
 const char* suit_err_to_str(suit_err_t error);
 suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, const uint32_t indent_space);

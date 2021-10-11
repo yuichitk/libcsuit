@@ -69,19 +69,32 @@ typedef struct suit_run_args {
     suit_report_t report;
 } suit_run_args_t;
 
+typedef struct suit_copy_args {
+    suit_component_identifier_t src;
+    suit_component_identifier_t dst;
+
+    suit_info_key_t info_key;
+    union {
+        suit_encryption_info_t encryption;
+        suit_compression_info_t compression;
+        suit_unpack_info_t unpack;
+    } info;
+
+    suit_report_t report;
+} suit_copy_args_t;
+
 typedef struct suit_fetch_args {
-    size_t name_len;
-    char name[SUIT_MAX_NAME_LENGTH];
     size_t uri_len;
     char uri[SUIT_MAX_URI_LENGTH];
+    suit_component_identifier_t dst;
 
-    size_t buf_len;
     /**
         Pointer to allocated memory in the caller.
-        This could be NULL if the caller did not allocate buffer,
-        i.e. the caller requests the callee to allocate space in the buffer (or storage).
+        This could be NULL if the caller wants callee
+        to allocate space corresponding to the component identifier.
     */
     void *ptr;
+    size_t buf_len;
 
     suit_report_t report;
 } suit_fetch_args_t;
@@ -109,7 +122,7 @@ typedef struct suit_parameter_args {
     /* uri is combined in uri-list */
     //suit_buf_t                uri;
 
-    //??                        source_component;
+    uint64_t                    source_component;
 
     /* used in suit-directive-run */
     UsefulBufC                  run_args;
@@ -184,6 +197,7 @@ typedef struct suit_inputs {
 
 typedef struct suit_callbacks {
     suit_err_t (*fetch)(suit_fetch_args_t fetch);
+    suit_err_t (*copy)(suit_copy_args_t copy);
     suit_err_t (*run)(suit_run_args_t run);
     suit_err_t (*on_error)(suit_on_error_args_t error);
 } suit_callbacks_t;

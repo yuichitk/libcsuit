@@ -42,6 +42,8 @@ const char* suit_err_to_str(suit_err_t error) {
         return "SUIT_ERR_NO_CALLBACK";
     case SUIT_ERR_NO_ARGUMENT:
         return "SUIT_ERR_NO_ARGUMENT";
+    case SUIT_ERR_TRY_OUT:
+        return "SUIT_ERR_TRY_OUT";
     case SUIT_ERR_ABORT:
         return "SUIT_ERR_ABORT";
     default:
@@ -214,6 +216,49 @@ const char* suit_parameter_key_to_str(suit_parameter_key_t parameter) {
     }
 }
 
+const char* suit_info_key_to_str(const suit_info_key_t info_key) {
+    switch (info_key) {
+    case SUIT_INFO_DEFAULT:
+        return "default";
+    case SUIT_INFO_ENCRYPTION:
+        return "SUIT_Encryption_Info";
+    case SUIT_INFO_COMPRESSION:
+        return "SUIT_Compression_Info";
+    case SUIT_INFO_UNPACK:
+        return "SUIT_Unpack_Info";
+    default:
+        return NULL;
+    }
+}
+
+const char* suit_compression_algorithm_to_str(const suit_compression_algorithm_t algorithm) {
+    switch (algorithm) {
+    case SUIT_COMPRESSION_ALGORITHM_ZLIB:
+        return "zlib";
+    case SUIT_COMPRESSION_ALGORITHM_BROTLI:
+        return "brotli";
+    case SUIT_COMPRESSION_ALGORITHM_ZSTD:
+        return "zstd";
+    default:
+        return NULL;
+    }
+}
+
+const char* suit_unpack_algorithm_to_str(const suit_unpack_algorithm_t algorithm) {
+    switch (algorithm) {
+    case SUIT_UNPACK_ALGORITHM_HEX:
+        return "HEX";
+    case SUIT_UNPACK_ALGORITHM_ELF:
+        return "ELF";
+    case SUIT_UNPACK_ALGORITHM_COFF:
+        return "COFF";
+    case SUIT_UNPACK_ALGORITHM_SREC:
+        return "SREC";
+    default:
+        return NULL;
+    }
+}
+
 suit_err_t suit_print_string(const suit_buf_t *string) {
     if (string == NULL) {
         return SUIT_ERR_FATAL;
@@ -239,8 +284,8 @@ suit_err_t suit_print_compression_info(const suit_buf_t *buf, const uint32_t ind
     if (result != SUIT_SUCCESS) {
         return result;
     }
-    if (compression_info.compression_algorithm != SUIT_COMPRESSION_ALGORITHM_INVALID) {
-        printf("%*scompression-algorithm : %d\n", indent_space, "", compression_info.compression_algorithm);
+    if (compression_info.algorithm != SUIT_COMPRESSION_ALGORITHM_INVALID) {
+        printf("%*scompression-algorithm : %d\n", indent_space, "", compression_info.algorithm);
     }
     return SUIT_SUCCESS;
 }

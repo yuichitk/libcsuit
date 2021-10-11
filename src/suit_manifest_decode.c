@@ -96,7 +96,7 @@ suit_err_t suit_decode_compression_info(uint8_t mode, const suit_buf_t *buf, sui
         QCBORDecode_GetNext(&context, &item);
         switch (item.label.int64) {
         case SUIT_COMPRESSION_ALGORITHM:
-            compression_info->compression_algorithm = item.val.int64;
+            compression_info->algorithm = item.val.int64;
             break;
         default:
             return SUIT_ERR_NOT_IMPLEMENTED;

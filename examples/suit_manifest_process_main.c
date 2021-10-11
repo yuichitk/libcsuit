@@ -69,8 +69,40 @@ suit_err_t print_run(suit_run_args_t run_args)
     printf("  argument(len=%ld) : h'", run_args.args_len);
     suit_print_hex(run_args.args, run_args.args_len);
     printf("'\n");
-    printf("  suit_report_t: RecPass%x RecFail%x SysPass%x SysFail%x\n", run_args.report.record_on_success, run_args.report.record_on_failure, run_args.report.sysinfo_success, run_args.report.sysinfo_failure);
-    printf("}\n");
+    printf("  suit_report_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", run_args.report.record_on_success, run_args.report.record_on_failure, run_args.report.sysinfo_success, run_args.report.sysinfo_failure);
+    printf("}\n\n");
+    return SUIT_SUCCESS;
+}
+
+suit_err_t print_copy(suit_copy_args_t copy_args)
+{
+    printf("copy args : {\n");
+    printf("  src-component-identifier : ");
+    suit_print_component_identifier(&copy_args.src);
+    printf("\n");
+    printf("  dst-component-identifier : ");
+    suit_print_component_identifier(&copy_args.dst);
+    printf("\n");
+
+    printf("  copy-info : %s", suit_info_key_to_str(copy_args.info_key));
+    switch (copy_args.info_key) {
+    case SUIT_INFO_DEFAULT:
+        /* nothing to be printed */
+        break;
+    case SUIT_INFO_ENCRYPTION:
+        /* TODO: nothing to be printed */
+        break;
+    case SUIT_INFO_COMPRESSION:
+        printf("{algorithm : %s}", suit_compression_algorithm_to_str(copy_args.info.compression.algorithm));
+        break;
+    case SUIT_INFO_UNPACK:
+        printf("{algorithm : %s}", suit_unpack_algorithm_to_str(copy_args.info.unpack.algorithm));
+        break;
+    }
+    printf("\n");
+
+    printf("  suit_report_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", copy_args.report.record_on_success, copy_args.report.record_on_failure, copy_args.report.sysinfo_success, copy_args.report.sysinfo_failure);
+    printf("}\n\n");
     return SUIT_SUCCESS;
 }
 
@@ -81,14 +113,17 @@ suit_err_t print_fetch(suit_fetch_args_t fetch_args)
     if (fetch_args.uri_len < print_len) {
         print_len = (int)fetch_args.uri_len;
     }
-    printf("  uri: \"%.*s\"", print_len, (char *)fetch_args.uri);
+    printf("  uri : \"%.*s\"", print_len, (char *)fetch_args.uri);
     if (fetch_args.uri_len > 32) {
         printf("...");
     }
     printf(" (%ld)\n", fetch_args.uri_len);
-    printf("  ptr: %p (%ld)\n", fetch_args.ptr, fetch_args.buf_len);
-    printf("  suit_report_t: RecPass%x RecFail%x SysPass%x SysFail%x\n", fetch_args.report.record_on_success, fetch_args.report.record_on_failure, fetch_args.report.sysinfo_success, fetch_args.report.sysinfo_failure);
-    printf("}\n");
+    printf("  dst-component-identifier : ");
+    suit_print_component_identifier(&fetch_args.dst);
+    printf("\n");
+    printf("  ptr : %p (%ld)\n", fetch_args.ptr, fetch_args.buf_len);
+    printf("  suit_report_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", fetch_args.report.record_on_success, fetch_args.report.record_on_failure, fetch_args.report.sysinfo_success, fetch_args.report.sysinfo_failure);
+    printf("}\n\n");
     return SUIT_SUCCESS;
 }
 
@@ -145,7 +180,7 @@ suit_err_t print_error(suit_on_error_args_t error_args)
     printf("  suit_err_t:    %d(%s)\n", error_args.suit_error, suit_err_to_str(error_args.suit_error));
     printf("  suit_report_t: RecPass%x RecFail%x SysPass%x SysFail%x\n", error_args.report.record_on_success, error_args.report.record_on_failure, error_args.report.sysinfo_success, error_args.report.sysinfo_failure);
 
-    printf("}\n");
+    printf("}\n\n");
 
     exit(EXIT_FAILURE);
     return SUIT_ERR_FATAL;
@@ -164,6 +199,7 @@ int main(int argc, char *argv[]) {
     suit_inputs_t suit_inputs = {0};
     suit_callbacks_t suit_callbacks = {0};
     suit_callbacks.fetch = print_fetch;
+    suit_callbacks.copy = print_copy;
     suit_callbacks.run = print_run;
     suit_callbacks.on_error = print_error;
     suit_inputs.key_len = NUM_PUBLIC_KEYS;
