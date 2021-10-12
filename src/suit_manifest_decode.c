@@ -1042,10 +1042,10 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
             return result;
         }
         if (item->uLabelType == QCBOR_TYPE_TEXT_STRING) {
-            suit_integrated_payload_t *payload = &envelope->integrated_payload.payload[envelope->integrated_payload.len];
+            suit_payload_t *payload = &envelope->payloads.payload[envelope->payloads.len];
             payload->key = item->label.string;
             payload->bytes = item->val.string;
-            envelope->integrated_payload.len++;
+            envelope->payloads.len++;
         }
         else if (item->uLabelType == QCBOR_TYPE_INT64) {
             switch (item->label.uint64) {

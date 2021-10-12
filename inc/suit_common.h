@@ -482,7 +482,7 @@ typedef struct suit_payloads {
 typedef struct suit_envelope {
     // TODO :                           suit-delegation
     suit_authentication_wrapper_t       wrapper;
-    suit_payloads_t                     payload;
+    suit_payloads_t                     payloads;
     suit_manifest_t                     manifest;
     // TODO :                           SUIT_Severed_Fields
     /* SUIT_Severable_Manifest_Members */

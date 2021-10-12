@@ -22,48 +22,6 @@
     Call suit_process_envelopes() to process whole SUIT manifests at once.
     One or more manifests may depend other manifests.
  */
-#if 0
-suit_err_t suit_in_component_index(QCBORDecodeContext *context,
-                                   uint64_t *component_index) {
-    // out of the current-list, by default
-    suit_err_t result = SUIT_ERR_NO_MORE_ITEMS;
-    QCBORItem item;
-    union {
-        int64_t int64;
-        uint64_t uint64;
-    } val;
-
-    QCBORDecode_PeekNext(context, &item);
-    switch (item.uDataType) {
-    case QCBOR_TYPE_INT64:
-        QCBORDecode_GetInt64(context, &val.int64);
-        if (val.int64 < 0) {
-            result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
-        }
-        else {
-            *component_index = (uint64_t)val.int64;
-            result = SUIT_SUCCESS;
-        }
-        break;
-    case QCBOR_TYPE_UINT64:
-        QCBORDecode_GetUInt64(context, component_index);
-        result = SUIT_SUCCESS;
-        break;
-    case QCBOR_TYPE_ARRAY:
-        result = SUIT_ERR_NOT_IMPLEMENTED;
-        break;
-    case QCBOR_TYPE_TRUE:
-        result = SUIT_ERR_NOT_IMPLEMENTED;
-        break;
-    case QCBOR_TYPE_FALSE:
-        QCBORDecode_GetNext(context, &item);
-        break;
-    default:
-        result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
-    }
-    return result;
-}
-#endif
 
 suit_err_t suit_set_compression_info(QCBORDecodeContext *context,
                                      suit_compression_info_t *compression_info) {
