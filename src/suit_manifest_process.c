@@ -467,8 +467,14 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                     if (index.is_dependency == 0) {
                         args.store = (suit_store_args_t){0};
                         args.store.report = report;
-                        args.fetch.key = SUIT_DEPENDENCIES;
-                        args.store.dst.component_identifier = extracted->components.comp_id[tmp_index];
+                        if (index.is_dependency) {
+                            args.store.key = SUIT_DEPENDENCIES;
+                            args.store.dst.dependency = extracted->dependencies.dependency[index.index[j].val];
+                        }
+                        else {
+                            args.store.key = SUIT_COMPONENTS;
+                            args.store.dst.component_identifier = extracted->components.comp_id[index.index[j].val];
+                        }
                         UsefulBuf buf = UsefulBuf_Unconst(payload->bytes);
                         args.store.ptr = buf.ptr;
                         args.store.buf_len = buf.len;
