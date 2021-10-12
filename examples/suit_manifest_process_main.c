@@ -106,6 +106,32 @@ suit_err_t print_copy(suit_copy_args_t copy_args)
     return SUIT_SUCCESS;
 }
 
+suit_err_t print_store(suit_store_args_t store_args)
+{
+    printf("store callback : {\n");
+    switch (store_args.key) {
+    case SUIT_DEPENDENCIES:
+        printf("  dst-dependnecy-digest : ");
+        suit_print_digest(&store_args.dst.dependency.digest, 4);
+        printf("  dst-dependency-prefix : ");
+        suit_print_component_identifier(&store_args.dst.dependency.prefix);
+        printf("\n");
+        break;
+    case SUIT_COMPONENTS:
+        printf("  dst-component-identifier : ");
+        suit_print_component_identifier(&store_args.dst.component_identifier);
+        printf("\n");
+        break;
+    default:
+        printf("  dst-UNKNOWN(%d)\n", store_args.key);
+        exit(EXIT_FAILURE);
+    }
+    printf("  ptr : %p (%ld)\n", store_args.ptr, store_args.buf_len);
+    printf("  suit_report_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", store_args.report.record_on_success, store_args.report.record_on_failure, store_args.report.sysinfo_success, store_args.report.sysinfo_failure);
+    printf("}\n\n");
+    return SUIT_SUCCESS;
+}
+
 suit_err_t print_fetch(suit_fetch_args_t fetch_args)
 {
     printf("fetch callback : {\n");
@@ -118,10 +144,25 @@ suit_err_t print_fetch(suit_fetch_args_t fetch_args)
         printf("...");
     }
     printf(" (%ld)\n", fetch_args.uri_len);
-    printf("  dst-component-identifier : ");
-    suit_print_component_identifier(&fetch_args.dst);
-    printf("\n");
-    printf("  ptr : %p (%ld)\n", fetch_args.ptr, fetch_args.buf_len);
+    switch (fetch_args.key) {
+    case SUIT_DEPENDENCIES:
+        printf("  dst-dependnecy-digest : ");
+        suit_print_digest(&fetch_args.dst.dependency.digest, 4);
+        printf("  dst-dependency-prefix : ");
+        suit_print_component_identifier(&fetch_args.dst.dependency.prefix);
+        printf("\n");
+        break;
+    case SUIT_COMPONENTS:
+        printf("  dst-component-identifier : ");
+        suit_print_component_identifier(&fetch_args.dst.component_identifier);
+        printf("\n");
+        break;
+    default:
+        printf("  dst-UNKNOWN(%d)\n", fetch_args.key);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("  ptr : %p (%ld)\n", fetch_args.ptr, (fetch_args.buf_len == NULL) ? -1 : *fetch_args.buf_len);
     printf("  suit_report_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", fetch_args.report.record_on_success, fetch_args.report.record_on_failure, fetch_args.report.sysinfo_success, fetch_args.report.sysinfo_failure);
     printf("}\n\n");
     return SUIT_SUCCESS;
@@ -199,6 +240,7 @@ int main(int argc, char *argv[]) {
     suit_inputs_t suit_inputs = {0};
     suit_callbacks_t suit_callbacks = {0};
     suit_callbacks.fetch = print_fetch;
+    suit_callbacks.store = print_store;
     suit_callbacks.copy = print_copy;
     suit_callbacks.run = print_run;
     suit_callbacks.on_error = print_error;

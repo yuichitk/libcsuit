@@ -22,7 +22,25 @@
 
 #define BIT(nr) (1UL << (nr))
 #define SUIT_PARAMETER_CONTAINS_VENDOR_IDENTIFIER BIT(SUIT_PARAMETER_VENDOR_IDENTIFIER)
+#define SUIT_PARAMETER_CONTAINS_CLASS_IDENTIFIER BIT(SUIT_PARAMETER_CLASS_IDENTIFIER)
+#define SUIT_PARAMETER_CONTAINS_IMAGE_DIGEST BIT(SUIT_PARAMETER_IMAGE_DIGEST)
+#define SUIT_PARAMETER_CONTAINS_USE_BEFORE BIT(SUIT_PARAMETER_USE_BEFORE)
+#define SUIT_PARAMETER_CONTAINS_COMPONENT_SLOT BIT(SUIT_PARAMETER_COMPONENT_SLOT)
+#define SUIT_PARAMETER_CONTAINS_STRICT_ORDER BIT(SUIT_PARAMETER_STRICT_ORDER)
+#define SUIT_PARAMETER_CONTAINS_SOFT_FAILURE BIT(SUIT_PARAMETER_SOFT_FAILURE)
+#define SUIT_PARAMETER_CONTAINS_IMAGE_SIZE BIT(SUIT_PARAMETER_IMAGE_SIZE)
+#define SUIT_PARAMETER_CONTAINS_ENCRYPTION_INFO BIT(SUIT_PARAMETER_ENCRYPTION_INFO)
+#define SUIT_PARAMETER_CONTAINS_COMPRESSION_INFO BIT(SUIT_PARAMETER_COMPRESSION_INFO)
+#define SUIT_PARAMETER_CONTAINS_UNPACK_INFO BIT(SUIT_PARAMETER_UNPACK_INFO)
 #define SUIT_PARAMETER_CONTAINS_URI BIT(SUIT_PARAMETER_URI)
+#define SUIT_PARAMETER_CONTAINS_SOURCE_COMPONENT BIT(SUIT_PARAMETER_SOURCE_COMPONENT)
+#define SUIT_PARAMETER_CONTAINS_RUN_ARGS BIT(SUIT_PARAMETER_RUN_ARGS)
+#define SUIT_PARAMETER_CONTAINS_DEVICE_IDENTIFIER BIT(SUIT_PARAMETER_DEVICE_IDENTIFIER)
+#define SUIT_PARAMETER_CONTAINS_MINIMUM_BATTERY BIT(SUIT_PARAMETER_MINIMUM_BATTERY)
+#define SUIT_PARAMETER_CONTAINS_UPDATE_PRIORITY BIT(SUIT_PARAMETER_UPDATE_PRIORITY)
+#define SUIT_PARAMETER_CONTAINS_VERSION BIT(SUIT_PARAMETER_VERSION)
+#define SUIT_PARAMETER_CONTAINS_WAIT_INFO BIT(SUIT_PARAMETER_WAIT_INFO)
+#define SUIT_PARAMETER_CONTAINS_URI_LIST BIT(SUIT_PARAMETER_URI_LIST)
 
 typedef union suit_report {
     uint64_t val;
@@ -83,18 +101,50 @@ typedef struct suit_copy_args {
     suit_report_t report;
 } suit_copy_args_t;
 
+/**
+ * Request to store data as component identifier.
+ * This feature is used on fetching integrated-payload or integrated-dependency.
+ * The memory object is integrated into the manifest, so there is no need to fetch actually.
+ */
+typedef struct suit_store_args {
+    suit_common_key_t key; // SUIT_DEPENDENCIES or SUIT_COMPONENTS
+    union {
+        suit_dependency_t dependency;
+        suit_component_identifier_t component_identifier;
+    } dst;
+
+    /**
+        Pointer to source memory object in the caller.
+     */
+    const void *ptr;
+    const size_t buf_len;
+
+    suit_report_t report;
+} suit_store_args_t;
+
+/**
+ * Request to fetch and store data as component identifier.
+ */
 typedef struct suit_fetch_args {
     size_t uri_len;
     char uri[SUIT_MAX_URI_LENGTH];
-    suit_component_identifier_t dst;
+    suit_common_key_t key; // SUIT_DEPENDENCIES or SUIT_COMPONENTS
+    union {
+        suit_dependency_t dependency;
+        suit_component_identifier_t component_identifier;
+    } dst;
 
     /**
-        Pointer to allocated memory in the caller.
-        This could be NULL if the caller wants callee
-        to allocate space corresponding to the component identifier.
-    */
+     *  Pointer to allocated memory in the caller.
+     *  This could be NULL if the caller wants callee
+     *  to allocate space corresponding to the component identifier.
+     */
     void *ptr;
-    size_t buf_len;
+    /**
+     *  The length of the allocated buffer.
+     *  Should be overwritten as the actual length of the fetched object.
+     */
+    size_t *buf_len;
 
     suit_report_t report;
 } suit_fetch_args_t;
@@ -155,9 +205,10 @@ typedef struct suit_parameter_args {
     //??                        fetch_arguments;
 } suit_parameter_args_t;
 
+#if 0
 typedef struct suit_common_sequence_args {
     /* SUIT_Parameters */
-    suit_parameter_args_t           parameters;
+    suit_parameter_args_t           parameters[SUIT_MAX_COMPONENT_NUM + SUIT_MAX_DEPENDENCY_NUM];
 
 
     /* SUIT_Directives */
@@ -165,6 +216,7 @@ typedef struct suit_common_sequence_args {
         uint64_t                    directive_exists;
     } directive;
 } suit_common_sequence_args_t;
+#endif
 
 /**
  * common command arguments for a specific component
@@ -199,17 +251,19 @@ typedef struct suit_inputs {
 
 typedef struct suit_callbacks {
     suit_err_t (*fetch)(suit_fetch_args_t fetch);
+    suit_err_t (*store)(suit_store_args_t store);
     suit_err_t (*copy)(suit_copy_args_t copy);
     suit_err_t (*run)(suit_run_args_t run);
     suit_err_t (*on_error)(suit_on_error_args_t error);
 } suit_callbacks_t;
 
 void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);
-suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, suit_inputs_t *suit_inputs, suit_digest_t *digest);
+suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, const suit_inputs_t *suit_inputs, suit_digest_t *digest);
 
 typedef struct suit_extracted {
     suit_dependencies_t dependencies;
     suit_components_t components;
+    suit_payloads_t payloads;
 
     UsefulBufC common_sequence;
     // UsefulBufC reference_uri;
@@ -226,8 +280,6 @@ typedef struct suit_extracted {
     suit_digest_t text_digest;
     UsefulBufC coswid;
     suit_digest_t coswid_digest;
-    suit_integrated_payload_t payloads[SUIT_MAX_ARRAY_LENGTH];
-    size_t payloads_len;
 } suit_extracted_t;
 
 /*!
@@ -267,7 +319,7 @@ typedef struct suit_extracted {
     +-------------------------------+
     \endcode
  */
-suit_err_t suit_process_envelopes(suit_inputs_t *suit_inputs, suit_callbacks_t *suit_callbacks);
+suit_err_t suit_process_envelopes(const suit_inputs_t *suit_inputs, const suit_callbacks_t *suit_callbacks);
 
 #endif /* SUIT_MANIFEST_PROCESS_H */
 
