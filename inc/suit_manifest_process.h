@@ -116,8 +116,8 @@ typedef struct suit_store_args {
     /**
         Pointer to source memory object in the caller.
      */
-    const void *ptr;
-    const size_t buf_len;
+    void *ptr;
+    size_t buf_len;
 
     suit_report_t report;
 } suit_store_args_t;
@@ -245,6 +245,8 @@ typedef struct suit_common_args {
 
 typedef struct suit_inputs {
     UsefulBufC manifest;
+    uint8_t buf[SUIT_MAX_DATA_SIZE];
+    size_t left_len;
     size_t key_len;
     struct t_cose_key public_keys[SUIT_MAX_ARRAY_LENGTH];
 } suit_inputs_t;
@@ -319,7 +321,7 @@ typedef struct suit_extracted {
     +-------------------------------+
     \endcode
  */
-suit_err_t suit_process_envelopes(const suit_inputs_t *suit_inputs, const suit_callbacks_t *suit_callbacks);
+suit_err_t suit_process_envelopes(suit_inputs_t *suit_inputs, const suit_callbacks_t *suit_callbacks);
 
 #endif /* SUIT_MANIFEST_PROCESS_H */
 

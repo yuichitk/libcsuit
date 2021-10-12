@@ -56,7 +56,7 @@ typedef enum {
 #define SUIT_MAX_COMPONENT_NUM          3
 #define SUIT_MAX_DEPENDENCY_NUM         1
 #define SUIT_MAX_ARGS_LENGTH            64
-#define SUIT_MAX_DATA_SIZE              2048
+#define SUIT_MAX_DATA_SIZE              1024 * 128
 
 #define SUIT_ENVELOPE_CBOR_TAG               107
 
@@ -459,7 +459,8 @@ typedef struct suit_manifest {
 
 typedef struct suit_index {
     uint8_t is_dependency : 1; // 0: component, 1: dependency
-    uint8_t len : 7;
+    uint8_t _padding : 3;
+    uint8_t len : 4;
     struct {
         uint8_t val;
     } index[7];
@@ -467,7 +468,7 @@ typedef struct suit_index {
 
 typedef struct suit_payload {
     UsefulBufC key;
-    suit_index_t index;
+    suit_index_t index; // only 1 index should be stored
     UsefulBufC bytes;
 } suit_payload_t;
 
