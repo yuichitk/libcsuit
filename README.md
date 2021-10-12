@@ -40,15 +40,20 @@ make -f Makefile.ossl install
 
 Make and run sample codes you need.
 
-- suit_manifest_parser
+- suit_manifest_parser (extract values and print it, and then re-generate the same binary)
 ```bash
 make -f Makefile.parser test
 ```
 
-- suit_manifest_encoder
+- suit_manifest_encoder (generate a manifest)
 ```bash
 make -f Makefile.encode test
 # generates ./testfiles/suit_manifest_expX.cbor
+```
+
+- suit_manifest_process (extract values and call appropriate callbacks)
+```bash
+make -f Makefile.process test
 ```
 
 To install libcsuit.a use the following command:
