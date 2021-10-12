@@ -814,12 +814,12 @@ suit_err_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, ui
     return SUIT_SUCCESS;
 }
 
-suit_err_t suit_print_integrated_payload(uint8_t mode, const suit_integrated_payloads_t *integrated_payloads, const uint32_t indent_space) {
-    for (size_t i = 0; i < integrated_payloads->len; i++) {
-        printf("%*s\"%.*s\" : ", indent_space, "", (int)integrated_payloads->payload[i].key.len, (char *)integrated_payloads->payload[i].key.ptr);
-        suit_print_hex_in_max(integrated_payloads->payload[i].bytes.ptr,
-                                 integrated_payloads->payload[i].bytes.len,
-                                 SUIT_MAX_PRINT_BYTE_COUNT);
+suit_err_t suit_print_integrated_payload(uint8_t mode, const suit_payloads_t *payloads, const uint32_t indent_space) {
+    for (size_t i = 0; i < payloads->len; i++) {
+        printf("%*s\"%.*s\" : ", indent_space, "", (int)payloads->payload[i].key.len, (char *)payloads->payload[i].key.ptr);
+        suit_print_hex_in_max(payloads->payload[i].bytes.ptr,
+                              payloads->payload[i].bytes.len,
+                              SUIT_MAX_PRINT_BYTE_COUNT);
         printf("\n");
     }
     return SUIT_SUCCESS;
@@ -840,7 +840,7 @@ suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, co
     }
 
     // integrated-payload
-    result = suit_print_integrated_payload(mode, &envelope->integrated_payload, indent_space + 2);
+    result = suit_print_integrated_payload(mode, &envelope->payloads, indent_space + 2);
     if (result != SUIT_SUCCESS) {
         return result;
     }

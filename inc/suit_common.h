@@ -54,7 +54,9 @@ typedef enum {
 #define SUIT_MAX_NAME_LENGTH            256 /* the length of path or name such as component_identifier */
 #define SUIT_MAX_URI_LENGTH             256 /* the length of uri to fetch something */
 #define SUIT_MAX_COMPONENT_NUM          3
+#define SUIT_MAX_DEPENDENCY_NUM         1
 #define SUIT_MAX_ARGS_LENGTH            64
+#define SUIT_MAX_DATA_SIZE              1024 * 128
 
 #define SUIT_ENVELOPE_CBOR_TAG               107
 
@@ -455,15 +457,25 @@ typedef struct suit_manifest {
     suit_unseverable_members_t          unsev_mem;
 } suit_manifest_t;
 
-typedef struct suit_integrated_payload {
-    UsefulBufC key;
-    UsefulBufC bytes;
-} suit_integrated_payload_t;
+typedef struct suit_index {
+    uint8_t is_dependency : 1; // 0: component, 1: dependency
+    uint8_t _padding : 3;
+    uint8_t len : 4;
+    struct {
+        uint8_t val;
+    } index[7];
+} suit_index_t;
 
-typedef struct suit_integrated_payloads {
+typedef struct suit_payload {
+    UsefulBufC key;
+    suit_index_t index; // only 1 index should be stored
+    UsefulBufC bytes;
+} suit_payload_t;
+
+typedef struct suit_payloads {
     size_t  len;
-    suit_integrated_payload_t payload[SUIT_MAX_ARRAY_LENGTH];
-} suit_integrated_payloads_t;
+    suit_payload_t payload[SUIT_MAX_ARRAY_LENGTH];
+} suit_payloads_t;
 
 /*
  * SUIT_Envelope
@@ -471,7 +483,7 @@ typedef struct suit_integrated_payloads {
 typedef struct suit_envelope {
     // TODO :                           suit-delegation
     suit_authentication_wrapper_t       wrapper;
-    suit_integrated_payloads_t          integrated_payload;
+    suit_payloads_t                     payloads;
     suit_manifest_t                     manifest;
     // TODO :                           SUIT_Severed_Fields
     /* SUIT_Severable_Manifest_Members */
