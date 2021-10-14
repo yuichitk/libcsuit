@@ -23,59 +23,58 @@ fetch callback : {
 }
 ```
 
-## Sample Input SUIT Manifest
+## Sample Input SUIT Manifest Summary
 ```
-+-testfiles/suit_manifest_exp1.cbor---+
-| SUIT_Envelope {                     |
-|   authentication-wrapper: [         |
-|     digest,                         |
-|     COSE_Sign1(digest)              |
-|   ],                                |
-|   manifest: {                       |
-|     common: {                       |
-|       common-sequence: {            |
-|         set-parameters: [           |
-|           image-size: 20,           |
-|           image-digest: {{digest}}, |
-|         ]                           |
-|       }                             |
-|     },                              |
-|     install: {                      |
-|       set-parameters: [             |
-|         uri: "http://.../file.bin"  |
-|       ],                            |
-|       directive-fetch,              |
-|       condition-image-match         |
-|     }                               |
-|   }                                 |
-| }                                   |
-+-------------------------------------+
++-testfiles/suit_manifest_exp1.cbor-----------+
+| SUIT_Envelope {                             |
+|   authentication-wrapper: [                 |
+|     digest(manifest),                       |
+|     COSE_Sign1(digest(manifest))            |
+|   ],                                        |
+|   manifest: {                               |
+|     common: {                               |
+|       common-sequence: [                    |
+|         set-parameters: {                   |
+|           image-size: 20,                   |
+|           image-digest: digest(image)       |
+|         }                                   |
+|       ]                                     |
+|     },                                      |
+|     install: [                              |
+|       set-parameters: {                     |
+|         uri: "http://example.con/file.bin"  |
+|       },                                    |
+|       directive-fetch,                      |
+|       condition-image-match                 |
+|     ]                                       |
+|   }                                         |
+| }                                           |
++---------------------------------------------+
 ```
 
 ## Program Flow in Pseudocode
 ```
-+-examples/suit_manifest_process_main.c----------+
-| main() {                                       |
-|   keys = prepare_keys();                       |
-|   callbacks.fetch = fetch_callback;            |
-|   while {                                      |
-|     m = fetch_manifest();                      |    +-libcsuit---------------------------------------+
-|     suit_process_envelope(keys, m, callbacks); |===>| suit_process_envelope(keys, m, callbacks) {    |
-|   }                                            |    |   t = check_digest_and_extract(keys, m);       |
-| }                                              |    |   dependency_resolution(t);                    |
-|                                                |    |   install(m.install) {                         |
-| fetch_callback(uri, buf, report) {             |<===|     err = callbacks.fetch(t.uri, buf, report); |
-|   err = get_image(uri, buf);                   |    |                                                |
-|   suit_report(report, err);                    |    |                                                |
-|   return SUIT_SUCCESS;                         |===>|     if (!err)                                  |
-| }                                              |    |       callbacks.on_error(err, report);         |
-|                                                |    |     err = check_image_digest(t.idigest, ptr);  |
-| error_callback(err, report) {                  |    |     if (!err)                                  |
-|   // error-recovery                            |    |       callbacks.on_error(err, report);         |
-|   if (fatal)                                   |    |   }                                            |
-|     exit(EXIT_FAILURE);                        |    | }                                              |
-|   return SUIT_SUCCESS;                         |    +------------------------------------------------+
-| }                                              |
-+------------------------------------------------+
++-examples/suit_manifest_process_main.c--------+
+| main() {                                     |
+|   keys = prepare_keys();                     |
+|   callbacks.fetch = fetch_callback;          |
+|   m = get_manifest();                        |    +-libcsuit---------------------------------------+
+|   suit_process_envelope(keys, m, callbacks); |===>| suit_process_envelope(keys, m, callbacks) {    |
+| }                                            |    |   t = check_digest_and_extract(keys, m);       |
+|                                              |    |   dependency_resolution(t);                    |
+|                                              |    |   install(m.install) {                         |
+| fetch_callback(uri, buf, report) {           |<===|     err = callbacks.fetch(t.uri, buf, report); |
+|   err = get_image(uri, buf);                 |    |                                                |
+|   suit_report(report, err);                  |    |                                                |
+|   return SUIT_SUCCESS;                       |===>|     if (!err)                                  |
+| }                                            |    |       callbacks.on_error(err, report);         |
+|                                              |    |     err = check_image_digest(t.idigest, ptr);  |
+| error_callback(err, report) {                |    |     if (!err)                                  |
+|   // error-recovery                          |    |       callbacks.on_error(err, report);         |
+|   if (fatal)                                 |    |   }                                            |
+|     exit(EXIT_FAILURE);                      |    | }                                              |
+|   return SUIT_SUCCESS;                       |    +------------------------------------------------+
+| }                                            |
++----------------------------------------------+
 ```
 
