@@ -205,19 +205,6 @@ typedef struct suit_parameter_args {
     //??                        fetch_arguments;
 } suit_parameter_args_t;
 
-#if 0
-typedef struct suit_common_sequence_args {
-    /* SUIT_Parameters */
-    suit_parameter_args_t           parameters[SUIT_MAX_COMPONENT_NUM + SUIT_MAX_DEPENDENCY_NUM];
-
-
-    /* SUIT_Directives */
-    struct {
-        uint64_t                    directive_exists;
-    } directive;
-} suit_common_sequence_args_t;
-#endif
-
 /**
  * common command arguments for a specific component
  */
@@ -259,9 +246,6 @@ typedef struct suit_callbacks {
     suit_err_t (*on_error)(suit_on_error_args_t error);
 } suit_callbacks_t;
 
-void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);
-suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, const suit_inputs_t *suit_inputs, suit_digest_t *digest);
-
 typedef struct suit_extracted {
     suit_dependencies_t dependencies;
     suit_components_t components;
@@ -296,32 +280,36 @@ typedef struct suit_extracted {
     Libcsuit parse suit-install, suit-run, ... and call some callback functions respectively.
     If any error occurred, on_error callback function will be called if set.
 
+    The figure below describes the program flow in pseudocode.
+    Note that the arguments and function names are not the same as the actual.
+
     \code{.unparsed}
     +-App---------------------------+
     | main() {                      |
-    |   prepare_keys();             |
-    |   create_suit_process();      |
+    |   init_keys();                |
+    |   init_manifest();            |
     |   while {                     |
     |     fetch_manifests();        |
     |     update_suit_process();    |    +-libcsuit-------------------------------+
-    |     suit_process_envelopes(); |===>| suit_process_envelops() {              |
-    |   }                           |    |   decode_and_check_digests();          |
-    | }                             |    |   for (m in manifests) {               |
-    |                               |    |     decode_common(m);                  |
+    |     suit_process_envelope();  |===>| suit_process_envelope() {              |
+    |   }                           |    |   check_digest_and_extract();          |
+    | }                             |    |   dependency_resolution();             |
+    |                               |    |   install() {                          |
     | fetch_callback() {            |<===|     err = callbacks.fetch(m.uri, ptr); |
     |   get_image(uri, ptr);        |    |     (wait)                             |
     |   return SUIT_SUCCESS;        |===>|     if (!err)                          |
     | }                             |    |       callbacks.on_error(err);         |
-    | error_callback() {            |    |     check_image_digest(m, ptr);        |
-    |   // do something             |    |     ...                                |
-    |   if (fatal)                  |    |   }                                    |
-    |     return SUIT_ERR_FATAL;    |    | }                                      |
-    |   return SUIT_SUCCESS;        |    +----------------------------------------+
+    |                               |    |     check_image_digest(m, ptr);        |
+    | error_callback() {            |    |     ...                                |
+    |   // error-recovery           |    |   }                                    |
+    |   if (fatal)                  |    | }                                      |
+    |     return SUIT_ERR_FATAL;    |    +----------------------------------------+
+    |   return SUIT_SUCCESS;        |
     | }                             |
     +-------------------------------+
     \endcode
  */
-suit_err_t suit_process_envelopes(suit_inputs_t *suit_inputs, const suit_callbacks_t *suit_callbacks);
+suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs, const suit_callbacks_t *suit_callbacks);
 
 #endif /* SUIT_MANIFEST_PROCESS_H */
 

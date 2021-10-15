@@ -23,6 +23,10 @@
     One or more manifests may depend other manifests.
  */
 
+//void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);
+//suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, const suit_inputs_t *suit_inputs, suit_digest_t *digest);
+
+
 suit_err_t suit_set_compression_info(QCBORDecodeContext *context,
                                      suit_compression_info_t *compression_info) {
     union {
@@ -269,7 +273,7 @@ suit_err_t suit_process_dependency(suit_extracted_t *extracted,
     }
     suit_inputs_t tmp_inputs = *suit_inputs;
     tmp_inputs.manifest = payload->bytes;
-    return suit_process_envelopes(&tmp_inputs, suit_callbacks);
+    return suit_process_envelope(&tmp_inputs, suit_callbacks);
 }
 
 suit_err_t suit_set_index(QCBORDecodeContext *context,
@@ -580,13 +584,41 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
             }
             break;
         case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
-            if (index.is_dependency == 0) {
+            if (!index.is_dependency) {
                 result = SUIT_ERR_INVALID_KEY;
                 goto error;
             }
             // TODO:
             QCBORDecode_GetUInt64(&context, &report.val);
             result = suit_process_dependency(extracted, index, suit_inputs, suit_callbacks);
+            break;
+        case SUIT_DIRECTIVE_UNLINK:
+            QCBORDecode_GetUInt64(&context, &report.val);
+            for (size_t j = 0; j < index.len; j++) {
+                const uint8_t tmp_index = index.index[j].val + index.is_dependency * SUIT_MAX_COMPONENT_NUM;
+
+                if (suit_callbacks->store == NULL) {
+                    result = SUIT_ERR_NO_CALLBACK;
+                    goto error;
+                }
+                else if (extracted->components.len < tmp_index || extracted->components.comp_id[tmp_index].len == 0) {
+                    result = SUIT_ERR_NO_ARGUMENT;
+                    goto error;
+                }
+                args.store = (suit_store_args_t){0};
+                args.store.report = report;
+                if (index.is_dependency) {
+                    args.store.key = SUIT_DEPENDENCIES;
+                    args.store.dst.dependency = extracted->dependencies.dependency[index.index[j].val];
+                }
+                else {
+                    args.store.key = SUIT_COMPONENTS;
+                    args.store.dst.component_identifier = extracted->components.comp_id[index.index[j].val];
+                }
+                args.store.ptr = NULL;
+                args.store.buf_len = 0;
+                result = suit_callbacks->store(args.store);
+            }
             break;
         case SUIT_CONDITION_VENDOR_IDENTIFIER:
             QCBORDecode_GetUInt64(&context, &report.val);
@@ -633,14 +665,12 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
             // TODO: check condition
             break;
 
-
         case SUIT_DIRECTIVE_DO_EACH:
         case SUIT_DIRECTIVE_MAP_FILTER:
         case SUIT_DIRECTIVE_WAIT:
         case SUIT_DIRECTIVE_FETCH_URI_LIST:
         case SUIT_DIRECTIVE_SWAP:
         case SUIT_DIRECTIVE_RUN_SEQUENCE:
-
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
         }
@@ -944,162 +974,6 @@ error:
     return result;
 }
 
-/*
-suit_err_t suit_process_validate(QCBORDecodeContext *context,
-                                 suit_common_args_t *suit_common_args,
-                                 const suit_inputs_t *suit_inputs,
-                                 const suit_callbacks_t *suit_callbacks) {
-    return suit_process_common_sequence(context, SUIT_VALIDATE, suit_common_args, suit_inputs, suit_callbacks);
-}
-*/
-
-/*
-suit_err_t suit_process_install(const suit_inputs_t *suit_inputs,
-                                const suit_extracted_t *extracted,
-                                const suit_callbacks_t *suit_callbacks) {
-    return suit_process_command_sequence(SUIT_INSTALL, suit_inputs, extracted, suit_callbacks);
-}
-*/
-
-/*
-    component_index
-        Negative: All
-        0 or Positive: Only the target component
- */
-#if 0
-suit_err_t suit_process_common(UsefulBufC common,
-                               const int64_t component_index,
-                               const suit_manifest_key_t action,
-                               suit_callbacks_t *suit_callbacks,
-                               suit_common_args_t *suit_common_args) {
-    suit_err_t result = SUIT_SUCCESS;
-    QCBORDecodeContext context;
-    QCBORError error = QCBOR_SUCCESS;
-    QCBORItem item;
-
-    UsefulBufC buf;
-    suit_components_t components;
-
-    QCBORDecode_Init(&context, common, QCBOR_DECODE_MODE_NORMAL);
-    QCBORDecode_EnterBstrWrapped(&context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
-    QCBORDecode_EnterMap(&context, &item);
-    size_t length = item.val.uCount;
-    for (size_t i = 0; i < length; i++) {
-        error = QCBORDecode_GetNext(&context, &item);
-        if (error != QCBOR_SUCCESS) {
-            goto out;
-        }
-        int64_t label = item.label.int64;
-        switch (label) {
-        case SUIT_COMPONENTS:
-            QCBORDecode_EnterArray(&context, &item);
-            components.len = item.val.uCount;
-            for (size_t j = 0; j < components.len; j++) {
-                UsefulBufC  identifier;
-                QCBORDecode_EnterArray(&context, &item);
-                components.comp_id[j].len = item.val.uCount;
-                for (size_t k = 0; j < components.comp_id[j].len; k++) {
-                    QCBORDecode_GetByteString(&context, &identifier);
-                    components.comp_id[j].identifier[k].ptr = identifier.ptr;
-                    components.comp_id[j].identifier[k].len = identifier.len;
-                }
-                QCBORDecode_ExitArray(&context);
-            }
-            QCBORDecode_ExitArray(&context);
-            break;
-        case SUIT_COMMON_SEQUENCE:
-            QCBORDecode_GetByteString(&context, &buf);
-            suit_process_command(SUIT_COMMON, buf, suit_common_args, suit_callbacks);
-            break;
-        }
-    }
-    QCBORDecode_ExitMap(&context);
-    QCBORDecode_ExitBstrWrapped(&context);
-
-    error = QCBORDecode_Finish(&context);
-out:
-    if (result != SUIT_SUCCESS && error != QCBOR_SUCCESS) {
-        result = suit_error_from_qcbor_error(error);
-    }
-    return result;
-}
-#endif
-
-#if 0
-suit_err_t suit_process_manifest(QCBORDecodeContext *context,
-                                 suit_digest_t *digest,
-                                 suit_common_args_t *suit_common_args,
-                                 suit_inputs_t *suit_inputs,
-                                 suit_callbacks_t *suit_callbacks) {
-    suit_err_t result = SUIT_SUCCESS;
-    QCBORError error = QCBOR_SUCCESS;
-    QCBORItem item;
-    UsefulBufC suit_common_buf;
-    suit_common_buf.len = 0;
-    union {
-        int64_t int64;
-        uint64_t uint64;
-        UsefulBufC string;
-    } val;
-
-    QCBORDecode_EnterBstrWrapped(context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
-    QCBORDecode_EnterMap(context, &item);
-    size_t length = item.val.uCount;
-    for (size_t i = 0; i < length; i++) {
-        error = QCBORDecode_PeekNext(context, &item);
-        if (error != QCBOR_SUCCESS) {
-            goto out;
-        }
-        int64_t label = item.label.int64;
-        switch (label) {
-        case SUIT_MANIFEST_VERSION:
-            QCBORDecode_GetInt64(context, &val.int64);
-            if (val.int64 != 1) {
-                result = SUIT_ERR_NOT_IMPLEMENTED;
-                goto out;
-            }
-            break;
-        case SUIT_COMMON:
-            QCBORDecode_GetByteString(context, &suit_common_buf);
-            result = suit_process_common(suit_common_buf, -1, 0, suit_callbacks, suit_common_args);
-            break;
-        case SUIT_MANIFEST_SEQUENCE_NUMBER:
-            QCBORDecode_GetUInt64(context, &suit_common_args->manifest_sequence_number);
-            break;
-        case SUIT_INSTALL:
-            result = suit_process_install(context, suit_common_args, suit_inputs, suit_callbacks);
-            break;
-        case SUIT_VALIDATE:
-            result = suit_process_validate(context, suit_common_args, suit_inputs, suit_callbacks);
-            break;
-        case SUIT_RUN:
-            /* TODO */
-            QCBORDecode_GetNext(context, &item);
-            break;
-        case SUIT_REFERENCE_URI:
-        case SUIT_DEPENDENCY_RESOLUTION:
-        case SUIT_PAYLOAD_FETCH:
-        case SUIT_LOAD:
-        case SUIT_TEXT:
-        case SUIT_COSWID:
-        default:
-            result = SUIT_ERR_NOT_IMPLEMENTED;
-            goto out;
-        }
-        if (result != SUIT_SUCCESS) {
-            return result;
-        }
-    }
-    QCBORDecode_ExitMap(context);
-    QCBORDecode_ExitBstrWrapped(context);
-out:
-    if (error != QCBOR_SUCCESS || result != SUIT_SUCCESS) {
-        result = suit_error_from_qcbor_error(error);
-    }
-    return result;
-}
-#endif
-
 void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest) {
     int64_t algorithm_id;
     UsefulBufC digest_bytes;
@@ -1379,25 +1253,19 @@ error:
 /*
     Public function. See suit_manifest_process.h
  */
-suit_err_t suit_process_envelopes(suit_inputs_t *suit_inputs, const suit_callbacks_t *suit_callbacks) {
+suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs,
+                                 const suit_callbacks_t *suit_callbacks) {
     QCBORDecodeContext context;
     QCBORError error = QCBOR_SUCCESS;
     QCBORItem item;
     suit_err_t result = SUIT_SUCCESS;
-    /*
-    union {
-        int64_t int64;
-        uint64_t uint64;
-        UsefulBufC string;
-    } val;
-    */
 
     suit_envelope_key_t envelope_key = SUIT_ENVELOPE_KEY_INVALID;
     suit_manifest_key_t manifest_key = SUIT_MANIFEST_KEY_INVALID;
     suit_digest_t manifest_digest;
     suit_extracted_t extracted = {0};
 
-    /* check the digests */
+    /* extract items */
     QCBORDecode_Init(&context,
                      (UsefulBufC){suit_inputs->manifest.ptr, suit_inputs->manifest.len},
                      QCBOR_DECODE_MODE_NORMAL);
@@ -1501,6 +1369,8 @@ suit_err_t suit_process_envelopes(suit_inputs_t *suit_inputs, const suit_callbac
         goto out;
     }
 
+    /* TODO: check digests */
+
     /* dependency-resolution */
     result = suit_process_common_and_command_sequence(&extracted, SUIT_DEPENDENCY_RESOLUTION, suit_inputs, suit_callbacks);
     if (result != SUIT_SUCCESS) {
@@ -1536,51 +1406,6 @@ suit_err_t suit_process_envelopes(suit_inputs_t *suit_inputs, const suit_callbac
     if (result != SUIT_SUCCESS) {
         goto error;
     }
-
-
-#if 0
-    QCBORDecode_Init(&context, ko, QCBOR_DECODE_MODE_NORMAL);
-    QCBORDecode_EnterMap(&context, &item);
-    size_t length = item.val.uCount;
-    for (size_t i = 0; i < length; i++) {
-        error = QCBORDecode_PeekNext(&context, &item);
-        if (error != QCBOR_SUCCESS) {
-            goto out;
-        }
-        int64_t label = item.label.int64;
-        switch (label) {
-        case SUIT_MANIFEST:
-            result = suit_process_manifest(&context, &digests[i], &suit_common_args, suit_inputs, suit_callbacks);
-            break;
-        case SUIT_DELEGATION:
-            /* TODO */
-        case SUIT_AUTHENTICATION:
-            /* Skip */
-            QCBORDecode_GetByteString(&context, &val.string);
-            break;
-
-        /* Severed Members */
-        case SUIT_INSTALL:
-            //TODO: suit_verify_digest(context, suit_common_args.signatures.install);
-            suit_process_install(&context, &suit_common_args, suit_inputs, suit_callbacks);
-            break;
-        case SUIT_DEPENDENCY_RESOLUTION:
-        case SUIT_PAYLOAD_FETCH:
-        case SUIT_TEXT:
-        case SUIT_COSWID:
-            result = SUIT_ERR_NOT_IMPLEMENTED;
-            break;
-        }
-        if (result != SUIT_SUCCESS) {
-            goto error;
-        }
-    }
-    QCBORDecode_ExitMap(&context);
-    error = QCBORDecode_Finish(&context);
-    if (error != QCBOR_SUCCESS) {
-        goto error;
-    }
-#endif
 
 out:
     return result;
