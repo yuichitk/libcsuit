@@ -42,7 +42,7 @@
 #define SUIT_PARAMETER_CONTAINS_WAIT_INFO BIT(SUIT_PARAMETER_WAIT_INFO)
 #define SUIT_PARAMETER_CONTAINS_URI_LIST BIT(SUIT_PARAMETER_URI_LIST)
 
-typedef union suit_report {
+typedef union suit_rep_policy {
     uint64_t val;
     struct {
         uint64_t record_on_success: 1;
@@ -51,20 +51,20 @@ typedef union suit_report {
         uint64_t sysinfo_failure: 1;
         uint64_t padding: 60;
     };
-} suit_report_t;
+} suit_rep_policy_t;
 
-typedef struct suit_on_error_args {
+typedef struct suit_report_args {
     suit_envelope_key_t level0;
     union {
         suit_manifest_key_t manifest_key;
     } level1;
     union {
-        suit_rep_policy_key_t condition_directive;
+        suit_con_dir_key_t condition_directive;
         suit_common_key_t common_key;
         suit_text_key_t text_key;
     } level2;
     union {
-        suit_rep_policy_key_t condition_directive;
+        suit_con_dir_key_t condition_directive;
         suit_parameter_key_t parameter;
         suit_text_component_key_t text_component_key;
     } level3;
@@ -75,8 +75,8 @@ typedef struct suit_on_error_args {
     QCBORError qcbor_error;
     suit_err_t suit_error;
 
-    suit_report_t report;
-} suit_on_error_args_t;
+    suit_rep_policy_t report;
+} suit_report_args_t;
 
 typedef struct suit_run_args {
     suit_component_identifier_t component_identifier;
@@ -84,7 +84,7 @@ typedef struct suit_run_args {
     uint8_t args[SUIT_MAX_ARGS_LENGTH];
     size_t args_len;
 
-    suit_report_t report;
+    suit_rep_policy_t report;
 } suit_run_args_t;
 
 typedef struct suit_copy_args {
@@ -98,7 +98,7 @@ typedef struct suit_copy_args {
         suit_unpack_info_t unpack;
     } info;
 
-    suit_report_t report;
+    suit_rep_policy_t report;
 } suit_copy_args_t;
 
 /**
@@ -119,7 +119,7 @@ typedef struct suit_store_args {
     void *ptr;
     size_t buf_len;
 
-    suit_report_t report;
+    suit_rep_policy_t report;
 } suit_store_args_t;
 
 /**
@@ -146,7 +146,7 @@ typedef struct suit_fetch_args {
      */
     size_t *buf_len;
 
-    suit_report_t report;
+    suit_rep_policy_t report;
 } suit_fetch_args_t;
 
 typedef struct suit_validate_args {
@@ -243,7 +243,7 @@ typedef struct suit_callbacks {
     suit_err_t (*store)(suit_store_args_t store);
     suit_err_t (*copy)(suit_copy_args_t copy);
     suit_err_t (*run)(suit_run_args_t run);
-    suit_err_t (*on_error)(suit_on_error_args_t error);
+    suit_err_t (*report)(suit_report_args_t report);
 } suit_callbacks_t;
 
 typedef struct suit_extracted {
@@ -278,10 +278,31 @@ typedef struct suit_extracted {
 
     Process one or more SUIT_Envelope(s) like below.
     Libcsuit parse suit-install, suit-run, ... and call some callback functions respectively.
-    If any error occurred, on_error callback function will be called if set.
+    If any error occurred, report callback function will be called if set.
 
     The figure below describes the program flow in pseudocode.
     Note that the arguments and function names are not the same as the actual.
+
+    suit_callbacks.fetch()
+    \param[in]      fetch_args      Fetch and suit-report arguments. See \ref suit_fetch_args_t.
+    Triggered on \ref SUIT_DIRECTIVE_FETCH.
+
+    suit_callbacks.store()
+    \param[in]      store_args      Store and suit-report arguments. See \ref suit_store_args_t.
+    Triggered on \ref SUIT_DIRECTIVE_FETCH of integrated-payload or integrated-dependency.
+
+    suit_callbacks.copy()
+    \param[in]      copy_args       Copy and suit-report arguments. See \ref suit_copy_args_t.
+    Triggered on \ref SUIT_DIRECTIVE_COPY.
+
+    suit_callbacks.run()
+    \param[in]      run_args        Run and suit-report arguments. See \ref suit_run_args_t.
+
+    suit_callbacks.report()
+    \param[in]      report_args     Suit-report arguments and errors. See \ref suit_report_args_t.
+    Triggerd on SUIT_CONDITION_* arguments match the policy (Rec|Sys)-(Pass|Fail) \ref suit_rep_policy_t,
+    or any error occurred.
+    QCBOR and libcsuit error codes are set in qcbor_error and suit_error respectively.
 
     \code{.unparsed}
     +-App---------------------------+
@@ -298,12 +319,14 @@ typedef struct suit_extracted {
     | fetch_callback() {            |<===|     err = callbacks.fetch(m.uri, ptr); |
     |   get_image(uri, ptr);        |    |     (wait)                             |
     |   return SUIT_SUCCESS;        |===>|     if (!err)                          |
-    | }                             |    |       callbacks.on_error(err);         |
+    | }                             |    |       callbacks.report(err);           |
     |                               |    |     check_image_digest(m, ptr);        |
-    | error_callback() {            |    |     ...                                |
-    |   // error-recovery           |    |   }                                    |
-    |   if (fatal)                  |    | }                                      |
-    |     return SUIT_ERR_FATAL;    |    +----------------------------------------+
+    | report_callback() {           |    |     ...                                |
+    |   suit_report();              |    |   }                                    |
+    |   if (err)                    |    | }                                      |
+    |     recover_error();          |    +----------------------------------------+
+    |   if (fatal)                  |
+    |     return SUIT_ERR_FATAL;    |
     |   return SUIT_SUCCESS;        |
     | }                             |
     +-------------------------------+

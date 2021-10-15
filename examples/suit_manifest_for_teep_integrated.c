@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     UsefulBufC payload = {.ptr = trusted_component, .len = strlen(trusted_component)};
     envelope.payloads.len = 1;
     char uri[] = "#tc";
-    envelope.payloads.payload[0].key = (UsefulBufC){.ptr = uri, .len = strlen(uri)};
+    envelope.payloads.payload[0].key = (UsefulBufC){.ptr = (const void *)uri, .len = strlen(uri)};
     envelope.payloads.payload[0].bytes = payload;
 
     /* "TEEP-Device" */
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     params_list->len = 1;
 
     params_list->params[0].label = SUIT_PARAMETER_URI;
-    params_list->params[0].value.string.ptr = uri;
+    params_list->params[0].value.string.ptr = (const void *)uri;
     params_list->params[0].value.string.len = strlen(uri);
 
     install->commands[1].label = SUIT_DIRECTIVE_FETCH;
@@ -144,8 +144,8 @@ int main(int argc, char *argv[]) {
     text->component[0].key = common->components.comp_id[0];
     const char model_name[] = "Reference TEEP-Device";
     const char vendor_domain[] = "tc.org";
-    text->component[0].text_component.model_name = (suit_buf_t){.ptr = model_name, .len = strlen(model_name)};
-    text->component[0].text_component.vendor_domain = (suit_buf_t){.ptr = vendor_domain, .len = strlen(vendor_domain)};
+    text->component[0].text_component.model_name = (suit_buf_t){.ptr = (const uint8_t *)model_name, .len = strlen(model_name)};
+    text->component[0].text_component.vendor_domain = (suit_buf_t){.ptr = (const uint8_t *)vendor_domain, .len = strlen(vendor_domain)};
 
 
     // Print manifest.

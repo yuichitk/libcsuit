@@ -8,7 +8,7 @@
 #include "qcbor/qcbor.h"
 #include "qcbor/qcbor_spiffy_decode.h"
 #include "suit_common.h"
-#include "suit_manifest_data.h"
+//#include "suit_manifest_data.h"
 #include "suit_manifest_process.h"
 #include "suit_cose.h"
 #include "suit_digest.h"
@@ -22,10 +22,6 @@
     Call suit_process_envelopes() to process whole SUIT manifests at once.
     One or more manifests may depend other manifests.
  */
-
-//void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);
-//suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context, const suit_inputs_t *suit_inputs, suit_digest_t *digest);
-
 
 suit_err_t suit_set_compression_info(QCBORDecodeContext *context,
                                      suit_compression_info_t *compression_info) {
@@ -61,7 +57,7 @@ suit_err_t suit_set_compression_info(QCBORDecodeContext *context,
 }
 
 suit_err_t suit_set_parameters(QCBORDecodeContext *context,
-                               const suit_rep_policy_key_t directive,
+                               const suit_con_dir_key_t directive,
                                suit_parameter_args_t *parameters,
                                const suit_index_t index,
                                const suit_callbacks_t *suit_callbacks) {
@@ -217,9 +213,9 @@ suit_err_t suit_set_parameters(QCBORDecodeContext *context,
     return result;
 
 error:
-    if (suit_callbacks->on_error != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->on_error(
-            (suit_on_error_args_t) {
+    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
+        suit_callbacks->report(
+            (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = SUIT_COMMON,
                 .level2.common_key = SUIT_COMMON_SEQUENCE,
@@ -279,7 +275,7 @@ suit_err_t suit_process_dependency(suit_extracted_t *extracted,
 suit_err_t suit_set_index(QCBORDecodeContext *context,
                           const suit_extracted_t *extracted,
                           suit_index_t *index,
-                          suit_rep_policy_key_t condition_directive_key) {
+                          suit_con_dir_key_t condition_directive_key) {
     union {
         uint64_t u64;
         bool b;
@@ -352,8 +348,8 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                                              const suit_callbacks_t *suit_callbacks) {
     suit_err_t result = SUIT_SUCCESS;
     suit_index_t index = {.is_dependency = 0, .len = 1, .index[0].val = 0};
-    suit_rep_policy_key_t condition_directive_key = SUIT_CONDITION_INVALID;
-    suit_report_t report;
+    suit_con_dir_key_t condition_directive_key = SUIT_CONDITION_INVALID;
+    suit_rep_policy_t report;
     union {
         suit_fetch_args_t fetch;
         suit_store_args_t store;
@@ -699,9 +695,9 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
     return result;
 
 error:
-    if (suit_callbacks->on_error != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->on_error(
-            (suit_on_error_args_t) {
+    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
+        suit_callbacks->report(
+            (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = command_key,
                 .level2.condition_directive = condition_directive_key,
@@ -724,9 +720,9 @@ suit_err_t suit_process_common_sequence(suit_extracted_t *extracted,
     QCBORDecodeContext context;
     QCBORItem item;
     QCBORError error = QCBOR_SUCCESS;
-    suit_rep_policy_key_t condition_directive_key;
+    suit_con_dir_key_t condition_directive_key;
     suit_index_t index = {.is_dependency = 0, .len = 1, .index[0].val = 0};
-    suit_report_t report;
+    suit_rep_policy_t report;
     union {
         uint64_t u64;
         int64_t i64;
@@ -896,9 +892,9 @@ suit_err_t suit_process_common_sequence(suit_extracted_t *extracted,
     return result;
 
 error:
-    if (suit_callbacks->on_error != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->on_error(
-            (suit_on_error_args_t) {
+    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
+        suit_callbacks->report(
+            (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = SUIT_COMMON,
                 .level2.common_key = SUIT_COMMON_SEQUENCE,
@@ -957,9 +953,9 @@ suit_err_t suit_process_common_and_command_sequence(suit_extracted_t *extracted,
     return suit_process_command_sequence_buf(extracted, command_key, command_buf, parameters, suit_inputs, suit_callbacks);
 
 error:
-    if (suit_callbacks->on_error != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->on_error(
-            (suit_on_error_args_t) {
+    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
+        suit_callbacks->report(
+            (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = command_key,
                 .level2.condition_directive = SUIT_CONDITION_INVALID,
@@ -1064,9 +1060,9 @@ suit_err_t suit_extract_common(QCBORDecodeContext *context,
     return result;
 
 error:
-    if (suit_callbacks->on_error != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->on_error(
-            (suit_on_error_args_t) {
+    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
+        suit_callbacks->report(
+            (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = manifest_key,
                 .level2.common_key = common_key,
@@ -1233,9 +1229,9 @@ suit_err_t suit_extract_manifest(UsefulBufC manifest,
     return result;
 
 error:
-    if (suit_callbacks->on_error != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->on_error(
-            (suit_on_error_args_t) {
+    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
+        suit_callbacks->report(
+            (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = manifest_key,
                 .level2.condition_directive = SUIT_CONDITION_INVALID,
@@ -1411,9 +1407,9 @@ out:
     return result;
 
 error:
-    if (suit_callbacks->on_error != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->on_error(
-            (suit_on_error_args_t) {
+    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
+        suit_callbacks->report(
+            (suit_report_args_t) {
                 .level0 = envelope_key,
                 .level1.manifest_key = manifest_key,
                 .level2.condition_directive = SUIT_CONDITION_INVALID,

@@ -4,13 +4,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include "suit_common.h"
-#include "suit_manifest_data.h"
 #include "suit_manifest_print.h"
-#include <inttypes.h>
 
 const char* suit_err_to_str(suit_err_t error) {
     switch(error) {
@@ -108,7 +102,7 @@ const char* suit_common_key_to_str(suit_common_key_t common_key) {
     }
 }
 
-const char* suit_command_sequence_key_to_str(suit_rep_policy_key_t condition_directive) {
+const char* suit_command_sequence_key_to_str(suit_con_dir_key_t condition_directive) {
     switch (condition_directive) {
     case SUIT_CONDITION_VENDOR_IDENTIFIER:
         return "condition-vendor-identifier";
@@ -258,6 +252,67 @@ const char* suit_unpack_algorithm_to_str(const suit_unpack_algorithm_t algorithm
         return NULL;
     }
 }
+
+suit_err_t suit_print_hex_in_max(const uint8_t *array, const size_t size, const size_t max_print_size) {
+    suit_err_t result = SUIT_SUCCESS;
+    if (size <= max_print_size) {
+        result = suit_print_hex(array, size);
+    }
+    else {
+        result = suit_print_hex(array, max_print_size);
+        printf("..");
+    }
+    return result;
+}
+
+suit_err_t suit_print_hex(const uint8_t *array, size_t size) {
+    if (array == NULL) {
+        return SUIT_ERR_FATAL;
+    }
+    for (size_t i = 0; i < size; i++) {
+        printf("0x%02x ", (unsigned char)array[i]);
+    }
+    return SUIT_SUCCESS;
+}
+
+suit_err_t suit_print_bytestr(const uint8_t *bytes, size_t len)
+{
+    if (bytes == NULL)
+        return( SUIT_ERR_FATAL );
+
+    for(unsigned int idx=0; idx < len; idx++)
+    {
+        printf("%02X", bytes[idx]);
+    }
+    return( SUIT_ERR_FATAL );
+}
+
+#ifdef DEBUG
+void suit_debug_print(QCBORDecodeContext *message,
+                      QCBORItem *item,
+                      const char *func_name,
+                      uint8_t expecting) {
+    size_t cursor = UsefulInputBuf_Tell(&message->InBuf);
+    size_t len = UsefulInputBuf_GetBufferLength(&message->InBuf) - cursor;
+    uint8_t *at = (uint8_t *)message->InBuf.UB.ptr + cursor;
+
+    len = (len > 12) ? 12 : len;
+
+    printf("DEBUG: %s\n", func_name);
+    printf("msg[%ld:%ld] = ", cursor, cursor + len);
+    suit_print_hex(at, len);
+    printf("\n");
+
+    if (expecting != QCBOR_TYPE_ANY && expecting != item->uDataType) {
+        printf("    item->uDataType %d != %d\n", item->uDataType, expecting);
+    }
+}
+#else
+void suit_debug_print(QCBORDecodeContext *message,
+                      QCBORItem *item,
+                      const char *func_name,
+                      uint8_t expecting) {}
+#endif
 
 suit_err_t suit_print_string(const suit_buf_t *string) {
     if (string == NULL) {

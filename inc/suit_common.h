@@ -7,9 +7,6 @@
 #ifndef SUIT_COMMON_H
 #define SUIT_COMMON_H
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "qcbor/qcbor.h"
 
 /*!
@@ -111,7 +108,7 @@ typedef enum suit_dependency_key {
     SUIT_DEPENDENCY_PREFIX              = 2,
 } suit_dependency_key_t;
 
-typedef enum suit_rep_policy_key {
+typedef enum suit_con_dir_key {
     SUIT_CONDITION_INVALID              = 0,
     SUIT_CONDITION_VENDOR_IDENTIFIER    = 1,
     SUIT_CONDITION_CLASS_IDENTIFIER     = 2,
@@ -141,7 +138,7 @@ typedef enum suit_rep_policy_key {
     SUIT_DIRECTIVE_SWAP                 = 31,
     SUIT_DIRECTIVE_RUN_SEQUENCE         = 32,
     SUIT_DIRECTIVE_UNLINK               = 33,
-} suit_rep_policy_key_t;
+} suit_con_dir_key_t;
 
 #define SUIT_SEVERABLE_INVALID               0 // 0b00000000
 #define SUIT_SEVERABLE_IN_MANIFEST           1 // 0b00000001
@@ -508,10 +505,6 @@ typedef struct t_cose_key t_cose_key;
 
 
 suit_err_t suit_error_from_qcbor_error(QCBORError error);
-suit_err_t suit_print_hex_in_max(const uint8_t *array, const size_t size, const size_t max_print_size);
-suit_err_t suit_print_hex(const uint8_t *array, size_t size);
-suit_err_t suit_print_bytestr(const uint8_t *bytes, size_t len);
-void suit_debug_print(QCBORDecodeContext *message, QCBORItem *item, const char *func_name, uint8_t expecting);
 bool suit_qcbor_value_is_uint64(QCBORItem *item);
 bool suit_qcbor_value_is_uint32(QCBORItem *item);
 suit_err_t suit_qcbor_get_next_uint(QCBORDecodeContext *message, QCBORItem *item);

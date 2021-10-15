@@ -69,7 +69,7 @@ suit_err_t print_run(suit_run_args_t run_args)
     printf("  argument(len=%ld) : h'", run_args.args_len);
     suit_print_hex(run_args.args, run_args.args_len);
     printf("'\n");
-    printf("  suit_report_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", run_args.report.record_on_success, run_args.report.record_on_failure, run_args.report.sysinfo_success, run_args.report.sysinfo_failure);
+    printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", run_args.report.record_on_success, run_args.report.record_on_failure, run_args.report.sysinfo_success, run_args.report.sysinfo_failure);
     printf("}\n\n");
     return SUIT_SUCCESS;
 }
@@ -101,7 +101,7 @@ suit_err_t print_copy(suit_copy_args_t copy_args)
     }
     printf("\n");
 
-    printf("  suit_report_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", copy_args.report.record_on_success, copy_args.report.record_on_failure, copy_args.report.sysinfo_success, copy_args.report.sysinfo_failure);
+    printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", copy_args.report.record_on_success, copy_args.report.record_on_failure, copy_args.report.sysinfo_success, copy_args.report.sysinfo_failure);
     printf("}\n\n");
     return SUIT_SUCCESS;
 }
@@ -127,7 +127,7 @@ suit_err_t print_store(suit_store_args_t store_args)
         exit(EXIT_FAILURE);
     }
     printf("  ptr : %p (%ld)\n", store_args.ptr, store_args.buf_len);
-    printf("  suit_report_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", store_args.report.record_on_success, store_args.report.record_on_failure, store_args.report.sysinfo_success, store_args.report.sysinfo_failure);
+    printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", store_args.report.record_on_success, store_args.report.record_on_failure, store_args.report.sysinfo_success, store_args.report.sysinfo_failure);
     printf("}\n\n");
     return SUIT_SUCCESS;
 }
@@ -232,7 +232,7 @@ suit_err_t print_fetch(suit_fetch_args_t fetch_args)
     }
 
     printf("  ptr : %p (%ld)\n", fetch_args.ptr, (fetch_args.buf_len == NULL) ? -1 : *fetch_args.buf_len);
-    printf("  suit_report_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", fetch_args.report.record_on_success, fetch_args.report.record_on_failure, fetch_args.report.sysinfo_success, fetch_args.report.sysinfo_failure);
+    printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", fetch_args.report.record_on_success, fetch_args.report.record_on_failure, fetch_args.report.sysinfo_success, fetch_args.report.sysinfo_failure);
     printf("}\n\n");
 
     for (size_t i = 0; i < SUIT_NAME_DATA_LEN; i++) {
@@ -248,25 +248,25 @@ suit_err_t print_fetch(suit_fetch_args_t fetch_args)
     return SUIT_SUCCESS;
 }
 
-suit_err_t print_error(suit_on_error_args_t error_args)
+suit_err_t print_report(suit_report_args_t report_args)
 {
-    printf("error callback : {\n");
-    printf("  at: %d(%s)", error_args.level0, suit_envelope_key_to_str(error_args.level0));
+    printf("report callback : {\n");
+    printf("  at: %d(%s)", report_args.level0, suit_envelope_key_to_str(report_args.level0));
 
-    switch (error_args.level0) {
+    switch (report_args.level0) {
     case SUIT_AUTHENTICATION:
         break;
     case SUIT_MANIFEST:
-        printf(", %d(%s)", error_args.level1.manifest_key, suit_manifest_key_to_str(error_args.level1.manifest_key));
-        switch (error_args.level1.manifest_key) {
+        printf(", %d(%s)", report_args.level1.manifest_key, suit_manifest_key_to_str(report_args.level1.manifest_key));
+        switch (report_args.level1.manifest_key) {
         case SUIT_COMMON:
-            printf(", %d(%s)", error_args.level2.common_key, suit_common_key_to_str(error_args.level2.common_key));
-            if (error_args.level2.common_key == SUIT_COMMON_SEQUENCE) {
-                printf(", %d(%s)", error_args.level3.condition_directive, suit_command_sequence_key_to_str(error_args.level3.condition_directive));
-                switch (error_args.level3.condition_directive) {
+            printf(", %d(%s)", report_args.level2.common_key, suit_common_key_to_str(report_args.level2.common_key));
+            if (report_args.level2.common_key == SUIT_COMMON_SEQUENCE) {
+                printf(", %d(%s)", report_args.level3.condition_directive, suit_command_sequence_key_to_str(report_args.level3.condition_directive));
+                switch (report_args.level3.condition_directive) {
                 case SUIT_DIRECTIVE_SET_PARAMETERS:
                 case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
-                    printf(", %d(%s)", error_args.level4.parameter, suit_parameter_key_to_str(error_args.level4.parameter));
+                    printf(", %d(%s)", report_args.level4.parameter, suit_parameter_key_to_str(report_args.level4.parameter));
                     break;
                 default:
                     break;
@@ -276,11 +276,11 @@ suit_err_t print_error(suit_on_error_args_t error_args)
         case SUIT_INSTALL:
         case SUIT_VALIDATE:
         case SUIT_RUN:
-            printf(", %d(%s)", error_args.level2.condition_directive, suit_command_sequence_key_to_str(error_args.level2.condition_directive));
-            switch (error_args.level2.condition_directive) {
+            printf(", %d(%s)", report_args.level2.condition_directive, suit_command_sequence_key_to_str(report_args.level2.condition_directive));
+            switch (report_args.level2.condition_directive) {
             case SUIT_DIRECTIVE_SET_PARAMETERS:
             case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
-                printf(", %d(%s)", error_args.level3.parameter, suit_parameter_key_to_str(error_args.level3.parameter));
+                printf(", %d(%s)", report_args.level3.parameter, suit_parameter_key_to_str(report_args.level3.parameter));
                 break;
             default:
                 break;
@@ -297,9 +297,9 @@ suit_err_t print_error(suit_on_error_args_t error_args)
     }
     printf("\n");
 
-    printf("  QCBORError:    %d(%s)\n", error_args.qcbor_error, qcbor_err_to_str(error_args.qcbor_error));
-    printf("  suit_err_t:    %d(%s)\n", error_args.suit_error, suit_err_to_str(error_args.suit_error));
-    printf("  suit_report_t: RecPass%x RecFail%x SysPass%x SysFail%x\n", error_args.report.record_on_success, error_args.report.record_on_failure, error_args.report.sysinfo_success, error_args.report.sysinfo_failure);
+    printf("  QCBORError:    %d(%s)\n", report_args.qcbor_error, qcbor_err_to_str(report_args.qcbor_error));
+    printf("  suit_err_t:    %d(%s)\n", report_args.suit_error, suit_err_to_str(report_args.suit_error));
+    printf("  suit_rep_policy_t: RecPass%x RecFail%x SysPass%x SysFail%x\n", report_args.report.record_on_success, report_args.report.record_on_failure, report_args.report.sysinfo_success, report_args.report.sysinfo_failure);
 
     printf("}\n\n");
 
@@ -325,7 +325,7 @@ int main(int argc, char *argv[]) {
     suit_callbacks.store = print_store;
     suit_callbacks.copy = print_copy;
     suit_callbacks.run = print_run;
-    suit_callbacks.on_error = print_error;
+    suit_callbacks.report = print_report;
     suit_inputs.key_len = NUM_PUBLIC_KEYS;
 
     // Read key from der file.

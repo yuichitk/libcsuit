@@ -8,7 +8,7 @@
 #ifndef SUIT_DIGEST_H
 #define SUIT_DIGEST_H
 
-#include "suit_manifest_data.h"
+#include "suit_common.h"
 struct suit_digest;
 struct suit_buf;
 

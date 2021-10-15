@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
     params_list = &dependency_resolution->commands[1].value.params_list;
     params_list->len = 1;
     params_list->params[0].label = SUIT_PARAMETER_URI;
-    params_list->params[0].value.string.ptr = (uint8_t *)uri;
+    params_list->params[0].value.string.ptr = (const void *)uri;
     params_list->params[0].value.string.len = strlen(uri);
 
     dependency_resolution->commands[2].label = SUIT_DIRECTIVE_FETCH;
@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
     params_list = &install->commands[3].value.params_list;
     params_list->len = 1;
     params_list->params[0].label = SUIT_PARAMETER_URI;
-    params_list->params[0].value.string.ptr = (uint8_t *)data_uri;
+    params_list->params[0].value.string.ptr = (const void *)data_uri;
     params_list->params[0].value.string.len = strlen(data_uri);
 
     install->commands[4].label = SUIT_DIRECTIVE_FETCH;
@@ -207,8 +207,8 @@ int main(int argc, char *argv[]) {
     text->component[0].key = common->components.comp_id[0];
     const char model_name[] = "Reference TEEP-Device";
     const char vendor_domain[] = "tc.org";
-    text->component[0].text_component.model_name = (suit_buf_t){.ptr = (uint8_t *)model_name, .len = strlen(model_name)};
-    text->component[0].text_component.vendor_domain = (suit_buf_t){.ptr = (uint8_t *)vendor_domain, .len = strlen(vendor_domain)};
+    text->component[0].text_component.model_name = (suit_buf_t){.ptr = (const uint8_t *)model_name, .len = strlen(model_name)};
+    text->component[0].text_component.vendor_domain = (suit_buf_t){.ptr = (const uint8_t *)vendor_domain, .len = strlen(vendor_domain)};
 
 
     // Print manifest.

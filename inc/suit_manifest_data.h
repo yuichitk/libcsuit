@@ -7,13 +7,8 @@
 #ifndef SUIT_MANIFEST_DATA_H
 #define SUIT_MANIFEST_DATA_H
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "qcbor/qcbor.h"
-#include "t_cose/t_cose_common.h"
 #include "suit_common.h"
-#include "suit_digest.h"
+#include "suit_manifest_print.h"
 
 /*!
     \file   suit_manifest_data.h
