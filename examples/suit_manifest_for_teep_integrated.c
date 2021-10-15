@@ -22,7 +22,7 @@
 int main(int argc, char *argv[]) {
     // check arguments.
     if (argc < 2) {
-        printf("suit_manifest_integrated_payload <private key path> <output manifest file path>");
+        printf("%s <private key path> <output manifest file path>", argv[0]);
         return EXIT_FAILURE;
     }
     char *private_key_file = argv[1];
@@ -60,10 +60,10 @@ int main(int argc, char *argv[]) {
 
     char trusted_component[] = "Hello, Secure World!";
     UsefulBufC payload = {.ptr = trusted_component, .len = strlen(trusted_component)};
-    envelope.integrated_payload.len = 1;
+    envelope.payloads.len = 1;
     char uri[] = "#tc";
-    envelope.integrated_payload.payload[0].key = (UsefulBufC){.ptr = uri, .len = strlen(uri)};
-    envelope.integrated_payload.payload[0].bytes = payload;
+    envelope.payloads.payload[0].key = (UsefulBufC){.ptr = uri, .len = strlen(uri)};
+    envelope.payloads.payload[0].bytes = payload;
 
     /* "TEEP-Device" */
     uint8_t component_id_0[] = {0x54, 0x45, 0x45, 0x50, 0x2D, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65};
