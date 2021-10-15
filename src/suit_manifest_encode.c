@@ -98,9 +98,9 @@ suit_err_t suit_generate_encoded_digest(const uint8_t *ptr, const size_t len, Us
     return result;
 }
 
-suit_err_t suit_encode_append_integrated_payload(uint8_t mode, const suit_envelope_t *envelope, QCBOREncodeContext *context) {
-    for (size_t i = 0; i < envelope->integrated_payload.len; i++) {
-        QCBOREncode_AddBytesToMap(context, envelope->integrated_payload.payload[i].key.ptr, envelope->integrated_payload.payload[i].bytes);
+suit_err_t suit_encode_append_payloads(uint8_t mode, const suit_envelope_t *envelope, QCBOREncodeContext *context) {
+    for (size_t i = 0; i < envelope->payloads.len; i++) {
+        QCBOREncode_AddBytesToMap(context, envelope->payloads.payload[i].key.ptr, envelope->payloads.payload[i].bytes);
     }
     return SUIT_SUCCESS;
 }
@@ -771,7 +771,7 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
         goto out;
     }
 
-    result = suit_encode_append_integrated_payload(mode, envelope, &context);
+    result = suit_encode_append_payloads(mode, envelope, &context);
     if (result != SUIT_SUCCESS) {
         goto out;
     }
