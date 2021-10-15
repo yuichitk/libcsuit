@@ -758,8 +758,8 @@ suit_err_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, ui
     }
     suit_err_t result = SUIT_SUCCESS;
     printf("%*smanifest(%s) : SUIT_Manifest\n", indent_space, "", suit_str_verified(manifest->is_verified));
-    printf("%*smanifest-version : %u\n", indent_space + 2, "", manifest->version);
-    printf("%*smanifest-sequence-number : %u\n", indent_space + 2, "", manifest->sequence_number);
+    printf("%*smanifest-version : %lu\n", indent_space + 2, "", manifest->version);
+    printf("%*smanifest-sequence-number : %lu\n", indent_space + 2, "", manifest->sequence_number);
 
     printf("%*scommon : SUIT_Common\n", indent_space + 2, "");
     if (manifest->common.dependencies.len > 0) {
