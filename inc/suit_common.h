@@ -448,8 +448,8 @@ typedef struct suit_common {
  */
 typedef struct suit_manifest {
     bool                                is_verified;
-    uint32_t                            version;
-    uint32_t                            sequence_number;
+    uint64_t                            version;
+    uint64_t                            sequence_number;
     suit_common_t                       common;
     suit_buf_t                          reference_uri;
     suit_severable_manifest_members_t   sev_man_mem;
