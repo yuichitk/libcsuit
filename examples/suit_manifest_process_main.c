@@ -348,7 +348,7 @@ int main(int argc, char *argv[]) {
 
     // Decode manifest file.
     printf("\nmain : Decode Manifest file.\n");
-    result = suit_process_envelopes(&suit_inputs, &suit_callbacks);
+    result = suit_process_envelope(&suit_inputs, &suit_callbacks);
     if (result != SUIT_SUCCESS) {
         printf("main : Can't parse Manifest file. err=%d\n", result);
         return EXIT_FAILURE;
