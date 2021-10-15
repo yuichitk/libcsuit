@@ -226,6 +226,7 @@ suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, UsefulB
             case SUIT_DIRECTIVE_FETCH:
             case SUIT_DIRECTIVE_COPY:
             case SUIT_DIRECTIVE_RUN:
+            case SUIT_DIRECTIVE_UNLINK:
                 QCBOREncode_AddUInt64(&context, item->label);
                 QCBOREncode_AddUInt64(&context, item->value.uint64);
                 break;
@@ -260,7 +261,6 @@ suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, UsefulB
             case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:
             case SUIT_DIRECTIVE_RUN_SEQUENCE:
-            case SUIT_DIRECTIVE_UNLINK:
             default:
                 result = SUIT_ERR_NOT_IMPLEMENTED;
         }
