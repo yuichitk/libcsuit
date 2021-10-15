@@ -580,13 +580,41 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
             }
             break;
         case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
-            if (index.is_dependency == 0) {
+            if (!index.is_dependency) {
                 result = SUIT_ERR_INVALID_KEY;
                 goto error;
             }
             // TODO:
             QCBORDecode_GetUInt64(&context, &report.val);
             result = suit_process_dependency(extracted, index, suit_inputs, suit_callbacks);
+            break;
+        case SUIT_DIRECTIVE_UNLINK:
+            QCBORDecode_GetUInt64(&context, &report.val);
+            for (size_t j = 0; j < index.len; j++) {
+                const uint8_t tmp_index = index.index[j].val + index.is_dependency * SUIT_MAX_COMPONENT_NUM;
+
+                if (suit_callbacks->store == NULL) {
+                    result = SUIT_ERR_NO_CALLBACK;
+                    goto error;
+                }
+                else if (extracted->components.len < tmp_index || extracted->components.comp_id[tmp_index].len == 0) {
+                    result = SUIT_ERR_NO_ARGUMENT;
+                    goto error;
+                }
+                args.store = (suit_store_args_t){0};
+                args.store.report = report;
+                if (index.is_dependency) {
+                    args.store.key = SUIT_DEPENDENCIES;
+                    args.store.dst.dependency = extracted->dependencies.dependency[index.index[j].val];
+                }
+                else {
+                    args.store.key = SUIT_COMPONENTS;
+                    args.store.dst.component_identifier = extracted->components.comp_id[index.index[j].val];
+                }
+                args.store.ptr = NULL;
+                args.store.buf_len = 0;
+                result = suit_callbacks->store(args.store);
+            }
             break;
         case SUIT_CONDITION_VENDOR_IDENTIFIER:
             QCBORDecode_GetUInt64(&context, &report.val);
@@ -640,6 +668,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
         case SUIT_DIRECTIVE_FETCH_URI_LIST:
         case SUIT_DIRECTIVE_SWAP:
         case SUIT_DIRECTIVE_RUN_SEQUENCE:
+
 
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
