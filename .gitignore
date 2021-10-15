@@ -6,6 +6,7 @@ suit_manifest_process
 suit_for_teep_uri
 suit_for_teep_integrated
 suit_for_teep_depending
+suit_for_teep_delete
 
 # DoxyGen directory
 html/

@@ -11,14 +11,17 @@ INC		= -I ./inc -I ./examples/inc
 TARGETu	= ./suit_for_teep_uri
 TARGETi	= ./suit_for_teep_integrated
 TARGETd	= ./suit_for_teep_depending
+TARGETr	= ./suit_for_teep_delete
 SRCu	= examples/suit_manifest_for_teep_uri.c
 SRCi	= examples/suit_manifest_for_teep_integrated.c
 SRCd	= examples/suit_manifest_for_teep_depend_uri.c
+SRCr	= examples/suit_manifest_for_teep_delete.c
 SRCS	= examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_decode.c src/suit_manifest_encode.c src/suit_cose.c src/suit_digest.c
 OBJDIR	= ./obj
 OBJu	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCu)))
 OBJi	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCi)))
 OBJd	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCd)))
+OBJr	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCr)))
 OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
 ifdef debug
@@ -27,7 +30,7 @@ endif
 
 .PHONY: all test clean
 
-all: $(TARGETu) $(TARGETi) $(TARGETd)
+all: $(TARGETu) $(TARGETi) $(TARGETd) $(TARGETr)
 
 $(TARGETu):	$(OBJu) $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -36,6 +39,9 @@ $(TARGETi):	$(OBJi) $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(TARGETd):	$(OBJd) $(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(TARGETr):	$(OBJr) $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o:	%.c
@@ -49,10 +55,13 @@ URI			:= https://tc.org/8d82573a-926d-4754-9353-32dc29997f74.suit
 PRIV_KEY2	:= ../libteep/testfiles/key/tam_prime256v1.der
 OUTPUTd		:= ./testfiles/suit_manifest_expD.cbor
 DEPENDENCY	:= ./testfiles/suit_manifest_expU_fixed.cbor
+OUTPUTr		:= ./testfiles/suit_manifest_expR.cbor
+
 test: all
 	$(TARGETu) $(PRIV_KEY1) $(OUTPUTu)
 	$(TARGETi) $(PRIV_KEY1) $(OUTPUTi)
 	$(TARGETd) $(DEPENDENCY) $(URI) $(PRIV_KEY2) $(OUTPUTd)
+	$(TARGETr) $(PRIV_KEY1) $(OUTPUTr)
 
 clean:
 	rm -f $(OBJS) $(TARGET1) $(TARGET2)
