@@ -8,9 +8,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "suit_common.h"
-#include "suit_manifest_data.h"
-#include "suit_digest.h"
+#include "csuit/suit_common.h"
+#include "csuit/suit_manifest_data.h"
+#include "csuit/suit_digest.h"
 
 /*
     Public function. See suit_digest.h

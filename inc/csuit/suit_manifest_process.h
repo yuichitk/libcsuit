@@ -7,10 +7,6 @@
 #ifndef SUIT_MANIFEST_PROCESS_H
 #define SUIT_MANIFEST_PROCESS_H
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "qcbor/qcbor.h"
 #include "t_cose/t_cose_common.h"
 #include "suit_manifest_data.h"
 

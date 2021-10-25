@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <stdlib.h>
-#include "qcbor/qcbor.h"
-#include "qcbor/qcbor_spiffy_decode.h"
-#include "suit_common.h"
-//#include "suit_manifest_data.h"
-#include "suit_manifest_process.h"
-#include "suit_cose.h"
-#include "suit_digest.h"
-#include <inttypes.h>
-
 /*!
     \file   suit_manifest_process.c
 
@@ -22,6 +12,11 @@
     Call suit_process_envelopes() to process whole SUIT manifests at once.
     One or more manifests may depend other manifests.
  */
+
+#include "qcbor/qcbor.h"
+#include "qcbor/qcbor_spiffy_decode.h"
+#include "csuit/suit_common.h"
+#include "csuit/suit_manifest_process.h"
 
 suit_err_t suit_set_compression_info(QCBORDecodeContext *context,
                                      suit_compression_info_t *compression_info) {

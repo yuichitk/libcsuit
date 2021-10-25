@@ -7,10 +7,10 @@
 #include <stdlib.h>
 #include "qcbor/qcbor.h"
 #include "t_cose/t_cose_common.h"
-#include "suit_common.h"
-#include "suit_manifest_data.h"
-#include "suit_cose.h"
-#include "suit_digest.h"
+#include "csuit/suit_common.h"
+#include "csuit/suit_manifest_data.h"
+#include "csuit/suit_cose.h"
+#include "csuit/suit_digest.h"
 #define SUIT_ENCODE_MAX_BUFFER_SIZE 2048
 
 /*!

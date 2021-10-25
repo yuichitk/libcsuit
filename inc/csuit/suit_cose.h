@@ -8,10 +8,7 @@
 #ifndef SUIT_COSE_H
 #define SUIT_COSE_H
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "suit_common.h"
+#include "csuit/suit_common.h"
 #include "t_cose/t_cose_sign1_verify.h"
 #include "t_cose/t_cose_sign1_sign.h"
 #if defined(LIBCSUIT_PSA_CRYPTO_C)

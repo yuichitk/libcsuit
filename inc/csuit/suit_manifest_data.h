@@ -8,7 +8,7 @@
 #define SUIT_MANIFEST_DATA_H
 
 #include "suit_common.h"
-#include "suit_manifest_print.h"
+//#include "suit_manifest_print.h"
 
 /*!
     \file   suit_manifest_data.h

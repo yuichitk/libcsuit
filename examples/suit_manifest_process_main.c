@@ -4,14 +4,17 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+/*!
+    \file   suit_manifest_process_main.c
+
+    \brief  A sample to use libcsuit processing
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "qcbor/qcbor.h"
-#include "suit_common.h"
-#include "suit_manifest_data.h"
-#include "suit_manifest_print.h"
-#include "suit_manifest_process.h"
-#include "suit_cose.h"
+#include "csuit/suit_manifest_process.h"
+#include "csuit/suit_manifest_print.h"
 #include "suit_examples_common.h"
 #include "t_cose/t_cose_sign1_verify.h"
 #include "t_cose/q_useful_buf.h"
@@ -341,7 +344,7 @@ int main(int argc, char *argv[]) {
     suit_inputs.manifest.len = read_file(argv[1], MAX_FILE_BUFFER_SIZE, suit_inputs.buf);
     if (suit_inputs.manifest.len <= 0) {
         printf("main : Can't read Manifest file.\n");
-        goto out;
+        return EXIT_FAILURE;
     }
     suit_inputs.manifest.ptr = suit_inputs.buf;
     suit_inputs.left_len -= suit_inputs.manifest.len;
@@ -354,6 +357,5 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-out:
     return EXIT_SUCCESS;
 }

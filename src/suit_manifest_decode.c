@@ -4,14 +4,12 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <stdlib.h>
 #include "qcbor/qcbor.h"
-#include <qcbor/qcbor_spiffy_decode.h>
-#include "suit_common.h"
-#include "suit_manifest_data.h"
-#include "suit_cose.h"
-#include "suit_digest.h"
-#include <inttypes.h>
+#include "qcbor/qcbor_spiffy_decode.h"
+#include "csuit/suit_common.h"
+#include "csuit/suit_manifest_data.h"
+#include "csuit/suit_cose.h"
+#include "csuit/suit_digest.h"
 
 /*!
     \file   suit_manifest_decode.c
@@ -33,14 +31,12 @@ suit_err_t suit_decode_digest_from_item(uint8_t mode, QCBORDecodeContext *contex
 
     result = suit_qcbor_get_next(context, item, QCBOR_TYPE_INT64);
     if (!suit_continue(mode, result)) {
-        suit_debug_print(context, item, "suit_decode_digest@algorithm-id", QCBOR_TYPE_INT64);
         return result;
     }
     digest->algorithm_id = item->val.int64;
 
     result = suit_qcbor_get_next(context, item, QCBOR_TYPE_BYTE_STRING);
     if (!suit_continue(mode, result)) {
-        suit_debug_print(context, item, "suit_decode_digest@digest-bytes", QCBOR_TYPE_BYTE_STRING);
         return result;
     }
     if (result == SUIT_SUCCESS) {
@@ -50,7 +46,6 @@ suit_err_t suit_decode_digest_from_item(uint8_t mode, QCBORDecodeContext *contex
 
     for (size_t i = 0; i < ext_len; i++) {
         // TODO
-        suit_debug_print(context, item, "suit_decode_digest skipping SUIT_Digest-extensions", QCBOR_TYPE_ANY);
         if (!suit_continue(mode, SUIT_ERR_NOT_IMPLEMENTED)) {
             return SUIT_ERR_NOT_IMPLEMENTED;
         }
@@ -171,7 +166,6 @@ suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContex
             case SUIT_PARAMETER_WAIT_INFO:
             case SUIT_PARAMETER_URI_LIST:
             default:
-                suit_debug_print(context, item, "suit_decode_parameters_list", QCBOR_TYPE_NONE);
                 result = SUIT_ERR_NOT_IMPLEMENTED;
                 if (!suit_qcbor_skip_any(context, item)) {
                     result = SUIT_ERR_FATAL;
@@ -336,7 +330,6 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
                 case SUIT_DIRECTIVE_UNLINK:
                 default:
                     // TODO
-                    suit_debug_print(context, item, "suit_decode_directive_or_condition", QCBOR_TYPE_ANY);
                     result = SUIT_ERR_NOT_IMPLEMENTED;
             }
             if (!suit_continue(mode, result)) {
@@ -396,7 +389,6 @@ suit_err_t suit_decode_command_sequence(uint8_t mode, const suit_buf_t *buf, sui
 suit_err_t suit_decode_command_sequence_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq) {
     suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_BYTE_STRING);
     if (result != SUIT_SUCCESS) {
-        suit_debug_print(context, item, "suit_decode_command_sequence_from_bstr", QCBOR_TYPE_BYTE_STRING);
         return result;
     }
     suit_buf_t buf;
@@ -410,7 +402,6 @@ suit_err_t suit_decode_component_identifiers_from_item(uint8_t mode, QCBORDecode
 
     suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_ARRAY);
     if (result != SUIT_SUCCESS) {
-        suit_debug_print(context, item, "suit_decode_component_identifiers", QCBOR_TYPE_ARRAY);
         return result;
     }
     size_t len = item->val.uCount;
@@ -498,7 +489,6 @@ suit_err_t suit_decode_dependency_from_item(uint8_t mode, QCBORDecodeContext *co
                 result = suit_decode_component_identifiers_from_item(mode, context, item, false, &dependency->prefix);
                 break;
             default:
-                suit_debug_print(context, item, "suit_decode_dependency", QCBOR_TYPE_NONE);
                 result = SUIT_ERR_NOT_IMPLEMENTED;
                 if (!suit_qcbor_skip_any(context, item)) {
                     result = SUIT_ERR_FATAL;
@@ -584,7 +574,6 @@ suit_err_t suit_decode_common_from_item(uint8_t mode, QCBORDecodeContext *contex
                 break;
             default:
                 // TODO
-                suit_debug_print(context, item, "suit_decode_dependencies(skipping)", QCBOR_TYPE_ARRAY);
                 result = SUIT_ERR_NOT_IMPLEMENTED;
                 if (!suit_qcbor_skip_any(context, item)) {
                     result = SUIT_ERR_NO_MORE_ITEMS;
@@ -741,7 +730,6 @@ suit_err_t suit_decode_text_from_item(uint8_t mode, QCBORDecodeContext *context,
                     case SUIT_TEXT_MANIFEST_JSON_SOURCE:
                     case SUIT_TEXT_MANIFEST_YAML_SOURCE:
                     default:
-                        suit_debug_print(context, item, "suit_decode_text", QCBOR_TYPE_INT64);
                         result = SUIT_ERR_NOT_IMPLEMENTED;
                         if (!suit_continue(mode, result)) {
                             if (!suit_qcbor_skip_any(context, item)) {

@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "suit_cose.h"
+#include <csuit/suit_cose.h>
 
 #define SUIT_EXAMPLE_SUCCESS    1
 #define SUIT_EXAMPLE_ERROR      0

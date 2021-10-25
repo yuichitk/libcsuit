@@ -10,7 +10,7 @@ CFLAGS				= -Wall -fPIC
 LDFLAGS				= -lt_cose -lqcbor
 INC					= -I ./inc
 SRCS				= src/suit_common.c src/suit_manifest_process.c src/suit_manifest_decode.c src/suit_manifest_encode.c src/suit_manifest_print.c src/suit_cose.c src/suit_digest.c
-PUBLIC_INTERFACE	= inc/csuit.h inc/suit_common.h inc/suit_manifest_data.h inc/suit_manifest_process.h inc/suit_manifest_print.h inc/suit_cose.h inc/suit_digest.h
+PUBLIC_INTERFACE	= inc/csuit/csuit.h inc/csuit/suit_common.h inc/csuit/suit_manifest_data.h inc/csuit/suit_manifest_process.h inc/csuit/suit_manifest_print.h inc/csuit/suit_cose.h inc/csuit/suit_digest.h
 OBJDIR				= ./obj
 OBJS				= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 

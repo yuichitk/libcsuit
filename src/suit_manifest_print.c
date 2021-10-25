@@ -4,7 +4,15 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include "suit_manifest_print.h"
+/*!
+    \file   suit_manifest_print.c
+
+    \brief  This implements libcsuit printing
+
+    Call these functions if you want to print the decoded structures and definitions.
+ */
+
+#include "csuit/suit_manifest_print.h"
 
 const char* suit_err_to_str(suit_err_t error) {
     switch(error) {

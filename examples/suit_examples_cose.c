@@ -1,5 +1,5 @@
-#include "suit_common.h"
-#include "suit_cose.h"
+#include "csuit/suit_common.h"
+#include "csuit/suit_cose.h"
 
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
 int32_t suit_create_es_key_pair(int nid, const char *private_key, const char *dummy, struct t_cose_key *cose_key_pair) {

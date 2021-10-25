@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include "suit_common.h"
-#include "suit_digest.h"
+#include "csuit/suit_common.h"
+#include "csuit/suit_digest.h"
 
 suit_err_t suit_error_from_qcbor_error(QCBORError error) {
     switch (error) {

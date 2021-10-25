@@ -5,8 +5,7 @@
  *
  */
 
-#include "suit_cose.h"
-#include "suit_common.h"
+#include "csuit/suit_cose.h"
 
 /*!
     \file   suit_cose.c

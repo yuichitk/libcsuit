@@ -7,6 +7,11 @@
 #ifndef SUIT_MANIFEST_PRINT_H
 #define SUIT_MANIFEST_PRINT_H
 
+/*!
+    \file   suit_manifest_print.h
+    \brief  Declarations of print functions and string values.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include "suit_common.h"
