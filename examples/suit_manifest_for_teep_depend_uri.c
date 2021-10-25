@@ -5,17 +5,11 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 #include "qcbor/qcbor.h"
-#include "suit_common.h"
-#include "suit_manifest_data.h"
-#include "suit_manifest_print.h"
-#include "suit_cose.h"
+#include "csuit/suit_manifest_data.h"
+#include "csuit/suit_manifest_print.h"
+#include "csuit/suit_digest.h"
 #include "suit_examples_common.h"
-#include "t_cose/t_cose_sign1_verify.h"
-#include "t_cose/q_useful_buf.h"
-#include "openssl/ecdsa.h"
-#include "openssl/obj_mac.h"
 
 #define MAX_FILE_BUFFER_SIZE            2048
 
