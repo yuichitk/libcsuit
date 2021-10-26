@@ -15,12 +15,12 @@
 
 int main(int argc, char *argv[]) {
     // check arguments.
-    if (argc < 2) {
-        printf("%s <private key path> <output manifest file path>", argv[0]);
+    if (argc < 1) {
+        printf("%s <private key path> [<output manifest file path>]", argv[0]);
         return EXIT_FAILURE;
     }
     char *private_key_file = argv[1];
-    char *manifest_file = argv[2];
+    char *manifest_file = (argc >= 2) ? argv[2] : NULL;
     struct t_cose_key key_pair;
     char public_key[PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
     char private_key[PRIME256V1_PRIVATE_KEY_CHAR_SIZE + 1];
@@ -161,9 +161,14 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    size_t w_len = write_to_file(manifest_file, encode_len, encode_buf);
-    if (w_len != encode_len) {
-        printf("main : Fail to write to %s\n", manifest_file);
+    if (manifest_file != NULL) {
+        size_t w_len = write_to_file(manifest_file, encode_len, encode_buf);
+        if (w_len != encode_len) {
+            printf("main : Fail to write to %s\n", manifest_file);
+        }
+    }
+    else {
+        printf("main : Skip to write to a file (dry-run).\n");
     }
 
     return EXIT_SUCCESS;

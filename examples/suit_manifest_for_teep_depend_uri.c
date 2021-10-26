@@ -15,14 +15,14 @@
 
 int main(int argc, char *argv[]) {
     // check arguments.
-    if (argc < 4) {
-        printf("%s <manifest to depend> <manifest uri> <private key path> <output manifest file path>", argv[0]);
+    if (argc < 3) {
+        printf("%s <manifest to depend> <manifest uri> <private key path> [<output manifest file path>]", argv[0]);
         return EXIT_FAILURE;
     }
     char *input_manifest_file = argv[1];
     char *uri = argv[2];
     char *private_key_file = argv[3];
-    char *output_manifest_file = argv[4];
+    char *output_manifest_file = (argc >= 4) ? argv[4] : NULL;
     struct t_cose_key key_pair;
     char public_key[PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
     char private_key[PRIME256V1_PRIVATE_KEY_CHAR_SIZE + 1];
@@ -92,11 +92,6 @@ int main(int argc, char *argv[]) {
     common->dependencies.len = 1;
     suit_digest_t *depending_digest = &common->dependencies.dependency[0].digest;
     *depending_digest = *digest;
-    /*
-    depending_digest->algorithm_id = digest->algorithm_id;
-    depending_digest->bytes.len = digest->bytes.len;
-    depending_digest->bytes.ptr = digest->bytes.ptr;
-    */
 
     /* suit-components */
     common->components.len = 1;
@@ -224,9 +219,14 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    size_t w_len = write_to_file(output_manifest_file, encode_len, encode_buf);
-    if (w_len != encode_len) {
-        printf("main : Fail to write to %s\n", output_manifest_file);
+    if (output_manifest_file != NULL) {
+        size_t w_len = write_to_file(output_manifest_file, encode_len, encode_buf);
+        if (w_len != encode_len) {
+            printf("main : Fail to write to %s\n", output_manifest_file);
+        }
+    }
+    else {
+        printf("main : Skip to write to a file (dry-run).\n");
     }
 
     return EXIT_SUCCESS;
