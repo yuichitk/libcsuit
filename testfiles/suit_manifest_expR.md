@@ -5,16 +5,16 @@
 / SUIT_Envelope_Tagged / 107( {
   / suit-authentication-wrapper / 2: << [
     << [
-      / suit-digest-algorithm-id: / -16 / cose-alg-sha256 /,
-      / suit-digest-bytes: / h'0F2AA1B386F11E5DDD3D6796C89C775F2DC450594C45219589753B2C8F393A54'
+      / suit-digest-algorithm-id: / -16 / suit-cose-alg-sha256 /,
+      / suit-digest-bytes: / h'A43F25C8CC203A23FA417926505019F1A12F50BE98611F3580F4FFB167FD5159'
     ] >>,
     << / COSE_Sign1_Tagged / 18( [
       / protected / << {
-        / algorithm-id / 1: -7 / cose-alg-ES256 /
+        / algorithm-id / 1: -7 / ES256 /
       } >>,
       / unprotected: / {},
       / payload: / null,
-      / signature: / h'36C6D380AD9E58F9E82A039C5B2C99B801344BC065215928BD4E1C14295335762502DD8C5237B350F9A6147B39BEBCF856BED27F382D22F5A1427E2C5BE707B5'
+      / signature: / h'90348818705F68725C31F5EA70B2E52A97A0466534CD2E1F790321ADC2407924DB0EB5AA8E0B5123798F55A12C5447ED0B162C46569903DB659BE70A55DFED3D'
     ] ) >>
   ] >>,
   / suit-manifest / 3: << {
@@ -30,7 +30,7 @@
         ]
       ],
       / suit-common-sequence / 4: << [
-        / suit-directive-set-parameters / 19, {
+        / suit-directive-override-parameters / 20, {
           / suit-parameter-vendor-identifier / 1: h'C0DDD5F15243566087DB4F5B0AA26C2F',
           / suit-parameter-class-identifier / 2: h'DB42F7093D8C55BAA8C5265FC5820F4E'
         },
@@ -67,9 +67,9 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
          82                                         # array(2)
             58 24                                   # bytes(36)
                82                                   # array(2)
-                  2F                                # negative(15) / -16 = cose-alg-sha256 /
+                  2F                                # negative(15) / -16 = suit-cose-alg-sha256 /
                   58 20                             # bytes(32)
-                     0F2AA1B386F11E5DDD3D6796C89C775F2DC450594C45219589753B2C8F393A54
+                     A43F25C8CC203A23FA417926505019F1A12F50BE98611F3580F4FFB167FD5159
             58 4A                                   # bytes(74)
                D2                                   # tag(18) / COSE_Sign1_Tagged /
                   84                                # array(4)
@@ -80,7 +80,7 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                      A0                             # map(0)
                      F6                             # primitive(22) / null /
                      58 40                          # bytes(64)
-                        36C6D380AD9E58F9E82A039C5B2C99B801344BC065215928BD4E1C14295335762502DD8C5237B350F9A6147B39BEBCF856BED27F382D22F5A1427E2C5BE707B5
+                        90348818705F68725C31F5EA70B2E52A97A0466534CD2E1F790321ADC2407924DB0EB5AA8E0B5123798F55A12C5447ED0B162C46569903DB659BE70A55DFED3D
       03                                            # unsigned(3) / suit-manifest: /
       58 C1                                         # bytes(193)
          A5                                         # map(5)
@@ -105,7 +105,7 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                   04                                # unsigned(4) / suit-common-sequence: /
                   58 2B                             # bytes(84)
                      86                             # array(6)
-                        13                          # unsigned(19) / suit-directive-set-parameters: /
+                        14                          # unsigned(20) / suit-directive-override-parameters: /
                         A2                          # map(2)
                            01                       # unsigned(1) / suit-parameter-vendor-identifier: /
                            50                       # bytes(16)
@@ -155,6 +155,18 @@ C450594C45219589753B2C8F393A54584AD28443A10126A0F6584036C6D3
 B50358C1A50101021BFFFFFFFFFFFFFFFF03585BA20281844B544545502D
 446576696365485365637572654653508D82573A926D4754935332DC2999
 7F7442746104582B8613A20150C0DDD5F15243566087DB4F5B0AA26C2F02
+50DB42F7093D8C55BAA8C5265FC5820F4E010F020F0946840C001821000D
+584BA1844B544545502D446576696365485365637572654653508D82573A
+926D4754935332DC29997F74427461A202755265666572656E6365205445
+45502D446576696365036674632E6F7267
+~~~
+D86BA2025873825824822F5820A43F25C8CC203A23FA417926505019F1A1
+2F50BE98611F3580F4FFB167FD5159584AD28443A10126A0F65840903488
+18705F68725C31F5EA70B2E52A97A0466534CD2E1F790321ADC2407924DB
+0EB5AA8E0B5123798F55A12C5447ED0B162C46569903DB659BE70A55DFED
+3D0358C1A50101021BFFFFFFFFFFFFFFFF03585BA20281844B544545502D
+446576696365485365637572654653508D82573A926D4754935332DC2999
+7F7442746104582B8614A20150C0DDD5F15243566087DB4F5B0AA26C2F02
 50DB42F7093D8C55BAA8C5265FC5820F4E010F020F0946840C001821000D
 584BA1844B544545502D446576696365485365637572654653508D82573A
 926D4754935332DC29997F74427461A202755265666572656E6365205445

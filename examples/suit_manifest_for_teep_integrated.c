@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     cmd_seq->len = 3;
 
     suit_parameters_list_t *params_list;
-    cmd_seq->commands[0].label = SUIT_DIRECTIVE_SET_PARAMETERS;
+    cmd_seq->commands[0].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
     params_list = &cmd_seq->commands[0].value.params_list;
     params_list->len = 4;
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
     manifest->sev_man_mem.install_status = SUIT_SEVERABLE_IN_MANIFEST;
     suit_command_sequence_t *install = &manifest->sev_man_mem.install;
     install->len = 3;
-    install->commands[0].label = SUIT_DIRECTIVE_SET_PARAMETERS;
+    install->commands[0].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
 
     params_list = &install->commands[0].value.params_list;
     params_list->len = 1;

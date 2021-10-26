@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
     cmd_seq->len = 3;
 
     suit_parameters_list_t *params_list;
-    cmd_seq->commands[0].label = SUIT_DIRECTIVE_SET_PARAMETERS;
+    cmd_seq->commands[0].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
     params_list = &cmd_seq->commands[0].value.params_list;
     params_list->len = 2;
 
