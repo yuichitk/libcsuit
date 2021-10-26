@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
     dependency_resolution->commands[0].label = SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX;
     dependency_resolution->commands[0].value.uint64 = 0;
 
-    dependency_resolution->commands[1].label = SUIT_DIRECTIVE_SET_PARAMETERS;
+    dependency_resolution->commands[1].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
     params_list = &dependency_resolution->commands[1].value.params_list;
     params_list->len = 1;
     params_list->params[0].label = SUIT_PARAMETER_URI;
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 
     install->commands[2].label = SUIT_DIRECTIVE_SET_COMPONENT_INDEX;
     install->commands[2].value.uint64 = 0;
-    install->commands[3].label = SUIT_DIRECTIVE_SET_PARAMETERS;
+    install->commands[3].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
     params_list = &install->commands[3].value.params_list;
     params_list->len = 1;
     params_list->params[0].label = SUIT_PARAMETER_URI;

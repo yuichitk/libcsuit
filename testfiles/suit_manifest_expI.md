@@ -5,8 +5,8 @@
 / SUIT_Envelope_Tagged / 107( {
   / suit-authentication-wrapper / 2: << [
     << [
-      / suit-digest-algorithm-id: / -16 / cose-alg-sha256 /,
-      / suit-digest-bytes: / h'C8363BDF3DCF68F0234A9DD320C2FEA72DE68F46AAE7CE700AFF87085516A335'
+      / suit-digest-algorithm-id: / -16 / suit-cose-alg-sha256 /,
+      / suit-digest-bytes: / h'C671B37C47FCB29E215DDC200A1500E2952AF2E9D0F477D52B9CF6C887FF0389'
     ] >>,
     << / COSE_Sign1_Tagged / 18( [
       / protected: / << {
@@ -14,7 +14,7 @@
       } >>,
       / unprotected: / {},
       / payload: / null,
-      / signature: / h'E0D2973A7B7185BBDA108458FB68EFAF65CD031F2283E784129A95D4229F0EB11F8947D3E589A26CE53CDE0807D58BC976B0FC4AB0E7C0CDE64B13CA41D1D986'
+      / signature: / h'28CDE676B86F7D3209F0E005ED0F65D7E4F0770C3266E9D247D5D776F570137792F517AC55CC70FA9968E60D409E37812E2590D716D152AB2D04B8E82DF4B899'
     ] ) >>
   ] >>,
   / suit-integrated-payload / "#tc": h'48656C6C6F2C2053656375726520576F726C6421', / "Hello, Secure World!" /
@@ -31,11 +31,11 @@
         ]
       ],
       / suit-common-sequence / 4: << [
-        / suit-directive-set-parameters / 19, {
+        / suit-directive-override-parameters / 20, {
           / suit-parameter-vendor-identifier / 1: h'C0DDD5F15243566087DB4F5B0AA26C2F',
           / suit-parameter-class-identifier / 2: h'DB42F7093D8C55BAA8C5265FC5820F4E',
           / suit-parameter-image-digest / 3: << [
-            / suit-digest-algorithm-id: / -16 / cose-alg-sha256 /,
+            / suit-digest-algorithm-id: / -16 / suit-cose-alg-sha256 /,
             / suit-digest-bytes: / h'8CF71AC86AF31BE184EC7A05A411A8C3A14FD9B77A30D046397481469468ECE8'
           ] >>,
           / suit-parameter-image-size / 14: 20
@@ -45,7 +45,7 @@
       ] >>
     } >>,
     / suit-install / 9: << [
-      / suit-directive-set-parameters / 19, {
+      / suit-directive-override-parameters / 20, {
         / suit-parameter-uri / 21: "#tc"
       },
       / suit-directive-fetch / 21, 15,
@@ -76,9 +76,9 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
          82                                         # array(2)
             58 24                                   # bytes(36)
                82                                   # array(2)
-                  2F                                # negative(15) / -16 = cose-alg-sha256 /
+                  2F                                # negative(15) / -16 = suit-cose-alg-sha256 /
                   58 20                             # bytes(32)
-                     C8363BDF3DCF68F0234A9DD320C2FEA72DE68F46AAE7CE700AFF87085516A335
+                     C671B37C47FCB29E215DDC200A1500E2952AF2E9D0F477D52B9CF6C887FF0389
             58 4A                                   # bytes(74)
                D2                                   # tag(18) / COSE_Sign1_Tagged /
                   84                                # array(4)
@@ -89,7 +89,7 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                      A0                             # map(0)
                      F6                             # primitive(22) / null /
                      58 40                          # bytes(64)
-                        E0D2973A7B7185BBDA108458FB68EFAF65CD031F2283E784129A95D4229F0EB11F8947D3E589A26CE53CDE0807D58BC976B0FC4AB0E7C0CDE64B13CA41D1D986
+                        28CDE676B86F7D3209F0E005ED0F65D7E4F0770C3266E9D247D5D776F570137792F517AC55CC70FA9968E60D409E37812E2590D716D152AB2D04B8E82DF4B899
       63                                            # text(3) / suit-integrated-payload /
          237463                                     # "#tc"
       54                                            # bytes(20)
@@ -118,7 +118,7 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                   04                                # unsigned(4) / suit-common-sequence: /
                   58 54                             # bytes(84)
                      86                             # array(6)
-                        13                          # unsigned(19) / suit-directive-set-parameters: /
+                        14                          # unsigned(20) / suit-directive-override-parameters: /
                         A4                          # map(4)
                            01                       # unsigned(1) / suit-parameter-vendor-identifier: /
                            50                       # bytes(16)
@@ -129,7 +129,7 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                            03                       # unsigned(3) / suit-parameter-image-digest: /
                            58 24                    # bytes(36)
                               82                    # array(2)
-                                 2F                 # negative(15) / -16 = cose-alg-sha256 /
+                                 2F                 # negative(15) / -16 = suit-cose-alg-sha256 /
                                  58 20              # bytes(32)
                                     8CF71AC86AF31BE184EC7A05A411A8C3A14FD9B77A30D046397481469468ECE8
                            0E                       # unsigned(14) / suit-parameter-image-size: /
@@ -141,7 +141,7 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
             09                                      # unsigned(9) / suit-install: /
             4C                                      # bytes(12)
                86                                   # array(6)
-                  13                                # unsigned(19) / suit-directive-set-parameters: /
+                  14                                # unsigned(20) / suit-directive-override-parameters: /
                   A1                                # map(1)
                      15                             # unsigned(21) / suit-parameter-uri: /
                      63                             # text(3)
@@ -174,16 +174,16 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
 
 ### CBOR Binary in Hex
 ~~~
-D86BA3025873825824822F5820C8363BDF3DCF68F0234A9DD320C2FEA72D
-E68F46AAE7CE700AFF87085516A335584AD28443A10126A0F65840E0D297
-3A7B7185BBDA108458FB68EFAF65CD031F2283E784129A95D4229F0EB11F
-8947D3E589A26CE53CDE0807D58BC976B0FC4AB0E7C0CDE64B13CA41D1D9
-86632374635448656C6C6F2C2053656375726520576F726C64210358E8A5
+D86BA3025873825824822F5820C671B37C47FCB29E215DDC200A1500E295
+2AF2E9D0F477D52B9CF6C887FF0389584AD28443A10126A0F6584028CDE6
+76B86F7D3209F0E005ED0F65D7E4F0770C3266E9D247D5D776F570137792
+F517AC55CC70FA9968E60D409E37812E2590D716D152AB2D04B8E82DF4B8
+99632374635448656C6C6F2C2053656375726520576F726C64210358E8A5
 01010203035884A20281844B544545502D44657669636548536563757265
-4653508D82573A926D4754935332DC29997F744274610458548613A40150
+4653508D82573A926D4754935332DC29997F744274610458548614A40150
 C0DDD5F15243566087DB4F5B0AA26C2F0250DB42F7093D8C55BAA8C5265F
 C5820F4E035824822F58208CF71AC86AF31BE184EC7A05A411A8C3A14FD9
-B77A30D046397481469468ECE80E14010F020F094C8613A1156323746315
+B77A30D046397481469468ECE80E14010F020F094C8614A1156323746315
 0F030F0D584BA1844B544545502D44657669636548536563757265465350
 8D82573A926D4754935332DC29997F74427461A202755265666572656E63
 6520544545502D446576696365036674632E6F7267
