@@ -30,7 +30,7 @@ endif
 
 .PHONY: all test clean
 
-all: $(TARGETu) $(TARGETi) $(TARGETd) $(TARGETr)
+all: $(TARGETu) $(TARGETi) $(TARGETd) $(TARGETr) $(OUTPUTu) $(OUTPUTd) $(OUTPUTi) $(OUTPUTr)
 
 $(TARGETu):	$(OBJu) $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -57,11 +57,23 @@ OUTPUTd		:= ./testfiles/suit_manifest_expD.cbor
 DEPENDENCY	:= ./testfiles/suit_manifest_expU_fixed.cbor
 OUTPUTr		:= ./testfiles/suit_manifest_expR.cbor
 
-test: all
+$(OUTPUTu): $(TARGETu) $(PRIV_KEY1)
 	$(TARGETu) $(PRIV_KEY1) $(OUTPUTu)
-	$(TARGETi) $(PRIV_KEY1) $(OUTPUTi)
+
+$(OUTPUTd): $(TARGETu) $(DEPENDENCY) $(PRIV_KEY2)
 	$(TARGETd) $(DEPENDENCY) $(URI) $(PRIV_KEY2) $(OUTPUTd)
+
+$(OUTPUTi): $(TARGETi) $(PRIV_KEY1)
+	$(TARGETi) $(PRIV_KEY1) $(OUTPUTi)
+
+$(OUTPUTr): $(TARGETr) $(PRIV_KEY1)
 	$(TARGETr) $(PRIV_KEY1) $(OUTPUTr)
+
+test:
+	$(TARGETu) $(PRIV_KEY1)
+	$(TARGETi) $(PRIV_KEY1)
+	$(TARGETd) $(OUTPUTu) $(URI) $(PRIV_KEY2)
+	$(TARGETr) $(PRIV_KEY1)
 
 clean:
 	rm -f $(OBJS) $(TARGET1) $(TARGET2)
