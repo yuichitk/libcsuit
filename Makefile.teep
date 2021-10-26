@@ -28,7 +28,7 @@ ifdef debug
     CFLAGS += -DSKIP_ERROR
 endif
 
-.PHONY: all test clean
+.PHONY: all test generate clean
 
 all: $(TARGETu) $(TARGETi) $(TARGETd) $(TARGETr) $(OUTPUTu) $(OUTPUTd) $(OUTPUTi) $(OUTPUTr)
 
@@ -60,14 +60,16 @@ OUTPUTr		:= ./testfiles/suit_manifest_expR.cbor
 $(OUTPUTu): $(TARGETu) $(PRIV_KEY1)
 	$(TARGETu) $(PRIV_KEY1) $(OUTPUTu)
 
-$(OUTPUTd): $(TARGETu) $(DEPENDENCY) $(PRIV_KEY2)
-	$(TARGETd) $(DEPENDENCY) $(URI) $(PRIV_KEY2) $(OUTPUTd)
+$(OUTPUTd): $(TARGETd) $(OUTPUTu) $(PRIV_KEY2)
+	$(TARGETd) $(OUTPUTu) $(URI) $(PRIV_KEY2) $(OUTPUTd)
 
 $(OUTPUTi): $(TARGETi) $(PRIV_KEY1)
 	$(TARGETi) $(PRIV_KEY1) $(OUTPUTi)
 
 $(OUTPUTr): $(TARGETr) $(PRIV_KEY1)
 	$(TARGETr) $(PRIV_KEY1) $(OUTPUTr)
+
+generate: $(OUTPUTu) $(OUTPUTi) $(OUTPUTd) $(OUTPUTr)
 
 test:
 	$(TARGETu) $(PRIV_KEY1)
