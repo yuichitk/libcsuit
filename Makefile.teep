@@ -6,9 +6,8 @@
 
 CC		= gcc
 CFLAGS	= -Wall -g
-TCOSE	= ./t_cose/libt_cose.a
-LDFLAGS	= -lqcbor -lcrypto
-INC		= -I ./inc -I ./t_cose/inc -I ./examples/inc
+LDFLAGS	= -lt_cose -lqcbor -lcrypto
+INC		= -I ./inc -I ./examples/inc
 TARGETu	= ./suit_for_teep_uri
 TARGETi	= ./suit_for_teep_integrated
 TARGETd	= ./suit_for_teep_depending
@@ -33,8 +32,8 @@ endif
 
 all: $(TARGETu) $(TARGETi) $(TARGETd) $(TARGETr) $(OUTPUTu) $(OUTPUTd) $(OUTPUTi) $(OUTPUTr)
 
-$(TARGETu):	$(OBJu) $(OBJS) $(TCOSE)
-	$(CC) -o $@ $^ $(LDFLAGS) $(TCOSE)
+$(TARGETu):	$(OBJu) $(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(TARGETi):	$(OBJi) $(OBJS) $(TCOSE)
 	$(CC) -o $@ $^ $(LDFLAGS) $(TCOSE)
@@ -62,7 +61,7 @@ $(OUTPUTu): $(TARGETu) $(PRIV_KEY1)
 	$(TARGETu) $(PRIV_KEY1) $(OUTPUTu)
 
 $(OUTPUTd): $(TARGETd) $(OUTPUTu) $(PRIV_KEY2)
-	$(TARGETd) $(OUTPUTu) $(URI) $(PRIV_KEY2) $(OUTPUTd)
+	$(TARGETd) -d $(OUTPUTu) -u $(URI) -p $(PRIV_KEY2) -o $(OUTPUTd)
 
 $(OUTPUTi): $(TARGETi) $(PRIV_KEY1)
 	$(TARGETi) $(PRIV_KEY1) $(OUTPUTi)

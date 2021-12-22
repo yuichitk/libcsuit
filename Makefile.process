@@ -5,9 +5,8 @@
 #
 
 CFLAGS	= -Wall -g
-TCOSE	= ./t_cose/libt_cose.a
-LDFLAGS	= -lqcbor -lcrypto
-INC		= -I ./inc -I ./t_cose/inc -I ./examples/inc
+LDFLAGS	= -lt_cose -lqcbor -lcrypto
+INC		= -I ./inc -I ./examples/inc
 TARGET	= ./suit_manifest_process
 SRCS	= examples/suit_manifest_process_main.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_common.c src/suit_manifest_process.c src/suit_cose.c src/suit_digest.c src/suit_manifest_print.c src/suit_manifest_decode.c
 OBJDIR	= ./obj
@@ -21,8 +20,8 @@ endif
 
 all: $(TARGET)
 
-$(TARGET):	$(OBJS) $(TCOSE)
-	$(CC) -o $@ $^ $(LDFLAGS) $(TCOSE)
+$(TARGET):	$(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o:	%.c
 	mkdir -p $(dir $@)

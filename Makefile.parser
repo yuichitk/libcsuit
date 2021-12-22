@@ -6,9 +6,8 @@
 
 CC		= gcc
 CFLAGS	= -Wall -g
-TCOSE	= ./t_cose/libt_cose.a
-LDFLAGS	= -lqcbor -lcrypto
-INC		= -I ./inc -I ./t_cose/inc -I ./examples/inc
+LDFLAGS	= -lt_cose -lqcbor -lcrypto
+INC		= -I ./inc -I ./examples/inc
 TARGET	= ./suit_manifest_parser
 SRCS	= examples/suit_manifest_parser_main.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_decode.c src/suit_manifest_encode.c src/suit_cose.c src/suit_digest.c
 OBJDIR	= ./obj
@@ -18,8 +17,8 @@ ifdef debug
     CFLAGS += -DSKIP_ERROR -DDEBUG
 endif
 
-$(TARGET):	$(OBJS) $(TCOSE)
-	$(CC) -o $@ $^ $(LDFLAGS) $(TCOSE)
+$(TARGET):	$(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o:	%.c
 	mkdir -p $(dir $@)
