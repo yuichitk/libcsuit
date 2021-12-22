@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+#include <unistd.h>
 #include "qcbor/qcbor.h"
 #include "csuit/suit_manifest_data.h"
 #include "csuit/suit_manifest_print.h"
@@ -13,16 +14,45 @@
 
 #define MAX_FILE_BUFFER_SIZE            2048
 
+int error_print(char *argv0) {
+    printf("%s <manifest to depend> <private key path> [-u <manifest uri>] [-o <output manifest file path>]", argv0);
+    return EXIT_FAILURE;
+}
+
 int main(int argc, char *argv[]) {
     // check arguments.
-    if (argc < 3) {
-        printf("%s <manifest to depend> <manifest uri> <private key path> [<output manifest file path>]", argv[0]);
-        return EXIT_FAILURE;
+    int c;
+    extern char *optarg;
+    extern int optind, optopt;
+
+    char *input_manifest_file = NULL;
+    char *uri = NULL;
+    char *private_key_file = NULL;
+    char *output_manifest_file = NULL;
+
+    while ((c = getopt(argc, argv, "u:o:")) != -1) {
+        switch (c) {
+        case 'u':
+            uri = optarg;
+            break;
+        case 'o':
+            output_manifest_file = optarg;
+            break;
+        case ':':
+            printf("Option -%c requires an operand\n", optopt);
+            return error_print(argv[0]);
+            break;
+        case '?':
+            printf("Unrecognised option: -%c\n", optopt);
+            return error_print(argv[0]);
+        }
     }
-    char *input_manifest_file = argv[1];
-    char *uri = argv[2];
-    char *private_key_file = argv[3];
-    char *output_manifest_file = (argc >= 4) ? argv[4] : NULL;
+    if (argc < optind + 2) {
+        return error_print(argv[0]);
+    }
+    input_manifest_file = argv[optind];
+    private_key_file = argv[optind + 1];
+
     struct t_cose_key key_pair;
     char public_key[PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
     char private_key[PRIME256V1_PRIVATE_KEY_CHAR_SIZE + 1];

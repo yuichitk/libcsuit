@@ -74,7 +74,7 @@ generate: $(OUTPUTu) $(OUTPUTi) $(OUTPUTd) $(OUTPUTr)
 test:
 	$(TARGETu) $(PRIV_KEY1)
 	$(TARGETi) $(PRIV_KEY1)
-	$(TARGETd) $(OUTPUTu) $(URI) $(PRIV_KEY2)
+	$(TARGETd) $(OUTPUTu) $(PRIV_KEY2) -u $(URI)
 	$(TARGETr) $(PRIV_KEY1)
 
 clean:
