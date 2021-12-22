@@ -11,30 +11,24 @@ For more information on how the IETF SUIT manifest is used to protect firmware u
 
 This implementation uses
  - the [QCBOR](https://github.com/laurencelundblade/QCBOR) library for encoding and decoding CBOR structures,
- - the [t_cose](https://github.com/laurencelundblade/t_cose) library for cryptographic processing of COSE structures, 
+ - the [t_cose](https://github.com/laurencelundblade/t_cose) library for cryptographic processing of COSE structures,
  - OpenSSL or Mbed TLS (based on the PSA Crypto API) for cryptographic algorithms.
- 
+
 This implementation offers a subset of the functionality defined in [draft-ietf-suit-manifest-14](https://tools.ietf.org/html/draft-ietf-suit-manifest-14).
- 
-Example programs are offered for testing. 
+
+Example programs are offered for testing.
 
 ## Getting started
 
-This library uses two build systems, namely cmake and classical makefiles. 
+This library uses two build systems, namely cmake and classical makefiles.
 
 ### Using Makefiles 
 
-Installing [QCBOR](https://github.com/laurencelundblade/QCBOR).
 ```bash
-git clone https://github.com/laurencelundblade/QCBOR.git
-cd QCBOR
+git clone --recurse-submodules https://github.com/yuichitk/libcsuit
+cd ./libcsuit/QCBOR
 make install
-```
-
-Installing [t_cose](https://github.com/laurencelundblade/t_cose).
-```bash
-git clone https://github.com/laurencelundblade/t_cose.git
-cd t_cose
+cd ../t_cose
 make -f Makefile.ossl install
 ```
 
@@ -72,14 +66,14 @@ make doc
 ```
 and open `html/index.html`.
 
-### Using CMake 
+### Using CMake
 
-The cmake file allows building code for OpenSSL and for Mbed TLS based on a parameter passed to cmake. 
+The cmake file allows building code for OpenSSL and for Mbed TLS based on a parameter passed to cmake.
 If you decide to use OpenSSL then you need to download and install it before building this library.
-The OpenSSL library and the include files need to be included in the search path. 
+The OpenSSL library and the include files need to be included in the search path.
 
-First, create a directory for the entire project. Inside this directory put the code of qcbor, t_cose, 
-mbedtls (if used), and libcsuit. 
+First, create a directory for the entire project. Inside this directory put the code of qcbor, t_cose,
+mbedtls (if used), and libcsuit.
 
 Here are the commands:
 
