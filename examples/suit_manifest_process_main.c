@@ -313,7 +313,7 @@ suit_err_t print_report(suit_report_args_t report_args)
 int main(int argc, char *argv[]) {
     // check arguments.
     if (argc < 2) {
-        printf("suit_manifest_process <manifest file path>");
+        printf("%s <manifest file path>", argv[0]);
         return EXIT_FAILURE;
     }
     int32_t result = 0;

@@ -37,10 +37,6 @@ endef
 test: all
 	$(foreach num,$(TEST_NUM),$(call test-one,$(num)))
 
-#MANIFEST1	:= ./testfiles/suit_manifest_exp.cbor
-#test: all
-#	$(TARGET) $(MANIFEST1)
-
 clean:
-	rm -f $(OBJS) $(TARGET1) $(TARGET2)
+	rm -f $(OBJS) $(TARGET)
 
