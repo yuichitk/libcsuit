@@ -110,6 +110,14 @@ int main(int argc, char *argv[]) {
     manifest->version = 1;
     manifest->sequence_number = 3;
 
+    char integrated_uri[] = "#depending";
+    if (uri == NULL) {
+        envelope.payloads.len = 1;
+        envelope.payloads.payload[0].key = (UsefulBufC){.ptr = (const void *)integrated_uri, .len = strlen(integrated_uri)};
+        envelope.payloads.payload[0].bytes = (UsefulBufC){.ptr = (const void *)manifest_buf, .len = manifest_len};
+        uri = integrated_uri;
+    }
+
     /* "TEEP-Device" */
     uint8_t component_id_0[] = {0x54, 0x45, 0x45, 0x50, 0x2D, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65};
     /* "SecureFS" */

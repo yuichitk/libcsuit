@@ -114,7 +114,7 @@ suit_err_t print_store(suit_store_args_t store_args)
     printf("store callback : {\n");
     switch (store_args.key) {
     case SUIT_DEPENDENCIES:
-        printf("  dst-dependnecy-digest : ");
+        printf("  dst-dependnecy-digest :\n");
         suit_print_digest(&store_args.dst.dependency.digest, 4);
         printf("  dst-dependency-prefix : ");
         suit_print_component_identifier(&store_args.dst.dependency.prefix);
