@@ -54,6 +54,7 @@ OUTPUTi		:= ./testfiles/suit_manifest_expI.cbor
 URI			:= https://tc.org/8d82573a-926d-4754-9353-32dc29997f74.suit
 PRIV_KEY2	:= ../libteep/testfiles/key/tam_prime256v1.der
 OUTPUTd		:= ./testfiles/suit_manifest_expD.cbor
+OUTPUTid	:= ./testfiles/suit_manifest_expID.cbor
 DEPENDENCY	:= ./testfiles/suit_manifest_expU_fixed.cbor
 OUTPUTr		:= ./testfiles/suit_manifest_expR.cbor
 
@@ -61,7 +62,10 @@ $(OUTPUTu): $(TARGETu) $(PRIV_KEY1)
 	$(TARGETu) $(PRIV_KEY1) $(OUTPUTu)
 
 $(OUTPUTd): $(TARGETd) $(OUTPUTu) $(PRIV_KEY2)
-	$(TARGETd) -d $(OUTPUTu) -u $(URI) -p $(PRIV_KEY2) -o $(OUTPUTd)
+	$(TARGETd) $(OUTPUTu) $(PRIV_KEY2) -u $(URI) -o $(OUTPUTd)
+
+$(OUTPUTid): $(TARGETd) $(OUTPUTi) $(PRIV_KEY2)
+	$(TARGETd) $(OUTPUTi) $(PRIV_KEY2) -o $(OUTPUTid)
 
 $(OUTPUTi): $(TARGETi) $(PRIV_KEY1)
 	$(TARGETi) $(PRIV_KEY1) $(OUTPUTi)
@@ -69,12 +73,13 @@ $(OUTPUTi): $(TARGETi) $(PRIV_KEY1)
 $(OUTPUTr): $(TARGETr) $(PRIV_KEY1)
 	$(TARGETr) $(PRIV_KEY1) $(OUTPUTr)
 
-generate: $(OUTPUTu) $(OUTPUTi) $(OUTPUTd) $(OUTPUTr)
+generate: $(OUTPUTu) $(OUTPUTi) $(OUTPUTd) $(OUTPUTr) $(OUTPUTid)
 
 test:
 	$(TARGETu) $(PRIV_KEY1)
 	$(TARGETi) $(PRIV_KEY1)
 	$(TARGETd) $(OUTPUTu) $(PRIV_KEY2) -u $(URI)
+	$(TARGETd) $(OUTPUTi) $(PRIV_KEY2)
 	$(TARGETr) $(PRIV_KEY1)
 
 clean:

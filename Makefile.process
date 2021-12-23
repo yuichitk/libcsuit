@@ -27,7 +27,7 @@ $(OBJDIR)/%.o:	%.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
-TEST_NUM	:= 0 1 2 3 4 5 U I D R
+TEST_NUM	:= 0 1 2 3 4 5 U I D R ID
 
 define test-one
 	$(TARGET) ./testfiles/suit_manifest_exp$(1).cbor
