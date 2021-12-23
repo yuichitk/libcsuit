@@ -441,17 +441,19 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                         result = SUIT_ERR_NO_MEMORY;
                         goto error;
                     }
-                    if (result == SUIT_SUCCESS) {
-                        suit_inputs->left_len -= image_size;
-                        payload = &extracted->payloads.payload[extracted->payloads.len];
-                        payload->bytes.ptr = args.fetch.ptr;
-                        payload->bytes.len = image_size;
-                        payload->key = parameters[tmp_index].uri_list[0];
-                        payload->index.len = 1;
-                        payload->index.is_dependency = index.is_dependency;
-                        payload->index.index[0].val = index.index[j].val;
-                        extracted->payloads.len++;
+                    if (result != SUIT_SUCCESS) {
+                        goto error;
                     }
+                    suit_inputs->left_len -= image_size;
+                    payload = &extracted->payloads.payload[extracted->payloads.len];
+                    extracted->payloads.len++;
+                    payload->bytes.ptr = args.fetch.ptr;
+                    payload->bytes.len = image_size;
+
+                    payload->key = parameters[tmp_index].uri_list[0];
+                    payload->index.len = 1;
+                    payload->index.is_dependency = index.is_dependency;
+                    payload->index.index[0].val = index.index[j].val;
                 }
                 else {
                     /* already handled with integrated-payload or integrated-dependency */
@@ -473,6 +475,14 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                     args.store.ptr = buf.ptr;
                     args.store.buf_len = buf.len;
                     result = suit_callbacks->store(args.store);
+                    if (result != SUIT_SUCCESS) {
+                        goto error;
+                    }
+
+                    payload->key = parameters[tmp_index].uri_list[0];
+                    payload->index.len = 1;
+                    payload->index.is_dependency = index.is_dependency;
+                    payload->index.index[0].val = index.index[j].val;
                 }
             }
             break;
