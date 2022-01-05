@@ -49,19 +49,6 @@ typedef enum cose_tag_key {
  */
 cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose);
 
-#if !defined(LIBCSUIT_PSA_CRYPTO_C)
-/*!
-    \brief  Create ES256 public key
-
-    \param[in]  public_key          Pointer of char array type of public key.
-    \param[out] cose_public_key     Pointer of struct t_cose_key type of public key.
-
-    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
-
-    The length of the char array public key is estimated from the algorithm and library.
- */
-suit_err_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key);
-
 /*!
     \brief  Generate COSE_Sign1 sined payload.
 
@@ -131,10 +118,18 @@ suit_err_t suit_verify_cose_mac(const UsefulBufC *signed_cose, const struct t_co
     \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
  */
 suit_err_t suit_verify_cose_mac0(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload);
-#else
+
+/*!
+    \brief  Create ES256 public key
+
+    \param[in]  public_key          Pointer of char array type of public key.
+    \param[out] cose_public_key     Pointer of struct t_cose_key type of public key.
+
+    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
+
+    The length of the char array public key is estimated from the algorithm and library.
+ */
 suit_err_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key);
-suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload);
-#endif /* LIBCSUIT_PSA_CRYPTO_C */
 
 #endif  /* SUIT_COSE_H */
 

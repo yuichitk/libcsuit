@@ -141,7 +141,7 @@ suit_err_t suit_create_es521_public_key(const char *public_key, struct t_cose_ke
 }
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
 
-suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload) {
+suit_err_t suit_verify_cose_sign1(const UsefulBufC *signed_cose, const struct t_cose_key *public_key, UsefulBufC returned_payload) {
     suit_err_t result = SUIT_SUCCESS;
     struct t_cose_sign1_verify_ctx verify_ctx;
     struct t_cose_parameters parameters;
