@@ -58,36 +58,28 @@ suit_err_t suit_create_es256_public_key(const char *public_key, struct t_cose_ke
 
     result = psa_crypto_init();
 
-    if(result != PSA_SUCCESS)
-        return( EXIT_FAILURE );
+    if (result != PSA_SUCCESS) {
+        return SUIT_ERR_FAILED_TO_VERIFY;
+    }
 
     psa_set_key_usage_flags( &key_attributes,
                              PSA_KEY_USAGE_VERIFY_HASH | PSA_KEY_USAGE_EXPORT );
     psa_set_key_algorithm( &key_attributes, PSA_ALG_ECDSA(PSA_ALG_SHA_256) );
     psa_set_key_type( &key_attributes, PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_FAMILY_SECP_R1) );
 
-    /*
-     psa_key_type_t       key_type;
-     psa_algorithm_t      key_alg;
-     key_type = PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_CURVE_SECP256R1);
-     key_alg = PSA_ALG_ECDSA(PSA_ALG_SHA_256);
-     psa_set_key_usage_flags( &key_attributes, PSA_KEY_USAGE_VERIFY_HASH );
-     psa_set_key_algorithm( &key_attributes, key_alg );
-     psa_set_key_type( &key_attributes, key_type );
-    */
-
     result = psa_import_key(&key_attributes,
                             (const unsigned char*) public_key,
                             public_key_len,
                             &key_handle);
 
-    if (result != PSA_SUCCESS)
-        return( EXIT_FAILURE );
+    if (result != PSA_SUCCESS) {
+        return SUIT_ERR_FAILED_TO_VERIFY;
+    }
 
     cose_public_key->k.key_handle = key_handle;
     cose_public_key->crypto_lib   = T_COSE_CRYPTO_LIB_PSA;
 
-    return( SUIT_SUCCESS );
+    return SUIT_SUCCESS;
 }
 #else /* LIBCSUIT_PSA_CRYPTO_C */
 
