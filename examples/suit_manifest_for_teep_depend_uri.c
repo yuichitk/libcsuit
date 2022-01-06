@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
     dependency_resolution->commands[3].value.uint64 = 15;
 
     /* install */
-    const char data_uri[] = "https://tc.org/config.json";
+    const char data_uri[] = "https://example.org/config.json";
     manifest->sev_man_mem.install_status = SUIT_SEVERABLE_IN_MANIFEST;
     suit_command_sequence_t *install = &manifest->sev_man_mem.install;
     install->len = 6;
@@ -226,16 +226,6 @@ int main(int argc, char *argv[]) {
     validate->commands[0].value.uint64 = 0;
     validate->commands[1].label = SUIT_CONDITION_IMAGE_MATCH;
     validate->commands[1].value.uint64 = 15;
-
-    /* text */
-    manifest->sev_man_mem.text_status = SUIT_SEVERABLE_IN_MANIFEST;
-    suit_text_t *text = &manifest->sev_man_mem.text;
-    text->component_len = 1;
-    text->component[0].key = common->components.comp_id[0];
-    const char model_name[] = "Reference TEEP-Device";
-    const char vendor_domain[] = "tc.org";
-    text->component[0].text_component.model_name = (suit_buf_t){.ptr = (const uint8_t *)model_name, .len = strlen(model_name)};
-    text->component[0].text_component.vendor_domain = (suit_buf_t){.ptr = (const uint8_t *)vendor_domain, .len = strlen(vendor_domain)};
 
 
     // Print manifest.

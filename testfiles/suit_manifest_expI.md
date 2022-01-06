@@ -6,7 +6,7 @@
   / suit-authentication-wrapper / 2: << [
     << [
       / suit-digest-algorithm-id: / -16 / suit-cose-alg-sha256 /,
-      / suit-digest-bytes: / h'C671B37C47FCB29E215DDC200A1500E2952AF2E9D0F477D52B9CF6C887FF0389'
+      / suit-digest-bytes: / h'14A98BE957DE38FAE37376EA491FD6CAD9BFBD3C90051C8F5B017D7A496C3B05'
     ] >>,
     << / COSE_Sign1_Tagged / 18( [
       / protected: / << {
@@ -14,7 +14,7 @@
       } >>,
       / unprotected: / {},
       / payload: / null,
-      / signature: / h'28CDE676B86F7D3209F0E005ED0F65D7E4F0770C3266E9D247D5D776F570137792F517AC55CC70FA9968E60D409E37812E2590D716D152AB2D04B8E82DF4B899'
+      / signature: / h'4093B323953785981EB607C8BA61B21E5C4F85726A2AF48C1CB05BD4401B1B1565070728FDA38E6496D631E1D23F966CFF7805EDE721D48507D9192993DA8722'
     ] ) >>
   ] >>,
   / suit-integrated-payload / "#tc": h'48656C6C6F2C2053656375726520576F726C6421', / "Hello, Secure World!" /
@@ -50,18 +50,7 @@
       },
       / suit-directive-fetch / 21, 15,
       / suit-condition-image-match / 3, 15
-    ] >>,
-    / suit-text / 13: << {
-      [
-        h'544545502D446576696365',           / "TEEP-Device" /
-        h'5365637572654653',                 / "SecureFS" /
-        h'8D82573A926D4754935332DC29997F74', / tc-uuid /
-        h'7461'                              / "ta" /
-      ]: {
-        / suit-text-model-name / 2: "Reference TEEP-Device",
-        / suit-text-vendor-domain / 3: "tc.org"
-      }
-    } >>
+    ] >>
   } >>
 } )
 ~~~
@@ -78,7 +67,7 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                82                                   # array(2)
                   2F                                # negative(15) / -16 = suit-cose-alg-sha256 /
                   58 20                             # bytes(32)
-                     C671B37C47FCB29E215DDC200A1500E2952AF2E9D0F477D52B9CF6C887FF0389
+                     14A98BE957DE38FAE37376EA491FD6CAD9BFBD3C90051C8F5B017D7A496C3B05
             58 4A                                   # bytes(74)
                D2                                   # tag(18) / COSE_Sign1_Tagged /
                   84                                # array(4)
@@ -89,14 +78,14 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                      A0                             # map(0)
                      F6                             # primitive(22) / null /
                      58 40                          # bytes(64)
-                        28CDE676B86F7D3209F0E005ED0F65D7E4F0770C3266E9D247D5D776F570137792F517AC55CC70FA9968E60D409E37812E2590D716D152AB2D04B8E82DF4B899
+                        4093B323953785981EB607C8BA61B21E5C4F85726A2AF48C1CB05BD4401B1B1565070728FDA38E6496D631E1D23F966CFF7805EDE721D48507D9192993DA8722
       63                                            # text(3) / suit-integrated-payload /
          237463                                     # "#tc"
       54                                            # bytes(20)
          48656C6C6F2C2053656375726520576F726C6421   # "Hello, Secure World!"
       03                                            # unsigned(3) / suit-manifest: /
-      58 E8                                         # bytes(232)
-         A5                                         # map(5)
+      58 9A                                         # bytes(154)
+         A4                                         # map(4)
             01                                      # unsigned(1) / suit-manifest-version: /
             01                                      # unsigned(1)
             02                                      # unsigned(2) / suit-manifest-sequence-number: /
@@ -150,41 +139,20 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                   0F                                # unsigned(15)
                   03                                # unsigned(3) / suit-condition-image-match: /
                   0F                                # unsigned(15)
-            0D                                      # unsigned(13) / suit-text: /
-            58 4B                                   # bytes(75)
-               A1                                   # map(1)
-                  84                                # array(4)
-                     4B                             # bytes(11)
-                        544545502D446576696365      # "TEEP-Device"
-                     48                             # bytes(8)
-                        5365637572654653            # "SecureFS"
-                     50                             # bytes(16)
-                        8D82573A926D4754935332DC29997F74 # tc-uuid
-                     42                             # bytes(2)
-                        7461                        # "ta"
-                  A2                                # map(2)
-                     02                             # unsigned(2) / suit-model-name: /
-                     75                             # text(21)
-                        5265666572656E636520544545502D446576696365 # "Reference TEEP-Device"
-                     03                             # unsigned(3) / suit-vendor-domain: /
-                     66                             # text(6)
-                        74632E6F7267                # "tc.org"
 ~~~
 
 
 ### CBOR Binary in Hex
 ~~~
-D86BA3025873825824822F5820C671B37C47FCB29E215DDC200A1500E295
-2AF2E9D0F477D52B9CF6C887FF0389584AD28443A10126A0F6584028CDE6
-76B86F7D3209F0E005ED0F65D7E4F0770C3266E9D247D5D776F570137792
-F517AC55CC70FA9968E60D409E37812E2590D716D152AB2D04B8E82DF4B8
-99632374635448656C6C6F2C2053656375726520576F726C64210358E8A5
+D86BA3025873825824822F582014A98BE957DE38FAE37376EA491FD6CAD9
+BFBD3C90051C8F5B017D7A496C3B05584AD28443A10126A0F658404093B3
+23953785981EB607C8BA61B21E5C4F85726A2AF48C1CB05BD4401B1B1565
+070728FDA38E6496D631E1D23F966CFF7805EDE721D48507D9192993DA87
+22632374635448656C6C6F2C2053656375726520576F726C642103589AA4
 01010203035884A20281844B544545502D44657669636548536563757265
 4653508D82573A926D4754935332DC29997F744274610458548614A40150
 C0DDD5F15243566087DB4F5B0AA26C2F0250DB42F7093D8C55BAA8C5265F
 C5820F4E035824822F58208CF71AC86AF31BE184EC7A05A411A8C3A14FD9
 B77A30D046397481469468ECE80E14010F020F094C8614A1156323746315
-0F030F0D584BA1844B544545502D44657669636548536563757265465350
-8D82573A926D4754935332DC29997F74427461A202755265666572656E63
-6520544545502D446576696365036674632E6F7267
+0F030F
 ~~~

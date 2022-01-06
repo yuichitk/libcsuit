@@ -4,19 +4,19 @@
 ### CBOR Diagnostic Notation of SUIT Manifest
 
 ~~~
-/ SUIT_Envelope_Tagged / 107 ( {
+/ SUIT_Envelope_Tagged / 107( {
   / suit-authentication-wrapper / 2: << [
     << [
       / suit-digest-algorithm-id: / -16 / suit-cose-alg-sha256 /,
-      / suit-digest-bytes: / h'0F0518C168F957A86FD138C64F85919DE1D2682F93CA45AE06ACE270AD59F0B0'
+      / suit-digest-bytes: / h'CE596D785169B72712560B3A246AA98F814498EA3625EEBB72CED9AF273E7FFD'
     ] >>,
-    << / COSE_Sign1_Tagged / 18 ( [
+    << / COSE_Sign1_Tagged / 18( [
       / protected: / << {
         / algorithm-id / 1: -7 / ES256 /
       } >>,
       / unprotected: / {},
       / payload: / null,
-      / signature: / h'B375102D24B6B575FAC98D4EF7DB7330FA36FC7B6A8E3247C934D33919AA71884803FB0849C8A6F15492BB17FB8E44126588B708D0E5D89955C2A641B1C770C1'
+      / signature: / h'E9083AA71D2BFCE48253037B9C3116A5EDF23BE0F4B4357A8A835F724660DA7482C64345B4C73DE95F05513BD09FC2E58BD2CC865CC851AD797513A9A951A3CA'
     ] ) >>
   ] >>,
   / suit-manifest / 3: << {
@@ -56,7 +56,7 @@
     / suit-dependency-resolution / 7: << [
       / suit-directive-set-dependency-index / 13, 0,
       / suit-directive-override-parameters / 20, {
-        / suit-parameter-uri / 21: "https://tc.org/8d82573a-926d-4754-9353-32dc29997f74.suit"
+        / suit-parameter-uri / 21: "https://example.org/8d82573a-926d-4754-9353-32dc29997f74.suit"
       },
       / suit-directive-fetch / 21, 2,
       / suit-condition-image-match / 3, 15
@@ -66,7 +66,7 @@
       / suit-directive-process-dependency / 18, 0,
       / suit-directive-set-component-index / 12, 0,
       / suit-directive-override-parameters / 20, {
-        / suit-parameter-uri / 21: "https://tc.org/config.json"
+        / suit-parameter-uri / 21: "https://example.org/config.json"
       },
       / suit-directive-fetch / 21, 2,
       / suit-condition-image-match / 3, 15
@@ -74,17 +74,7 @@
     / suit-validate / 10: << [
       / suit-directive-set-component-index / 12, 0,
       / suit-condition-image-match/ 3, 15
-    ] >>,
-    / suit-text / 13: << {
-      [
-        h'544545502D446576696365', / "TEEP-Device" /
-        h'5365637572654653',       / "SecureFS" /
-        h'636F6E6669672E6A736F6E'  / "config.json" /
-      ]: {
-        / suit-text-model-name / 2: "Reference TEEP-Device",
-        / suit-text-vendor-domain / 3: "tc.org"
-      }
-    } >>
+    ] >>
   } >>
 } )
 ~~~
@@ -102,7 +92,7 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                82                                   # array(2)
                   2F                                # negative(15) / -16 = suit-cose-alg-sha256 /
                   58 20                             # bytes(32)
-                     0F0518C168F957A86FD138C64F85919DE1D2682F93CA45AE06ACE270AD59F0B0
+                     CE596D785169B72712560B3A246AA98F814498EA3625EEBB72CED9AF273E7FFD
             58 4A                                   # bytes(74)
                D2                                   # tag(18) / COSE_Sign1_Tagged /
                   84                                # array(4)
@@ -113,10 +103,10 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                      A0                             # map(0)
                      F6                             # primitive(22) / null /
                      58 40                          # bytes(64)
-                        B375102D24B6B575FAC98D4EF7DB7330FA36FC7B6A8E3247C934D33919AA71884803FB0849C8A6F15492BB17FB8E44126588B708D0E5D89955C2A641B1C770C1
+                        E9083AA71D2BFCE48253037B9C3116A5EDF23BE0F4B4357A8A835F724660DA7482C64345B4C73DE95F05513BD09FC2E58BD2CC865CC851AD797513A9A951A3CA
       03                                            # unsigned(3) / suit-manifest: /
-      59 0170                                       # bytes(368)
-         A7                                         # map(7)
+      59 0134                                       # bytes(308)
+         A6                                         # map(6)
             01                                      # unsigned(1) / suit-manifest-version: /
             01                                      # unsigned(1)
             02                                      # unsigned(2) / suit-manifest-sequence-number: /
@@ -167,21 +157,21 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                         02                          # unsigned(2) / suit-condition-class-identifier: /
                         0F                          # unsigned(15)
             07                                      # unsigned(7) / suit-dependency-resolution: /
-            58 44                                   # bytes(68)
+            58 49                                   # bytes(73)
                88                                   # array(8)
                   0D                                # unsigned(13) / suit-directive-set-dependency-index: /
                   00                                # unsigned(0)
                   14                                # unsigned(20) / suit-directive-override-parameters: /
                   A1                                # map(1)
                      15                             # unsigned(21) / suit-parameter-uri: /
-                     78 38                          # text(56)
-                        68747470733A2F2F74632E6F72672F38643832353733612D393236642D343735342D393335332D3332646332393939376637342E73756974 # "https://tc.org/8d82573a-926d-4754-9353-32dc29997f74.suit"
+                     78 3D                          # text(61)
+                        68747470733A2F2F6578616D706C652E6F72672F38643832353733612D393236642D343735342D393335332D3332646332393939376637342E73756974 # "https://example.org/8d82573a-926d-4754-9353-32dc29997f74.suit"
                   15                                # unsigned(21) / suit-directive-fetch: /
                   02                                # unsigned(2)
                   03                                # unsigned(3) / suit-condition-image-match: /
                   0F                                # unsigned(15)
             09                                      # unsigned(9) / suit-install: /
-            58 2A                                   # bytes(42)
+            58 2F                                   # bytes(47)
                8C                                   # array(12)
                   0D                                # unsigned(13) / suit-directive-set-dependency-index: /
                   00                                # unsigned(0)
@@ -192,8 +182,8 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                   14                                # unsigned(20) / suit-directive-override-parameters: /
                   A1                                # map(1)
                      15                             # unsigned(21) / suit-parameter-uri: /
-                     78 1A                          # text(26)
-                        68747470733A2F2F74632E6F72672F636F6E6669672E6A736F6E # "https://tc.org/config.json"
+                     78 1F                          # text(31)
+                        68747470733A2F2F6578616D706C652E6F72672F636F6E6669672E6A736F6E # "https://example.org/config.json"
                   15                                # unsigned(21) / suit-directive-fetch: /
                   02                                # unsigned(2)
                   03                                # unsigned(3) / suit-condition-image-match: /
@@ -205,44 +195,25 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                   00
                   03                                # unsigned(3) / suit-condition-image-match: /
                   0F                                # unsigned(15)
-            0D                                      # unsigned(13) / suit-text: /
-            58 43                                   # bytes(67)
-               A1                                   # map(1)
-                  83                                # array(3)
-                     4B                             # bytes(11)
-                        544545502D446576696365      # "TEEP-Device"
-                     48                             # bytes(8)
-                        5365637572654653            # "SecureFS"
-                     4B                             # bytes(11)
-                        636F6E6669672E6A736F6E      # "config.json"
-                  A2                                # map(2)
-                     02                             # unsigned(2) / suit-text-model-name: /
-                     75                             # text(21)
-                        5265666572656E636520544545502D446576696365 # "Reference TEEP-Device"
-                     03                             # unsigned(3) / suit-text-vendor-domain: /
-                     66                             # text(6)
-                        74632E6F7267                # "tc.org"
 ~~~
 
 
 ### CBOR Binary in Hex
 
 ~~~
-D86BA2025873825824822F58200F0518C168F957A86FD138C64F85919DE1
-D2682F93CA45AE06ACE270AD59F0B0584AD28443A10126A0F65840B37510
-2D24B6B575FAC98D4EF7DB7330FA36FC7B6A8E3247C934D33919AA718848
-03FB0849C8A6F15492BB17FB8E44126588B708D0E5D89955C2A641B1C770
-C103590170A7010102030358A7A30181A101822F58208ADC995573631639
-C3C6D5FC4026160C8A32C5AADFBEEC9FA49E026FDD74CAB30281834B5445
+D86BA2025873825824822F5820CE596D785169B72712560B3A246AA98F81
+4498EA3625EEBB72CED9AF273E7FFD584AD28443A10126A0F65840E9083A
+A71D2BFCE48253037B9C3116A5EDF23BE0F4B4357A8A835F724660DA7482
+C64345B4C73DE95F05513BD09FC2E58BD2CC865CC851AD797513A9A951A3
+CA03590134A6010102030358A7A30181A101822F5820DB601ADE73092B58
+532CA03FBB663DE49532435336F1558B49BB622726A2FEDD0281834B5445
 45502D4465766963654853656375726546534B636F6E6669672E6A736F6E
 045857880C0014A40150C0DDD5F15243566087DB4F5B0AA26C2F0250DB42
 F7093D8C55BAA8C5265FC5820F4E035824822F5820AAABCCCDEEEF000122
 23444566678889ABBBCDDDEFFF011123334555677789990E1840010F020F
-075844880D0014A115783868747470733A2F2F74632E6F72672F38643832
-353733612D393236642D343735342D393335332D33326463323939393766
-37342E737569741502030F09582A8C0D0012000C0014A115781A68747470
-733A2F2F74632E6F72672F636F6E6669672E6A736F6E1502030F0A45840C
-00030F0D5843A1834B544545502D4465766963654853656375726546534B
-636F6E6669672E6A736F6EA202755265666572656E636520544545502D44
-6576696365036674632E6F7267
+075849880D0014A115783D68747470733A2F2F6578616D706C652E6F7267
+2F38643832353733612D393236642D343735342D393335332D3332646332
+393939376637342E737569741502030F09582F8C0D0012000C0014A11578
+1F68747470733A2F2F6578616D706C652E6F72672F636F6E6669672E6A73
+6F6E1502030F0A45840C00030F
 ~~~

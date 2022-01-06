@@ -103,16 +103,6 @@ int main(int argc, char *argv[]) {
     install->commands[1].label = SUIT_DIRECTIVE_UNLINK;
     install->commands[1].value.uint64 = 0;
 
-    /* text */
-    manifest->sev_man_mem.text_status = SUIT_SEVERABLE_IN_MANIFEST;
-    suit_text_t *text = &manifest->sev_man_mem.text;
-    text->component_len = 1;
-    text->component[0].key = common->components.comp_id[0];
-    const char model_name[] = "Reference TEEP-Device";
-    const char vendor_domain[] = "tc.org";
-    text->component[0].text_component.model_name = (suit_buf_t){.ptr = (const uint8_t *)model_name, .len = strlen(model_name)};
-    text->component[0].text_component.vendor_domain = (suit_buf_t){.ptr = (const uint8_t *)vendor_domain, .len = strlen(vendor_domain)};
-
 
     // Print manifest.
     printf("\nmain : Print Manifest.\n");
