@@ -1,7 +1,11 @@
 
-## URI Reference Manifest {#suit-uri}
+## Example 1: SUIT Manifest pointing to URI of the Trusted Component Binary {#suit-uri}
+{: numbered='no'}
+
 ### CBOR Diagnostic Notation of SUIT Manifest
-~~~
+{: numbered='no'}
+
+~~~~
 / SUIT_Envelope_Tagged / 107( {
   / suit-authentication-wrapper / 2: << [
     << [
@@ -52,11 +56,13 @@
     ] >>
   } >>
 } )
-~~~
+~~~~
 
 
 ### CBOR Binary Representation
-~~~
+{: numbered='no'}
+
+~~~~
 D8 6B                                               # tag(107) / SUIT_Envelope_Tagged /
    A2                                               # map(2)
       02                                            # unsigned(2) / suit-authentication-wrapper /
@@ -134,11 +140,13 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                   0F                                # unsigned(15)
                   03                                # unsigned(3) / suit-condition-image-match: /
                   0F                                # unsigned(15)
-~~~
+~~~~
 
 
 ### CBOR Binary in Hex
-~~~
+{: numbered='no'}
+
+~~~~
 D86BA2025873825824822F5820DB601ADE73092B58532CA03FBB663DE495
 32435336F1558B49BB622726A2FEDD584AD28443A10126A0F658405B2D53
 5A2B6D5E3C585C1074F414DA9E10BD285C99A33916DADE3ED38812504817
@@ -151,4 +159,4 @@ A8C3A14FD9B77A30D046397481469468ECE80E14010F020F0958458614A1
 15783B68747470733A2F2F6578616D706C652E6F72672F38643832353733
 612D393236642D343735342D393335332D3332646332393939376637342E
 7461150F030F
-~~~
+~~~~

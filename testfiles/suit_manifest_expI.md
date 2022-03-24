@@ -1,7 +1,11 @@
 
-## Integrated Payload Manifest {#suit-integrated}
+## Example 2: SUIT Manifest including the Trusted Component Binary {#suit-integrated}
+{: numbered='no'}
+
 ### CBOR Diagnostic Notation of SUIT Manifest
-~~~
+{: numbered='no'}
+
+~~~~
 / SUIT_Envelope_Tagged / 107( {
   / suit-authentication-wrapper / 2: << [
     << [
@@ -53,11 +57,13 @@
     ] >>
   } >>
 } )
-~~~
+~~~~
 
 
 ### CBOR Binary Representation
-~~~
+{: numbered='no'}
+
+~~~~
 D8 6B                                               # tag(107) / SUIT_Envelope_Tagged /
    A3                                               # map(3)
       02                                            # unsigned(2) / suit-authentication-wrapper /
@@ -139,11 +145,13 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                   0F                                # unsigned(15)
                   03                                # unsigned(3) / suit-condition-image-match: /
                   0F                                # unsigned(15)
-~~~
+~~~~
 
 
 ### CBOR Binary in Hex
-~~~
+{: numbered='no'}
+
+~~~~
 D86BA3025873825824822F582014A98BE957DE38FAE37376EA491FD6CAD9
 BFBD3C90051C8F5B017D7A496C3B05584AD28443A10126A0F658404093B3
 23953785981EB607C8BA61B21E5C4F85726A2AF48C1CB05BD4401B1B1565
@@ -155,4 +163,4 @@ C0DDD5F15243566087DB4F5B0AA26C2F0250DB42F7093D8C55BAA8C5265F
 C5820F4E035824822F58208CF71AC86AF31BE184EC7A05A411A8C3A14FD9
 B77A30D046397481469468ECE80E14010F020F094C8614A1156323746315
 0F030F
-~~~
+~~~~

@@ -1,7 +1,11 @@
 
-## Delete Component Manifest {#suit-delete}
+## E.4. Example 4: Unlink a Trusted Component {#suit-unlink}
+{: numbered='no'}
+
 ### CBOR Diagnostic Notation of SUIT Manifest
-~~~
+{: numbered='no'}
+
+~~~~
 / SUIT_Envelope_Tagged / 107( {
   / suit-authentication-wrapper / 2: << [
     << [
@@ -44,11 +48,13 @@
     ] >>
   } >>
 } )
-~~~
+~~~~
 
 
 ### CBOR Binary Representation
-~~~
+{: numbered='no'}
+
+~~~~
 D8 6B                                               # tag(107) / SUIT_Envelope_Tagged /
    A2                                               # map(2)
       02                                            # unsigned(2) / suit-authentication-wrapper /
@@ -113,11 +119,13 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                   00                                # unsigned(0)
                   18 21                             # unsigned(33) / suit-directive-unlink: /
                   00                                # unsigned(0)
-~~~
+~~~~
 
 
 ### CBOR Binary in Hex
-~~~
+{: numbered='no'}
+
+~~~~
 D86BA2025873825824822F5820632454F19A9440A5B83493628A7EF8704C
 8A0205A62C34E425BAA34C71341F42584AD28443A10126A0F65840A32CDB
 7C1D089C27408CED3C79087220EB0D77F105BB5330912875F4D94AD108D7
@@ -126,4 +134,4 @@ BF035873A40101021BFFFFFFFFFFFFFFFF03585BA20281844B544545502D
 446576696365485365637572654653508D82573A926D4754935332DC2999
 7F7442746104582B8614A20150C0DDD5F15243566087DB4F5B0AA26C2F02
 50DB42F7093D8C55BAA8C5265FC5820F4E010F020F0946840C00182100
-~~~
+~~~~

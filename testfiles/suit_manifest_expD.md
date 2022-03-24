@@ -1,9 +1,11 @@
 
 ## Example 3: Supplying Personalization Data for Trusted Component Binary {#suit-personalization}
+{: numbered='no'}
 
 ### CBOR Diagnostic Notation of SUIT Manifest
+{: numbered='no'}
 
-~~~
+~~~~
 / SUIT_Envelope_Tagged / 107( {
   / suit-authentication-wrapper / 2: << [
     << [
@@ -77,12 +79,13 @@
     ] >>
   } >>
 } )
-~~~
+~~~~
 
 
 ### CBOR Binary Represenation
+{: numbered='no'}
 
-~~~
+~~~~
 D8 6B                                               # tag(107) / SUIT_Envelope_Tagged /
    A2                                               # map(2)
       02                                            # unsigned(2) / suit-authentication-wrapper: /
@@ -195,12 +198,13 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
                   00
                   03                                # unsigned(3) / suit-condition-image-match: /
                   0F                                # unsigned(15)
-~~~
+~~~~
 
 
 ### CBOR Binary in Hex
+{: numbered='no'}
 
-~~~
+~~~~
 D86BA2025873825824822F5820CE596D785169B72712560B3A246AA98F81
 4498EA3625EEBB72CED9AF273E7FFD584AD28443A10126A0F65840E9083A
 A71D2BFCE48253037B9C3116A5EDF23BE0F4B4357A8A835F724660DA7482
@@ -216,4 +220,4 @@ F7093D8C55BAA8C5265FC5820F4E035824822F5820AAABCCCDEEEF000122
 393939376637342E737569741502030F09582F8C0D0012000C0014A11578
 1F68747470733A2F2F6578616D706C652E6F72672F636F6E6669672E6A73
 6F6E1502030F0A45840C00030F
-~~~
+~~~~
