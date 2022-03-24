@@ -33,7 +33,8 @@ typedef enum {
     SUIT_ERR_NO_CALLBACK                = 12, /*! callback function to be called does not provided */
     SUIT_ERR_NO_ARGUMENT                = 13, /*! arguments for callback function did not appear */
     SUIT_ERR_TRY_OUT                    = 14, /*! all command_sequence in try-each section failed */
-    SUIT_ERR_ABORT                      = 31,
+    SUIT_ERR_NOT_FOUND                  = 15, /*! the specified content does not exists or unaccessible */
+    SUIT_ERR_ABORT                      = 31, /*! abort to execute, mainly for libcsuit internal */
 } suit_err_t;
 
 /*! \brief abort immediately on any error */
@@ -48,6 +49,7 @@ typedef enum {
 #define SUIT_DECODE_MODE_SKIP_ANY_ERROR       255
 
 #define SUIT_MAX_ARRAY_LENGTH           20
+#define SUIT_MAX_KEY_NUM                4
 #define SUIT_MAX_NAME_LENGTH            256 /* the length of path or name such as component_identifier */
 #define SUIT_MAX_URI_LENGTH             256 /* the length of uri to fetch something */
 #define SUIT_MAX_COMPONENT_NUM          3

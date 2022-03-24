@@ -231,7 +231,7 @@ typedef struct suit_inputs {
     uint8_t buf[SUIT_MAX_DATA_SIZE];
     size_t left_len;
     size_t key_len;
-    struct t_cose_key public_keys[SUIT_MAX_ARRAY_LENGTH];
+    struct t_cose_key public_keys[SUIT_MAX_KEY_NUM];
 } suit_inputs_t;
 
 typedef struct suit_callbacks {
