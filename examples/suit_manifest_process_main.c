@@ -63,78 +63,6 @@ size_t read_file(const char *file_path, const size_t write_buf_len, uint8_t *wri
     return read_len;
 }
 
-suit_err_t print_run(suit_run_args_t run_args)
-{
-    printf("run callback : {\n");
-    printf("  component-identifier : ");
-    suit_print_component_identifier(&run_args.component_identifier);
-    printf("\n");
-    printf("  argument(len=%ld) : h'", run_args.args_len);
-    suit_print_hex(run_args.args, run_args.args_len);
-    printf("'\n");
-    printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", run_args.report.record_on_success, run_args.report.record_on_failure, run_args.report.sysinfo_success, run_args.report.sysinfo_failure);
-    printf("}\n\n");
-    return SUIT_SUCCESS;
-}
-
-suit_err_t print_copy(suit_copy_args_t copy_args)
-{
-    printf("copy args : {\n");
-    printf("  src-component-identifier : ");
-    suit_print_component_identifier(&copy_args.src);
-    printf("\n");
-    printf("  dst-component-identifier : ");
-    suit_print_component_identifier(&copy_args.dst);
-    printf("\n");
-
-    printf("  copy-info : %s", suit_info_key_to_str(copy_args.info_key));
-    switch (copy_args.info_key) {
-    case SUIT_INFO_DEFAULT:
-        /* nothing to be printed */
-        break;
-    case SUIT_INFO_ENCRYPTION:
-        /* TODO: nothing to be printed */
-        break;
-    case SUIT_INFO_COMPRESSION:
-        printf("{algorithm : %s}", suit_compression_algorithm_to_str(copy_args.info.compression.algorithm));
-        break;
-    case SUIT_INFO_UNPACK:
-        printf("{algorithm : %s}", suit_unpack_algorithm_to_str(copy_args.info.unpack.algorithm));
-        break;
-    }
-    printf("\n");
-
-    printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", copy_args.report.record_on_success, copy_args.report.record_on_failure, copy_args.report.sysinfo_success, copy_args.report.sysinfo_failure);
-    printf("}\n\n");
-    return SUIT_SUCCESS;
-}
-
-suit_err_t print_store(suit_store_args_t store_args)
-{
-    printf("store callback : {\n");
-    switch (store_args.key) {
-    case SUIT_DEPENDENCIES:
-        printf("  dst-dependnecy-digest :\n");
-        suit_print_digest(&store_args.dst.dependency.digest, 4);
-        printf("  dst-dependency-prefix : ");
-        suit_print_component_identifier(&store_args.dst.dependency.prefix);
-        printf("\n");
-        break;
-    case SUIT_COMPONENTS:
-        printf("  dst-component-identifier : ");
-        suit_print_component_identifier(&store_args.dst.component_identifier);
-        printf("\n");
-        break;
-    default:
-        printf("  dst-UNKNOWN(%d)\n", store_args.key);
-        exit(EXIT_FAILURE);
-    }
-    printf("  ptr : %p (%ld)\n", store_args.ptr, store_args.buf_len);
-    printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", store_args.report.record_on_success, store_args.report.record_on_failure, store_args.report.sysinfo_success, store_args.report.sysinfo_failure);
-    printf("}\n\n");
-    return SUIT_SUCCESS;
-}
-
 
 const uint8_t tc_uri[] = {
     0x68, 0x74, 0x74, 0x70, 0x73, 0x3A, 0x2F, 0x2F, 0x65, 0x78,
@@ -227,16 +155,18 @@ const struct name_data name_data[] = {
     {.name = config_uri, .data = config_data, .data_len = sizeof(config_data)},
 };
 
-#define SUIT_PRINT_URI_LEN 64
-suit_err_t print_fetch(suit_fetch_args_t fetch_args)
+#ifdef suit_fetch_callback
+#undef suit_fetch_callback
+#endif
+suit_err_t __wrap_suit_fetch_callback(suit_fetch_args_t fetch_args)
 {
-    printf("fetch callback : {\n");
-    int print_len = SUIT_PRINT_URI_LEN;
+    printf("my fetch callback : {\n");
+    int print_len = SUIT_MAX_PRINT_URI_COUNT;
     if (fetch_args.uri_len < print_len) {
         print_len = (int)fetch_args.uri_len;
     }
     printf("  uri : \"%.*s\"", print_len, (char *)fetch_args.uri);
-    if (fetch_args.uri_len > SUIT_PRINT_URI_LEN) {
+    if (fetch_args.uri_len > SUIT_MAX_PRINT_URI_COUNT) {
         printf("...");
     }
     printf(" (%ld)\n", fetch_args.uri_len);
@@ -281,65 +211,6 @@ suit_err_t print_fetch(suit_fetch_args_t fetch_args)
     return SUIT_SUCCESS;
 }
 
-suit_err_t print_report(suit_report_args_t report_args)
-{
-    printf("report callback : {\n");
-    printf("  at: %d(%s)", report_args.level0, suit_envelope_key_to_str(report_args.level0));
-
-    switch (report_args.level0) {
-    case SUIT_AUTHENTICATION:
-        break;
-    case SUIT_MANIFEST:
-        printf(", %d(%s)", report_args.level1.manifest_key, suit_manifest_key_to_str(report_args.level1.manifest_key));
-        switch (report_args.level1.manifest_key) {
-        case SUIT_COMMON:
-            printf(", %d(%s)", report_args.level2.common_key, suit_common_key_to_str(report_args.level2.common_key));
-            if (report_args.level2.common_key == SUIT_COMMON_SEQUENCE) {
-                printf(", %d(%s)", report_args.level3.condition_directive, suit_command_sequence_key_to_str(report_args.level3.condition_directive));
-                switch (report_args.level3.condition_directive) {
-                case SUIT_DIRECTIVE_SET_PARAMETERS:
-                case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
-                    printf(", %d(%s)", report_args.level4.parameter, suit_parameter_key_to_str(report_args.level4.parameter));
-                    break;
-                default:
-                    break;
-                }
-            }
-            break;
-        case SUIT_INSTALL:
-        case SUIT_VALIDATE:
-        case SUIT_RUN:
-            printf(", %d(%s)", report_args.level2.condition_directive, suit_command_sequence_key_to_str(report_args.level2.condition_directive));
-            switch (report_args.level2.condition_directive) {
-            case SUIT_DIRECTIVE_SET_PARAMETERS:
-            case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
-                printf(", %d(%s)", report_args.level3.parameter, suit_parameter_key_to_str(report_args.level3.parameter));
-                break;
-            default:
-                break;
-            }
-            break;
-        default:
-            break;
-        }
-        break;
-    case SUIT_DELEGATION:
-        break;
-    default:
-        break;
-    }
-    printf("\n");
-
-    printf("  QCBORError:    %d(%s)\n", report_args.qcbor_error, qcbor_err_to_str(report_args.qcbor_error));
-    printf("  suit_err_t:    %d(%s)\n", report_args.suit_error, suit_err_to_str(report_args.suit_error));
-    printf("  suit_rep_policy_t: RecPass%x RecFail%x SysPass%x SysFail%x\n", report_args.report.record_on_success, report_args.report.record_on_failure, report_args.report.sysinfo_success, report_args.report.sysinfo_failure);
-
-    printf("}\n\n");
-
-    exit(EXIT_FAILURE);
-    return SUIT_ERR_FATAL;
-}
-
 int main(int argc, char *argv[]) {
     // check arguments.
     if (argc < 2) {
@@ -353,12 +224,6 @@ int main(int argc, char *argv[]) {
     suit_inputs_t suit_inputs = {0};
     suit_inputs.left_len = SUIT_MAX_DATA_SIZE;
 
-    suit_callbacks_t suit_callbacks = {0};
-    suit_callbacks.fetch = print_fetch;
-    suit_callbacks.store = print_store;
-    suit_callbacks.copy = print_copy;
-    suit_callbacks.run = print_run;
-    suit_callbacks.report = print_report;
     suit_inputs.key_len = NUM_PUBLIC_KEYS;
 
     // Read key from der file.
@@ -381,7 +246,7 @@ int main(int argc, char *argv[]) {
 
     // Decode manifest file.
     printf("\nmain : Decode Manifest file.\n");
-    result = suit_process_envelope(&suit_inputs, &suit_callbacks);
+    result = suit_process_envelope(&suit_inputs);
     if (result != SUIT_SUCCESS) {
         printf("main : Can't parse Manifest file. err=%d\n", result);
         return EXIT_FAILURE;

@@ -17,6 +17,7 @@
 #include "qcbor/qcbor_spiffy_decode.h"
 #include "csuit/suit_common.h"
 #include "csuit/suit_manifest_process.h"
+#include "csuit/suit_manifest_print.h"
 
 suit_err_t suit_set_compression_info(QCBORDecodeContext *context,
                                      suit_compression_info_t *compression_info) {
@@ -54,8 +55,7 @@ suit_err_t suit_set_compression_info(QCBORDecodeContext *context,
 suit_err_t suit_set_parameters(QCBORDecodeContext *context,
                                const suit_con_dir_key_t directive,
                                suit_parameter_args_t *parameters,
-                               const suit_index_t index,
-                               const suit_callbacks_t *suit_callbacks) {
+                               const suit_index_t index) {
     suit_err_t result = SUIT_SUCCESS;
     QCBORItem item;
     QCBORError error = QCBOR_SUCCESS;
@@ -208,8 +208,8 @@ suit_err_t suit_set_parameters(QCBORDecodeContext *context,
     return result;
 
 error:
-    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->report(
+    if (result != SUIT_ERR_ABORT) {
+        suit_report_callback(
             (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = SUIT_COMMON,
@@ -256,8 +256,7 @@ suit_payload_t* suit_key_to_payload(suit_extracted_t *extracted,
 
 suit_err_t suit_process_dependency(suit_extracted_t *extracted,
                                    suit_index_t dependency_index,
-                                   const suit_inputs_t *suit_inputs,
-                                   const suit_callbacks_t *suit_callbacks) {
+                                   const suit_inputs_t *suit_inputs) {
     suit_payload_t *payload = suit_index_to_payload(extracted, dependency_index);
     if (payload == NULL) {
         return SUIT_ERR_NO_ARGUMENT;
@@ -339,8 +338,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                                              const suit_manifest_key_t command_key,
                                              UsefulBufC buf,
                                              suit_parameter_args_t parameters[],
-                                             suit_inputs_t *suit_inputs,
-                                             const suit_callbacks_t *suit_callbacks) {
+                                             suit_inputs_t *suit_inputs) {
     suit_err_t result = SUIT_SUCCESS;
     suit_index_t index = {.is_dependency = 0, .len = 1, .index[0].val = 0};
     suit_con_dir_key_t condition_directive_key = SUIT_CONDITION_INVALID;
@@ -405,10 +403,6 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
 
                 suit_payload_t *payload = suit_key_to_payload(extracted, parameters[tmp_index].uri_list[0]);
                 if (payload == NULL) {
-                    if (suit_callbacks->fetch == NULL) {
-                        result = SUIT_ERR_NO_CALLBACK;
-                        goto error;
-                    }
                     if (extracted->payloads.len >= SUIT_MAX_ARRAY_LENGTH) {
                         result = SUIT_ERR_NO_MEMORY;
                         goto error;
@@ -436,7 +430,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                     args.fetch.buf_len = &image_size;
                     args.fetch.ptr = &suit_inputs->buf[SUIT_MAX_DATA_SIZE - suit_inputs->left_len];
 
-                    result = suit_callbacks->fetch(args.fetch);
+                    result = suit_fetch_callback(args.fetch);
                     if (buf_size < image_size) {
                         result = SUIT_ERR_NO_MEMORY;
                         goto error;
@@ -457,10 +451,6 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                 }
                 else {
                     /* already handled with integrated-payload or integrated-dependency */
-                    if (suit_callbacks->store == NULL) {
-                        result = SUIT_ERR_NO_CALLBACK;
-                        goto error;
-                    }
                     args.store = (suit_store_args_t){0};
                     args.store.report = report;
                     if (index.is_dependency) {
@@ -474,7 +464,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                     UsefulBuf buf = UsefulBuf_Unconst(payload->bytes);
                     args.store.ptr = buf.ptr;
                     args.store.buf_len = buf.len;
-                    result = suit_callbacks->store(args.store);
+                    result = suit_store_callback(args.store);
                     if (result != SUIT_SUCCESS) {
                         goto error;
                     }
@@ -491,10 +481,6 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
             for (size_t j = 0; j < index.len; j++) {
                 const uint8_t tmp_index = index.index[j].val + index.is_dependency * SUIT_MAX_COMPONENT_NUM;
 
-                if (suit_callbacks->copy == NULL) {
-                    result = SUIT_ERR_NO_CALLBACK;
-                    goto error;
-                }
                 args.copy = (suit_copy_args_t){0};
                 /* TODO
                 if (parameters[tmp_index].encryption_info.) {
@@ -514,7 +500,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                 args.copy.report.val = val.u64;
                 args.copy.src = extracted->components.comp_id[parameters[tmp_index].source_component];
                 args.copy.dst = extracted->components.comp_id[tmp_index];
-                result = suit_callbacks->copy(args.copy);
+                result = suit_copy_callback(args.copy);
             }
             break;
         case SUIT_DIRECTIVE_RUN:
@@ -522,11 +508,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
             for (size_t j = 0; j < index.len; j++) {
                 const uint8_t tmp_index = index.index[j].val + index.is_dependency * SUIT_MAX_COMPONENT_NUM;
 
-                if (suit_callbacks->run == NULL) {
-                    result = SUIT_ERR_NO_CALLBACK;
-                    goto error;
-                }
-                else if (extracted->components.len < tmp_index || extracted->components.comp_id[tmp_index].len == 0) {
+                if (extracted->components.len < tmp_index || extracted->components.comp_id[tmp_index].len == 0) {
                     result = SUIT_ERR_NO_ARGUMENT;
                     goto error;
                 }
@@ -538,7 +520,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                 if (args.run.args_len > 0) {
                     memcpy(args.run.args, parameters[tmp_index].run_args.ptr, args.run.args_len);
                 }
-                result = suit_callbacks->run(args.run);
+                result = suit_run_callback(args.run);
             }
             break;
         case SUIT_DIRECTIVE_TRY_EACH:
@@ -596,11 +578,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
             for (size_t j = 0; j < index.len; j++) {
                 const uint8_t tmp_index = index.index[j].val + index.is_dependency * SUIT_MAX_COMPONENT_NUM;
 
-                if (suit_callbacks->store == NULL) {
-                    result = SUIT_ERR_NO_CALLBACK;
-                    goto error;
-                }
-                else if (extracted->components.len < tmp_index || extracted->components.comp_id[tmp_index].len == 0) {
+                if (extracted->components.len < tmp_index || extracted->components.comp_id[tmp_index].len == 0) {
                     result = SUIT_ERR_NO_ARGUMENT;
                     goto error;
                 }
@@ -616,7 +594,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                 }
                 args.store.ptr = NULL;
                 args.store.buf_len = 0;
-                result = suit_callbacks->store(args.store);
+                result = suit_store_callback(args.store);
             }
             break;
         case SUIT_CONDITION_VENDOR_IDENTIFIER:
@@ -698,8 +676,8 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
     return result;
 
 error:
-    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->report(
+    if (result != SUIT_ERR_ABORT) {
+        suit_report_callback(
             (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = command_key,
@@ -717,8 +695,7 @@ error:
 }
 
 suit_err_t suit_process_common_sequence(suit_extracted_t *extracted,
-                                        suit_parameter_args_t parameters[],
-                                        const suit_callbacks_t *suit_callbacks) {
+                                        suit_parameter_args_t parameters[]) {
     suit_err_t result = SUIT_SUCCESS;
     QCBORDecodeContext context;
     QCBORItem item;
@@ -895,8 +872,8 @@ suit_err_t suit_process_common_sequence(suit_extracted_t *extracted,
     return result;
 
 error:
-    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->report(
+    if (result != SUIT_ERR_ABORT) {
+        suit_report_callback(
             (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = SUIT_COMMON,
@@ -914,8 +891,7 @@ error:
 
 suit_err_t suit_process_common_and_command_sequence(suit_extracted_t *extracted,
                                                     const suit_manifest_key_t command_key,
-                                                    suit_inputs_t *suit_inputs,
-                                                    const suit_callbacks_t *suit_callbacks) {
+                                                    suit_inputs_t *suit_inputs) {
     suit_err_t result = SUIT_SUCCESS;
     suit_parameter_args_t parameters[SUIT_MAX_COMPONENT_NUM + SUIT_MAX_DEPENDENCY_NUM];
 
@@ -956,8 +932,8 @@ suit_err_t suit_process_common_and_command_sequence(suit_extracted_t *extracted,
     return suit_process_command_sequence_buf(extracted, command_key, command_buf, parameters, suit_inputs, suit_callbacks);
 
 error:
-    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->report(
+    if (result != SUIT_ERR_ABORT) {
+        suit_report_callback(
             (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = command_key,
@@ -1016,8 +992,7 @@ suit_err_t suit_process_authentication_wrapper(QCBORDecodeContext *context,
 }
 
 suit_err_t suit_extract_common(QCBORDecodeContext *context,
-                               suit_extracted_t *extracted,
-                               const suit_callbacks_t *suit_callbacks) {
+                               suit_extracted_t *extracted) {
     QCBORItem item;
     QCBORError error = QCBOR_SUCCESS;
     suit_err_t result = SUIT_SUCCESS;
@@ -1063,8 +1038,8 @@ suit_err_t suit_extract_common(QCBORDecodeContext *context,
     return result;
 
 error:
-    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->report(
+    if (result != SUIT_ERR_ABORT) {
+        suit_report_callback(
             (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = manifest_key,
@@ -1081,8 +1056,7 @@ error:
 
 
 suit_err_t suit_extract_manifest(UsefulBufC manifest,
-                                 suit_extracted_t *extracted,
-                                 const suit_callbacks_t *suit_callbacks) {
+                                 suit_extracted_t *extracted) {
     suit_err_t result = SUIT_SUCCESS;
     QCBORDecodeContext context;
     QCBORItem item;
@@ -1232,8 +1206,8 @@ suit_err_t suit_extract_manifest(UsefulBufC manifest,
     return result;
 
 error:
-    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->report(
+    if (result != SUIT_ERR_ABORT) {
+        suit_report_callback(
             (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = manifest_key,
@@ -1252,8 +1226,7 @@ error:
 /*
     Public function. See suit_manifest_process.h
  */
-suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs,
-                                 const suit_callbacks_t *suit_callbacks) {
+suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs) {
     QCBORDecodeContext context;
     QCBORError error = QCBOR_SUCCESS;
     QCBORItem item;
@@ -1410,8 +1383,8 @@ out:
     return result;
 
 error:
-    if (suit_callbacks->report != NULL || result != SUIT_ERR_ABORT) {
-        suit_callbacks->report(
+    if (result != SUIT_ERR_ABORT) {
+        suit_report_callback(
             (suit_report_args_t) {
                 .level0 = envelope_key,
                 .level1.manifest_key = manifest_key,

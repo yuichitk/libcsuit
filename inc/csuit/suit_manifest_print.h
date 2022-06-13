@@ -16,9 +16,11 @@
 #include <string.h>
 #include "suit_common.h"
 #include "suit_manifest_data.h"
+#include "suit_manifest_process.h"
 
 #define SUIT_MAX_PRINT_BYTE_COUNT        5
 #define SUIT_MAX_PRINT_TEXT_COUNT        64
+#define SUIT_MAX_PRINT_URI_COUNT         64
 
 const char* suit_envelope_key_to_str(suit_envelope_key_t envelope_key);
 const char* suit_manifest_key_to_str(suit_manifest_key_t manifest_key);
@@ -39,4 +41,44 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
 suit_err_t suit_print_component_identifier(const suit_component_identifier_t *identifier);
 suit_err_t suit_print_digest(const suit_digest_t *digest, const uint32_t indent_space);
 suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, const uint32_t indent_space);
+
+/*!
+    \brief  Print SUIT fetch callback
+
+    \param[in]      fetch_args      Fetch and suit-report arguments. See \ref suit_fetch_args_t.
+    Triggered on \ref SUIT_DIRECTIVE_FETCH.
+    \return         This returns one of the error codes defined by \ref suit_err_t.
+*/
+suit_err_t suit_fetch_callback(suit_fetch_args_t fetch_args);
+
+/*!
+    \brief Print SUIT store callback
+    \param[in]      store_args      Store and suit-report arguments. See \ref suit_store_args_t.
+    Triggered on \ref SUIT_DIRECTIVE_FETCH of integrated-payload or integrated-dependency.
+    \return         This returns one of the error codes defined by \ref suit_err_t.
+*/
+suit_err_t suit_store_callback(suit_store_args_t store_args);
+
+/*!
+    \brief Print SUIT copy callback
+    \param[in]      copy_args       Copy and suit-report arguments. See \ref suit_copy_args_t.
+    Triggered on \ref SUIT_DIRECTIVE_COPY.
+    \return         This returns one of the error codes defined by \ref suit_err_t.
+*/
+suit_err_t suit_copy_callback(suit_copy_args_t copy_args);
+
+/*!
+    \brief Print SUIT run callback
+    \param[in]      run_args        Run and suit-report arguments. See \ref suit_run_args_t.
+    \return         This returns one of the error codes defined by \ref suit_err_t.
+*/
+suit_err_t suit_run_callback(suit_run_args_t run_args);
+
+/*!
+    \brief Print SUIT report callback
+    \param[in]      report_args     Suit-report arguments and errors. See \ref suit_report_args_t.
+    \return         This returns one of the error codes defined by \ref suit_err_t.
+*/
+suit_err_t suit_report_callback(suit_report_args_t report_args);
+
 #endif  /* SUIT_MANIFEST_PRINT_H */

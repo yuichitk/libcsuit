@@ -5,10 +5,10 @@
 #
 
 CFLAGS	= -Wall -g
-LDFLAGS	= -lt_cose -lqcbor -lcrypto
+LDFLAGS	= -lcsuit -lt_cose -lqcbor -lcrypto -lm
 INC		= -I ./inc -I ./examples/inc
 TARGET	= ./suit_manifest_process
-SRCS	= examples/suit_manifest_process_main.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_common.c src/suit_manifest_process.c src/suit_cose.c src/suit_digest.c src/suit_manifest_print.c src/suit_manifest_decode.c
+SRCS	= examples/suit_manifest_process_main.c examples/suit_examples_common.c examples/suit_examples_cose.c
 OBJDIR	= ./obj
 OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
@@ -21,7 +21,7 @@ endif
 all: $(TARGET)
 
 $(TARGET):	$(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -Xlinker --wrap=suit_fetch_callback -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o:	%.c
 	mkdir -p $(dir $@)

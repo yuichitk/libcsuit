@@ -234,14 +234,6 @@ typedef struct suit_inputs {
     struct t_cose_key public_keys[SUIT_MAX_KEY_NUM];
 } suit_inputs_t;
 
-typedef struct suit_callbacks {
-    suit_err_t (*fetch)(suit_fetch_args_t fetch);
-    suit_err_t (*store)(suit_store_args_t store);
-    suit_err_t (*copy)(suit_copy_args_t copy);
-    suit_err_t (*run)(suit_run_args_t run);
-    suit_err_t (*report)(suit_report_args_t report);
-} suit_callbacks_t;
-
 typedef struct suit_extracted {
     suit_dependencies_t dependencies;
     suit_components_t components;
@@ -268,34 +260,17 @@ typedef struct suit_extracted {
     \brief  Decode & Process SUIT binary
 
     \param[in]      suit_inputs     To be procceed manifests and its public keys to verify.
-    \param[in]      suit_callbacks  Callback function pointers to be called by libcsuit.
-
     \return         This returns one of the error codes defined by \ref suit_err_t.
 
     Process one or more SUIT_Envelope(s) like below.
     Libcsuit parse suit-install, suit-run, ... and call some callback functions respectively.
     If any error occurred, report callback function will be called if set.
+    There are callbacks just printing the argument in the library, you can overwrite it
+    with linker options (see Makefile.process for example).
 
     The figure below describes the program flow in pseudocode.
     Note that the arguments and function names are not the same as the actual.
 
-    suit_callbacks.fetch()
-    \param[in]      fetch_args      Fetch and suit-report arguments. See \ref suit_fetch_args_t.
-    Triggered on \ref SUIT_DIRECTIVE_FETCH.
-
-    suit_callbacks.store()
-    \param[in]      store_args      Store and suit-report arguments. See \ref suit_store_args_t.
-    Triggered on \ref SUIT_DIRECTIVE_FETCH of integrated-payload or integrated-dependency.
-
-    suit_callbacks.copy()
-    \param[in]      copy_args       Copy and suit-report arguments. See \ref suit_copy_args_t.
-    Triggered on \ref SUIT_DIRECTIVE_COPY.
-
-    suit_callbacks.run()
-    \param[in]      run_args        Run and suit-report arguments. See \ref suit_run_args_t.
-
-    suit_callbacks.report()
-    \param[in]      report_args     Suit-report arguments and errors. See \ref suit_report_args_t.
     Triggerd on SUIT_CONDITION_* arguments match the policy (Rec|Sys)-(Pass|Fail) \ref suit_rep_policy_t,
     or any error occurred.
     QCBOR and libcsuit error codes are set in qcbor_error and suit_error respectively.
@@ -307,20 +282,20 @@ typedef struct suit_extracted {
     |   init_manifest();            |
     |   while {                     |
     |     fetch_manifests();        |
-    |     update_suit_process();    |    +-libcsuit-------------------------------+
-    |     suit_process_envelope();  |===>| suit_process_envelope() {              |
-    |   }                           |    |   check_digest_and_extract();          |
-    | }                             |    |   dependency_resolution();             |
-    |                               |    |   install() {                          |
-    | fetch_callback() {            |<===|     err = callbacks.fetch(m.uri, ptr); |
-    |   get_image(uri, ptr);        |    |     (wait)                             |
-    |   return SUIT_SUCCESS;        |===>|     if (!err)                          |
-    | }                             |    |       callbacks.report(err);           |
-    |                               |    |     check_image_digest(m, ptr);        |
-    | report_callback() {           |    |     ...                                |
-    |   suit_report();              |    |   }                                    |
-    |   if (err)                    |    | }                                      |
-    |     recover_error();          |    +----------------------------------------+
+    |     update_suit_process();    |    +-libcsuit-------------------------+
+    |     suit_process_envelope();  |===>| suit_process_envelope() {        |
+    |   }                           |    |   check_digest_and_extract();    |
+    | }                             |    |   dependency_resolution();       |
+    |                               |    |   install() {                    |
+    | suit_fetch_callback() {       |<===|     err = suit_fetch_callback(); |
+    |   http_get(uri, ptr);         |    |     (wait)                       |
+    |   return SUIT_SUCCESS;        |===>|     if (!err)                    |
+    | }                             |    |       suit_report_callback(err); |
+    |                               |    |     check_image_digest(m, ptr);  |
+    | report_callback() {           |    |     ...                          |
+    |   suit_report();              |    |   }                              |
+    |   if (err)                    |    | }                                |
+    |     recover_error();          |    +----------------------------------+
     |   if (fatal)                  |
     |     return SUIT_ERR_FATAL;    |
     |   return SUIT_SUCCESS;        |
@@ -328,7 +303,7 @@ typedef struct suit_extracted {
     +-------------------------------+
     \endcode
  */
-suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs, const suit_callbacks_t *suit_callbacks);
+suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs);
 
 #endif /* SUIT_MANIFEST_PROCESS_H */
 
