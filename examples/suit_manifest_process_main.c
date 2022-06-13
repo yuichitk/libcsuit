@@ -220,11 +220,13 @@ int main(int argc, char *argv[]) {
     int32_t result = 0;
     int i;
     char char_public_keys[NUM_PUBLIC_KEYS][PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
+    struct t_cose_key public_keys[NUM_PUBLIC_KEYS];
 
     suit_inputs_t suit_inputs = {0};
     suit_inputs.left_len = SUIT_MAX_DATA_SIZE;
 
     suit_inputs.key_len = NUM_PUBLIC_KEYS;
+    suit_inputs.public_keys = public_keys;
 
     // Read key from der file.
     // This code is only available for openssl prime256v1.
