@@ -263,7 +263,7 @@ suit_err_t suit_process_dependency(suit_extracted_t *extracted,
     }
     suit_inputs_t tmp_inputs = *suit_inputs;
     tmp_inputs.manifest = payload->bytes;
-    return suit_process_envelope(&tmp_inputs, suit_callbacks);
+    return suit_process_envelope(&tmp_inputs);
 }
 
 suit_err_t suit_set_index(QCBORDecodeContext *context,
@@ -382,11 +382,11 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
             break;
         case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
             // TODO: support also bool or [ + uint ] index
-            result = suit_set_parameters(&context, SUIT_DIRECTIVE_OVERRIDE_PARAMETERS, parameters, index, suit_callbacks);
+            result = suit_set_parameters(&context, SUIT_DIRECTIVE_OVERRIDE_PARAMETERS, parameters, index);
             break;
         case SUIT_DIRECTIVE_SET_PARAMETERS:
             // TODO: support also bool or [ + uint ] index
-            result = suit_set_parameters(&context, SUIT_DIRECTIVE_SET_PARAMETERS, parameters, index, suit_callbacks);
+            result = suit_set_parameters(&context, SUIT_DIRECTIVE_SET_PARAMETERS, parameters, index);
             break;
         case SUIT_DIRECTIVE_FETCH:
             QCBORDecode_GetUInt64(&context, &report.val);
@@ -539,7 +539,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                 QCBORDecode_GetNext(&context, &item);
                 if (item.uDataType == QCBOR_TYPE_BYTE_STRING) {
                     if (!done) {
-                        result = suit_process_command_sequence_buf(extracted, SUIT_COMMON, item.val.string, parameters, NULL, suit_callbacks);
+                        result = suit_process_command_sequence_buf(extracted, SUIT_COMMON, item.val.string, parameters, NULL);
                         if (result == SUIT_SUCCESS) {
                             done = true;
                         }
@@ -571,7 +571,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
             }
             // TODO:
             QCBORDecode_GetUInt64(&context, &report.val);
-            result = suit_process_dependency(extracted, index, suit_inputs, suit_callbacks);
+            result = suit_process_dependency(extracted, index, suit_inputs);
             break;
         case SUIT_DIRECTIVE_UNLINK:
             QCBORDecode_GetUInt64(&context, &report.val);
@@ -761,11 +761,11 @@ suit_err_t suit_process_common_sequence(suit_extracted_t *extracted,
 
         case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
             // TODO: support also bool or [ + uint ] index
-            result = suit_set_parameters(&context, SUIT_DIRECTIVE_OVERRIDE_PARAMETERS, parameters, index, suit_callbacks);
+            result = suit_set_parameters(&context, SUIT_DIRECTIVE_OVERRIDE_PARAMETERS, parameters, index);
             break;
         case SUIT_DIRECTIVE_SET_PARAMETERS:
             // TODO: support also bool or [ + uint ] index
-            result = suit_set_parameters(&context, SUIT_DIRECTIVE_SET_PARAMETERS, parameters, index, suit_callbacks);
+            result = suit_set_parameters(&context, SUIT_DIRECTIVE_SET_PARAMETERS, parameters, index);
             break;
         case SUIT_CONDITION_VENDOR_IDENTIFIER:
             QCBORDecode_GetUInt64(&context, &report.val);
@@ -827,7 +827,7 @@ suit_err_t suit_process_common_sequence(suit_extracted_t *extracted,
                 QCBORDecode_GetNext(&context, &item);
                 if (item.uDataType == QCBOR_TYPE_BYTE_STRING) {
                     if (!done) {
-                        result = suit_process_command_sequence_buf(extracted, SUIT_COMMON, item.val.string, parameters, NULL, suit_callbacks);
+                        result = suit_process_command_sequence_buf(extracted, SUIT_COMMON, item.val.string, parameters, NULL);
                         if (result == SUIT_SUCCESS) {
                             done = true;
                         }
@@ -924,12 +924,12 @@ suit_err_t suit_process_common_and_command_sequence(suit_extracted_t *extracted,
     }
 
     memset(parameters, 0, sizeof(parameters));
-    result = suit_process_common_sequence(extracted, parameters, suit_callbacks);
+    result = suit_process_common_sequence(extracted, parameters);
     if (result != SUIT_SUCCESS) {
         goto error;
     }
 
-    return suit_process_command_sequence_buf(extracted, command_key, command_buf, parameters, suit_inputs, suit_callbacks);
+    return suit_process_command_sequence_buf(extracted, command_key, command_buf, parameters, suit_inputs);
 
 error:
     if (result != SUIT_ERR_ABORT) {
@@ -1107,7 +1107,7 @@ suit_err_t suit_extract_manifest(UsefulBufC manifest,
             // TODO: check sequence-number
             break;
         case SUIT_COMMON:
-            result = suit_extract_common(&context, extracted, suit_callbacks);
+            result = suit_extract_common(&context, extracted);
             if (result != SUIT_SUCCESS) {
                 goto error;
             }
@@ -1276,7 +1276,7 @@ suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs) {
                     if (result != SUIT_SUCCESS) {
                         goto error;
                     }
-                    result = suit_extract_manifest(item.val.string, &extracted, suit_callbacks);
+                    result = suit_extract_manifest(item.val.string, &extracted);
                 }
                 break;
             case SUIT_DELEGATION:
@@ -1344,37 +1344,37 @@ suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs) {
     /* TODO: check digests */
 
     /* dependency-resolution */
-    result = suit_process_common_and_command_sequence(&extracted, SUIT_DEPENDENCY_RESOLUTION, suit_inputs, suit_callbacks);
+    result = suit_process_common_and_command_sequence(&extracted, SUIT_DEPENDENCY_RESOLUTION, suit_inputs);
     if (result != SUIT_SUCCESS) {
         goto error;
     }
 
     /* payload-fetch */
-    result = suit_process_common_and_command_sequence(&extracted, SUIT_PAYLOAD_FETCH, suit_inputs, suit_callbacks);
+    result = suit_process_common_and_command_sequence(&extracted, SUIT_PAYLOAD_FETCH, suit_inputs);
     if (result != SUIT_SUCCESS) {
         goto error;
     }
 
     /* install */
-    result = suit_process_common_and_command_sequence(&extracted, SUIT_INSTALL, suit_inputs, suit_callbacks);
+    result = suit_process_common_and_command_sequence(&extracted, SUIT_INSTALL, suit_inputs);
     if (result != SUIT_SUCCESS) {
         goto error;
     }
 
     /* validate */
-    result = suit_process_common_and_command_sequence(&extracted, SUIT_VALIDATE, suit_inputs, suit_callbacks);
+    result = suit_process_common_and_command_sequence(&extracted, SUIT_VALIDATE, suit_inputs);
     if (result != SUIT_SUCCESS) {
         goto error;
     }
 
     /* load */
-    result = suit_process_common_and_command_sequence(&extracted, SUIT_LOAD, suit_inputs, suit_callbacks);
+    result = suit_process_common_and_command_sequence(&extracted, SUIT_LOAD, suit_inputs);
     if (result != SUIT_SUCCESS) {
         goto error;
     }
 
     /* run */
-    result = suit_process_common_and_command_sequence(&extracted, SUIT_RUN, suit_inputs, suit_callbacks);
+    result = suit_process_common_and_command_sequence(&extracted, SUIT_RUN, suit_inputs);
     if (result != SUIT_SUCCESS) {
         goto error;
     }
