@@ -155,9 +155,6 @@ const struct name_data name_data[] = {
     {.name = config_uri, .data = config_data, .data_len = sizeof(config_data)},
 };
 
-#ifdef suit_fetch_callback
-#undef suit_fetch_callback
-#endif
 suit_err_t __wrap_suit_fetch_callback(suit_fetch_args_t fetch_args)
 {
     printf("my fetch callback : {\n");
