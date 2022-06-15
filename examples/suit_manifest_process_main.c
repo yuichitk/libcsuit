@@ -155,39 +155,13 @@ const struct name_data name_data[] = {
     {.name = config_uri, .data = config_data, .data_len = sizeof(config_data)},
 };
 
+suit_err_t __real_suit_fetch_callback(suit_fetch_args_t fetch_args);
 suit_err_t __wrap_suit_fetch_callback(suit_fetch_args_t fetch_args)
 {
-    printf("my fetch callback : {\n");
-    int print_len = SUIT_MAX_PRINT_URI_COUNT;
-    if (fetch_args.uri_len < print_len) {
-        print_len = (int)fetch_args.uri_len;
+    suit_err_t result = __real_suit_fetch_callback(fetch_args);
+    if (result != SUIT_SUCCESS) {
+        return result;
     }
-    printf("  uri : \"%.*s\"", print_len, (char *)fetch_args.uri);
-    if (fetch_args.uri_len > SUIT_MAX_PRINT_URI_COUNT) {
-        printf("...");
-    }
-    printf(" (%ld)\n", fetch_args.uri_len);
-    switch (fetch_args.key) {
-    case SUIT_DEPENDENCIES:
-        printf("  dst-dependnecy-digest :\n");
-        suit_print_digest(&fetch_args.dst.dependency.digest, 4);
-        printf("  dst-dependency-prefix : ");
-        suit_print_component_identifier(&fetch_args.dst.dependency.prefix);
-        printf("\n");
-        break;
-    case SUIT_COMPONENTS:
-        printf("  dst-component-identifier : ");
-        suit_print_component_identifier(&fetch_args.dst.component_identifier);
-        printf("\n");
-        break;
-    default:
-        printf("  dst-UNKNOWN(%d)\n", fetch_args.key);
-        exit(EXIT_FAILURE);
-    }
-
-    printf("  ptr : %p (%ld)\n", fetch_args.ptr, (fetch_args.buf_len == NULL) ? -1 : *fetch_args.buf_len);
-    printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", fetch_args.report.record_on_success, fetch_args.report.record_on_failure, fetch_args.report.sysinfo_success, fetch_args.report.sysinfo_failure);
-    printf("}\n\n");
 
     size_t i = 0;
     for (i = 0; i < SUIT_NAME_DATA_LEN; i++) {
@@ -197,6 +171,7 @@ suit_err_t __wrap_suit_fetch_callback(suit_fetch_args_t fetch_args)
             }
             memcpy(fetch_args.ptr, name_data[i].data, name_data[i].data_len);
             *fetch_args.buf_len = name_data[i].data_len;
+            printf("fetched %s\n\n", name_data[i].name);
             break;
         }
     }
