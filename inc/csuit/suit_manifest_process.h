@@ -147,6 +147,11 @@ typedef struct suit_fetch_args {
 
 typedef struct suit_fetch_ret {
     /**
+     *  Pointer to fetched payload.
+     */
+    void *ptr;
+
+    /**
      *  The length of the fetched payload.
      */
     size_t buf_len;
@@ -235,6 +240,7 @@ typedef struct suit_common_args {
 
 typedef struct suit_inputs {
     UsefulBufC manifest;
+    uint8_t *ptr;
     uint8_t buf[SUIT_MAX_DATA_SIZE];
     size_t left_len;
     size_t key_len;

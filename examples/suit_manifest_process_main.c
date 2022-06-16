@@ -192,6 +192,7 @@ int main(int argc, char *argv[]) {
 
     suit_inputs_t suit_inputs = {0};
     suit_inputs.left_len = SUIT_MAX_DATA_SIZE;
+    suit_inputs.ptr = suit_inputs.buf;
 
     suit_inputs.key_len = NUM_PUBLIC_KEYS;
     suit_inputs.public_keys = public_keys;

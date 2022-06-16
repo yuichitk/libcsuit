@@ -429,8 +429,9 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                         result = SUIT_ERR_NO_MEMORY;
                         goto error;
                     }
-                    args.fetch.ptr = &suit_inputs->buf[SUIT_MAX_DATA_SIZE - suit_inputs->left_len];
+                    args.fetch.ptr = suit_inputs->ptr + (SUIT_MAX_DATA_SIZE - suit_inputs->left_len); //;
                     args.fetch.buf_len = buf_size;
+                    uint8_t *buf_ptr = &suit_inputs->buf[SUIT_MAX_DATA_SIZE - suit_inputs->left_len];
 
                     /* store the fetched payload into args.fetch.ptr */
                     result = suit_fetch_callback(args.fetch, &args.fret);
@@ -444,8 +445,13 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                     suit_inputs->left_len -= args.fret.buf_len;
                     payload = &extracted->payloads.payload[extracted->payloads.len];
                     extracted->payloads.len++;
-                    payload->bytes.ptr = args.fetch.ptr;
+                    payload->bytes.ptr = buf_ptr;
                     payload->bytes.len = args.fret.buf_len;
+
+                    if (payload->bytes.ptr != args.fetch.ptr) {
+                        /* the buffer is different between the caller and callee */
+                        memcpy(buf_ptr, args.fetch.ptr, payload->bytes.len);
+                    }
 
                     payload->key = parameters[tmp_index].uri_list[0];
                     payload->index.len = 1;

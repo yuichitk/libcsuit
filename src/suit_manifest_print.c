@@ -1016,7 +1016,7 @@ suit_err_t suit_print_fetch(suit_fetch_args_t fetch_args,
         ret = SUIT_ERR_INVALID_KEY;
     }
 
-    printf("  fetch_len : %ld\n", fetch_args.buf_len);
+    printf("  fetch buf : %p(%ld)\n", fetch_args.ptr, fetch_args.buf_len);
     printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", fetch_args.report.record_on_success, fetch_args.report.record_on_failure, fetch_args.report.sysinfo_success, fetch_args.report.sysinfo_failure);
     printf("}\n\n");
 
