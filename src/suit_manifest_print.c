@@ -984,7 +984,8 @@ suit_err_t suit_store_callback(suit_store_args_t store_args)
     return suit_print_store(store_args);
 }
 
-suit_err_t suit_print_fetch(suit_fetch_args_t fetch_args)
+suit_err_t suit_print_fetch(suit_fetch_args_t fetch_args,
+                            suit_fetch_ret_t *fetch_ret)
 {
     suit_err_t ret = SUIT_SUCCESS;
     printf("fetch callback : {\n");
@@ -1015,16 +1016,16 @@ suit_err_t suit_print_fetch(suit_fetch_args_t fetch_args)
         ret = SUIT_ERR_INVALID_KEY;
     }
 
-    printf("  ptr : %p (%ld)\n", fetch_args.ptr, (fetch_args.buf_len == NULL) ? -1 : *fetch_args.buf_len);
+    printf("  fetch_len : %ld\n", fetch_args.buf_len);
     printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", fetch_args.report.record_on_success, fetch_args.report.record_on_failure, fetch_args.report.sysinfo_success, fetch_args.report.sysinfo_failure);
     printf("}\n\n");
 
     return ret;
 }
 
-suit_err_t suit_fetch_callback(suit_fetch_args_t fetch_args)
+suit_err_t suit_fetch_callback(suit_fetch_args_t fetch_args, suit_fetch_ret_t *fetch_ret)
 {
-    return suit_print_fetch(fetch_args);
+    return suit_print_fetch(fetch_args, fetch_ret);
 }
 
 suit_err_t suit_print_report(suit_report_args_t report_args)

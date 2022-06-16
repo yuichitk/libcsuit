@@ -344,7 +344,10 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
     suit_con_dir_key_t condition_directive_key = SUIT_CONDITION_INVALID;
     suit_rep_policy_t report;
     union {
-        suit_fetch_args_t fetch;
+        struct {
+            suit_fetch_args_t fetch;
+            suit_fetch_ret_t fret;
+        };
         suit_store_args_t store;
         suit_copy_args_t copy;
         suit_run_args_t run;
@@ -426,23 +429,23 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                         result = SUIT_ERR_NO_MEMORY;
                         goto error;
                     }
-                    size_t image_size = buf_size;
-                    args.fetch.buf_len = &image_size;
                     args.fetch.ptr = &suit_inputs->buf[SUIT_MAX_DATA_SIZE - suit_inputs->left_len];
+                    args.fetch.buf_len = buf_size;
 
-                    result = suit_fetch_callback(args.fetch);
-                    if (buf_size < image_size) {
-                        result = SUIT_ERR_NO_MEMORY;
-                        goto error;
-                    }
+                    /* store the fetched payload into args.fetch.ptr */
+                    result = suit_fetch_callback(args.fetch, &args.fret);
                     if (result != SUIT_SUCCESS) {
                         goto error;
                     }
-                    suit_inputs->left_len -= image_size;
+                    if (args.fetch.buf_len < args.fret.buf_len) {
+                        result = SUIT_ERR_NO_MEMORY;
+                        goto error;
+                    }
+                    suit_inputs->left_len -= args.fret.buf_len;
                     payload = &extracted->payloads.payload[extracted->payloads.len];
                     extracted->payloads.len++;
                     payload->bytes.ptr = args.fetch.ptr;
-                    payload->bytes.len = image_size;
+                    payload->bytes.len = args.fret.buf_len;
 
                     payload->key = parameters[tmp_index].uri_list[0];
                     payload->index.len = 1;

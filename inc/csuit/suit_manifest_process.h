@@ -140,10 +140,17 @@ typedef struct suit_fetch_args {
      *  The length of the allocated buffer.
      *  Should be overwritten as the actual length of the fetched object.
      */
-    size_t *buf_len;
+    size_t buf_len;
 
     suit_rep_policy_t report;
 } suit_fetch_args_t;
+
+typedef struct suit_fetch_ret {
+    /**
+     *  The length of the fetched payload.
+     */
+    size_t buf_len;
+} suit_fetch_ret_t;
 
 typedef struct suit_validate_args {
     const size_t name_len;

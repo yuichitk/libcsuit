@@ -145,32 +145,34 @@ const uint8_t config_data[] = {
 
 struct name_data {
     const uint8_t *name;
+    size_t name_len;
     const uint8_t *data;
-    const size_t data_len;
+    size_t data_len;
 };
 #define SUIT_NAME_DATA_LEN 3
 const struct name_data name_data[] = {
-    {.name = tc_uri, .data = tc_data, .data_len = sizeof(tc_data)},
-    {.name = depend_uri, .data = depend_suit, .data_len = sizeof(depend_suit)},
-    {.name = config_uri, .data = config_data, .data_len = sizeof(config_data)},
+    {.name = tc_uri, .name_len = sizeof(tc_uri), .data = tc_data, .data_len = sizeof(tc_data)},
+    {.name = depend_uri, .name_len = sizeof(depend_uri), .data = depend_suit, .data_len = sizeof(depend_suit)},
+    {.name = config_uri, .name_len = sizeof(config_uri), .data = config_data, .data_len = sizeof(config_data)},
 };
 
-suit_err_t __real_suit_fetch_callback(suit_fetch_args_t fetch_args);
-suit_err_t __wrap_suit_fetch_callback(suit_fetch_args_t fetch_args)
+suit_err_t __real_suit_fetch_callback(suit_fetch_args_t fetch_args, suit_fetch_ret_t *fetch_ret);
+suit_err_t __wrap_suit_fetch_callback(suit_fetch_args_t fetch_args, suit_fetch_ret_t *fetch_ret)
 {
-    suit_err_t result = __real_suit_fetch_callback(fetch_args);
+    suit_err_t result = __real_suit_fetch_callback(fetch_args, fetch_ret);
     if (result != SUIT_SUCCESS) {
         return result;
     }
 
     size_t i = 0;
     for (i = 0; i < SUIT_NAME_DATA_LEN; i++) {
-        if (memcmp(name_data[i].name, fetch_args.uri, fetch_args.uri_len) == 0) {
-            if (*fetch_args.buf_len < name_data[i].data_len) {
+        if (name_data[i].name_len == fetch_args.uri_len &&
+            memcmp(name_data[i].name, fetch_args.uri, fetch_args.uri_len) == 0) {
+            if (fetch_args.buf_len < name_data[i].data_len) {
                 return SUIT_ERR_NO_MEMORY;
             }
             memcpy(fetch_args.ptr, name_data[i].data, name_data[i].data_len);
-            *fetch_args.buf_len = name_data[i].data_len;
+            fetch_ret->buf_len = name_data[i].data_len;
             printf("fetched %s\n\n", name_data[i].name);
             break;
         }
@@ -179,6 +181,7 @@ suit_err_t __wrap_suit_fetch_callback(suit_fetch_args_t fetch_args)
         /* not found */
         /* ignore this for testing example 0-5 only */
         //return SUIT_ERR_NOT_FOUND;
+        fetch_ret->buf_len = fetch_args.buf_len;
     }
     return SUIT_SUCCESS;
 }

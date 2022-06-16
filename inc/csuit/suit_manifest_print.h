@@ -46,10 +46,11 @@ suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, co
     \brief  Print SUIT fetch callback
 
     \param[in]      fetch_args      Fetch and suit-report arguments. See \ref suit_fetch_args_t.
+    \param[out]     fetch_ret       Fetch result. See \ref suit_fetch_ret_t.
     Triggered on \ref SUIT_DIRECTIVE_FETCH.
     \return         This returns one of the error codes defined by \ref suit_err_t.
 */
-suit_err_t suit_fetch_callback(suit_fetch_args_t fetch_args);
+suit_err_t suit_fetch_callback(suit_fetch_args_t fetch_args, suit_fetch_ret_t *fetch_ret);
 
 /*!
     \brief Print SUIT store callback
