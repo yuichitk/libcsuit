@@ -26,37 +26,12 @@ int main(int argc, char *argv[]) {
     }
     char *manifest_file = argv[1];
     struct t_cose_key key_pair;
-    /*
-    char public_key[PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
-    char private_key[PRIME256V1_PRIVATE_KEY_CHAR_SIZE + 1];
-
-    // Read der file.
-    printf("\nmain : Read Private&Public Key.\n");
-    uint8_t der_buf[PRIME256V1_PRIVATE_KEY_DER_SIZE];
-    size_t der_len = read_from_file(private_key_file, PRIME256V1_PRIVATE_KEY_DER_SIZE, der_buf);
-    if (!der_len) {
-        printf("main : Can't read DER file.\n");
-        return EXIT_FAILURE;
-    }
-    suit_print_hex(der_buf, der_len);
-    printf("\n");
-
-    // Read key pair from der file.
-    read_prime256v1_key_pair(der_buf, private_key, public_key);
-    printf("Private Key : %s\n", private_key);
-    printf("Public Key : %s\n", public_key);
-    int32_t result = suit_create_es256_key_pair(private_key, public_key, &key_pair);
-    if (result != SUIT_SUCCESS) {
-        printf("main : Can't create ES256 key pair.\n");
-        return EXIT_FAILURE;
-    }
-    */
 
     const unsigned char *public_key = trust_anchor_prime256v1_public_key;
     const unsigned char *private_key = trust_anchor_prime256v1_private_key;
     suit_err_t result = suit_create_es256_key_pair(private_key, public_key, &key_pair);
     if (result != SUIT_SUCCESS) {
-        printf("main : Can't create ES256 key pair. %s(%d)\n", result, suit_err_to_str(result));
+        printf("main : Can't create ES256 key pair. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
 
@@ -151,33 +126,5 @@ int main(int argc, char *argv[]) {
         printf("main : Fail to write to %s\n", manifest_file);
     }
 
-#if 0
-    // Compare whole and 
-    if (manifest_len != encode_len) {
-        printf("main : Lengthes differ %ld => %ld\n", manifest_len, encode_len);
-        suit_print_hex_in_max(manifest_buf, manifest_len, manifest_len);
-        printf("\n");
-        suit_print_hex_in_max(encode_buf, encode_len, encode_len);
-        printf("\n\n");
-        return EXIT_FAILURE;
-    }
-    else if (memcmp(manifest_buf, encode_buf, manifest_len) != 0) {
-        if (memcmp(&manifest_buf[0], &encode_buf[0], 92) != 0 ||
-            memcmp(&manifest_buf[92 + 64], &encode_buf[92 + 64], manifest_len - (92 + 64))) {
-            printf("main : encoded binary is differ from original\n");
-            suit_print_hex_in_max(manifest_buf, manifest_len, manifest_len);
-            printf("\n");
-            suit_print_hex_in_max(encode_buf, encode_len, encode_len);
-            printf("\n\n");
-            return EXIT_FAILURE;
-        }
-        else {
-            printf("main : Whole binaries but COSE_Sign1 signature match.\n\n");
-        }
-    }
-    else {
-        printf("main : Whole binaries match.\n\n");
-    }
-#endif
     return EXIT_SUCCESS;
 }

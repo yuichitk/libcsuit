@@ -1,9 +1,5 @@
 #include "suit_examples_common.h"
 
-bool suit_key_size_is_valid(const unsigned char *key, const size_t len) {
-    return (strnlen(key, len) == len) && (key[len] == '\0');
-}
-
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
 suit_err_t suit_create_es_key(const int nid, const int hash, const bool is_private, const unsigned char *key, const size_t key_len, struct t_cose_key *cose_public_key) {
     psa_key_attributes_t key_attributes = PSA_KEY_ATTRIBUTES_INIT;
@@ -45,16 +41,10 @@ suit_err_t suit_create_es_key(const int nid, const int hash, const bool is_priva
 }
 
 suit_err_t suit_create_es256_key_pair(const unsigned char *private_key, const unsigned char *public_key, struct t_cose_key *cose_key_pair) {
-    if (!suit_key_size_is_valid(private_key, PRIME256V1_PRIVATE_KEY_CHAR_LENGTH)) {
-        return SUIT_ERR_FATAL;
-    }
     return suit_create_es_key(PSA_ECC_FAMILY_SECP_R1, PSA_ALG_SHA_256, true, private_key, PRIME256V1_PRIVATE_KEY_CHAR_LENGTH, cose_key_pair);
 }
 
 suit_err_t suit_create_es256_public_key(const unsigned char *public_key, struct t_cose_key *cose_public_key) {
-    if (!suit_key_size_is_valid(public_key, PRIME256V1_PUBLIC_KEY_CHAR_LENGTH)) {
-        return SUIT_ERR_FATAL;
-    }
     return suit_create_es_key(PSA_ECC_FAMILY_SECP_R1, PSA_ALG_SHA_256, false, public_key, PRIME256V1_PUBLIC_KEY_CHAR_LENGTH, cose_public_key);
 }
 
@@ -74,7 +64,6 @@ suit_err_t suit_free_key(struct t_cose_key *key) {
  */
 suit_err_t suit_create_openssl_es_key(int nid, const unsigned char *private_key, const unsigned char *public_key, struct t_cose_key *cose_key) {
     suit_err_t      result = SUIT_SUCCESS;
-    int             ossl_result = 0;
     EVP_PKEY        *pkey = NULL;
     EVP_PKEY_CTX    *ctx;
     BIGNUM *priv;
@@ -140,18 +129,10 @@ suit_err_t suit_create_es256_key_pair(const unsigned char *private_key, const un
 }
 
 suit_err_t suit_create_es384_key_pair(const unsigned char *private_key, const unsigned char *public_key, struct t_cose_key *cose_key_pair) {
-    if (!suit_key_size_is_valid(private_key, SECP384R1_PRIVATE_KEY_CHAR_LENGTH) ||
-        !suit_key_size_is_valid(public_key, SECP384R1_PUBLIC_KEY_CHAR_LENGTH)) {
-        return SUIT_ERR_FATAL;
-    }
     return suit_create_openssl_es_key(NID_secp384r1, private_key, public_key, cose_key_pair);
 }
 
 suit_err_t suit_create_es521_key_pair(const unsigned char *private_key, const unsigned char *public_key, struct t_cose_key *cose_key_pair) {
-    if (!suit_key_size_is_valid(private_key, SECP521R1_PRIVATE_KEY_CHAR_LENGTH) ||
-        !suit_key_size_is_valid(public_key, SECP521R1_PUBLIC_KEY_CHAR_LENGTH)) {
-        return SUIT_ERR_FATAL;
-    }
     return suit_create_openssl_es_key(NID_secp521r1, private_key, public_key, cose_key_pair);
 }
 

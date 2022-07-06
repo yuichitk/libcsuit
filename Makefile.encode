@@ -32,10 +32,9 @@ $(OBJDIR)/%.o:	%.c
 
 all: $(TARGET)
 
-PRIV_KEY	:= ./testfiles/key/trust_anchor_secp256r1.der
 OUTPUT		:= ./testfiles/suit_manifest_expX.cbor
 test: all
-	$(TARGET) $(PRIV_KEY) $(OUTPUT)
+	$(TARGET) $(OUTPUT)
 
 clean:
 	rm -f $(OBJS) $(TARGET)

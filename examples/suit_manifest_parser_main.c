@@ -18,17 +18,6 @@
 
 #define MAX_FILE_BUFFER_SIZE            2048
 
-size_t read_file(const char *file_path, const size_t write_buf_len, uint8_t *write_buf) {
-    size_t read_len = 0;
-    FILE* fp = fopen(file_path, "rb");
-    if (fp == NULL) {
-        return 0;
-    }
-    read_len = fread(write_buf, 1, write_buf_len, fp);
-    fclose(fp);
-    return read_len;
-}
-
 int main(int argc, char *argv[]) {
     // check arguments.
     if (argc < 1) {
@@ -50,7 +39,7 @@ int main(int argc, char *argv[]) {
     // Read manifest file.
     printf("main : Read Manifest file.\n");
     uint8_t manifest_buf[MAX_FILE_BUFFER_SIZE];
-    size_t manifest_len = read_file(manifest_file, MAX_FILE_BUFFER_SIZE, manifest_buf);
+    size_t manifest_len = read_from_file(manifest_file, MAX_FILE_BUFFER_SIZE, manifest_buf);
     if (!manifest_len) {
         printf("main : Can't read Manifest file.\n");
         return EXIT_FAILURE;
