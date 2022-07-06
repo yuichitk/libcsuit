@@ -1,11 +1,11 @@
 #include "suit_examples_common.h"
 
-bool suit_key_size_is_valid(const char *key, const size_t len) {
+bool suit_key_size_is_valid(const unsigned char *key, const size_t len) {
     return (strnlen(key, len) == len) && (key[len] == '\0');
 }
 
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
-suit_err_t suit_create_es_key(const int nid, const int hash, const bool is_private, const char *key, const size_t key_len, struct t_cose_key *cose_public_key) {
+suit_err_t suit_create_es_key(const int nid, const int hash, const bool is_private, const unsigned char *key, const size_t key_len, struct t_cose_key *cose_public_key) {
     psa_key_attributes_t key_attributes = PSA_KEY_ATTRIBUTES_INIT;
     psa_key_handle_t     key_handle = 0;
     psa_status_t         result;
@@ -44,14 +44,14 @@ suit_err_t suit_create_es_key(const int nid, const int hash, const bool is_priva
     return SUIT_SUCCESS;
 }
 
-suit_err_t suit_create_es256_key_pair(const char *private_key, const char *public_key, struct t_cose_key *cose_key_pair) {
+suit_err_t suit_create_es256_key_pair(const unsigned char *private_key, const unsigned char *public_key, struct t_cose_key *cose_key_pair) {
     if (!suit_key_size_is_valid(private_key, PRIME256V1_PRIVATE_KEY_CHAR_LENGTH)) {
         return SUIT_ERR_FATAL;
     }
     return suit_create_es_key(PSA_ECC_FAMILY_SECP_R1, PSA_ALG_SHA_256, true, private_key, PRIME256V1_PRIVATE_KEY_CHAR_LENGTH, cose_key_pair);
 }
 
-suit_err_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
+suit_err_t suit_create_es256_public_key(const unsigned char *public_key, struct t_cose_key *cose_public_key) {
     if (!suit_key_size_is_valid(public_key, PRIME256V1_PUBLIC_KEY_CHAR_LENGTH)) {
         return SUIT_ERR_FATAL;
     }
@@ -72,69 +72,74 @@ suit_err_t suit_free_key(struct t_cose_key *key) {
 
     \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
  */
-suit_err_t suit_create_openssl_es_key(int nid, const char *private_key, const char *public_key, struct t_cose_key *cose_key) {
-    EC_GROUP    *ec_group = NULL;
-    EC_KEY      *ec_key = NULL;
-    BIGNUM      *private_key_bn = NULL;
-    EC_POINT    *pub_key_point = NULL;
-    int         result = 0;
+suit_err_t suit_create_openssl_es_key(int nid, const unsigned char *private_key, const unsigned char *public_key, struct t_cose_key *cose_key) {
+    suit_err_t      result = SUIT_SUCCESS;
+    int             ossl_result = 0;
+    EVP_PKEY        *pkey = NULL;
+    EVP_PKEY_CTX    *ctx;
+    BIGNUM *priv;
+    OSSL_PARAM_BLD  *param_bld;
+    OSSL_PARAM      *params = NULL;
 
-    ec_group = EC_GROUP_new_by_curve_name(nid);
-    if (ec_group == NULL) {
-        return SUIT_ERR_FATAL;
-    }
-    ec_key = EC_KEY_new();
-    if (ec_key == NULL) {
-        return SUIT_ERR_FATAL;
-    }
-    result = EC_KEY_set_group(ec_key, ec_group);
-    if (!result) {
-        return SUIT_ERR_FATAL;
-    }
+    priv = BN_bin2bn(private_key, 32, NULL);
 
-    if (private_key != NULL) {
-        private_key_bn = BN_new();
-        if (private_key_bn == NULL) {
-            return SUIT_ERR_FATAL;
-        }
-        BN_zero(private_key_bn);
-        result = BN_hex2bn(&private_key_bn, private_key);
-        if(private_key_bn == 0) {
-            return SUIT_ERR_FATAL;
-        }
-        result = EC_KEY_set_private_key(ec_key, private_key_bn);
-        if (!result) {
-            return SUIT_ERR_FATAL;
-        }
+    param_bld = OSSL_PARAM_BLD_new();
+    if (priv != NULL && param_bld != NULL
+        && OSSL_PARAM_BLD_push_utf8_string(param_bld, "group", "prime256v1", 0)
+        && OSSL_PARAM_BLD_push_BN(param_bld, "priv", priv)
+        && OSSL_PARAM_BLD_push_octet_string(param_bld, "pub", public_key, 65)) {
+        params = OSSL_PARAM_BLD_to_param(param_bld);
     }
 
-    pub_key_point = EC_POINT_new(ec_group);
-    if (pub_key_point == NULL) {
-        return SUIT_ERR_FATAL;
+    if (params == NULL) {
+        result = SUIT_ERR_FATAL;
+        goto out;
     }
-    pub_key_point = EC_POINT_hex2point(ec_group, public_key, pub_key_point, NULL);
-    if (pub_key_point == NULL) {
-        return SUIT_ERR_FATAL;
+    ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    if (ctx == NULL) {
+        result = SUIT_ERR_FATAL;
+        goto free_params;
     }
-    result = EC_KEY_set_public_key(ec_key, pub_key_point);
-    if (result == 0) {
-        return SUIT_ERR_FATAL;
+    if (ctx == NULL
+        || EVP_PKEY_fromdata_init(ctx) <= 0
+        || EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0) {
+        result = SUIT_ERR_FATAL;
+        goto free_ctx;
     }
+    /*
+    ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    EVP_PKEY_keygen_init(ctx);
+    EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid);
+    pkey = EVP_PKEY_new();
+    EVP_PKEY_keygen(ctx, &pkey);
+    */
+    /*
+    EC_GROUP *ec_group = EC_GROUP_new_by_curve_name(nid);
+    EC_KEY  *ec_key = EC_KEY_new_by_curve_name(nid);
+    EC_KEY_set_group(ec_key, ec_group);
 
-    cose_key->k.key_ptr  = ec_key;
+    priv = BN_bin2bn(private_key, 32, NULL);
+    EC_KEY_set_private_key(ec_key, priv);
+    EC_POINT *pub_key_point = EC_POINT_new(ec_group);
+    EC_POINT_oct2point(ec_group, pub_key_point, public_key, 65, NULL);
+    EC_KEY_set_public_key(ec_key, pub_key_point);
+    */
+
+    cose_key->k.key_ptr  = pkey;
     cose_key->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
-    return SUIT_SUCCESS;
+
+free_ctx:
+free_params:
+out:
+    //TODO: free not only pkey but als ctx, params...
+    return result;
 }
 
-suit_err_t suit_create_es256_key_pair(const char *private_key, const char *public_key, struct t_cose_key *cose_key_pair) {
-    if (!suit_key_size_is_valid(private_key, PRIME256V1_PRIVATE_KEY_CHAR_LENGTH) ||
-        !suit_key_size_is_valid(public_key, PRIME256V1_PUBLIC_KEY_CHAR_LENGTH)) {
-        return SUIT_ERR_FATAL;
-    }
+suit_err_t suit_create_es256_key_pair(const unsigned char *private_key, const unsigned char *public_key, struct t_cose_key *cose_key_pair) {
     return suit_create_openssl_es_key(NID_X9_62_prime256v1, private_key, public_key, cose_key_pair);
 }
 
-suit_err_t suit_create_es384_key_pair(const char *private_key, const char *public_key, struct t_cose_key *cose_key_pair) {
+suit_err_t suit_create_es384_key_pair(const unsigned char *private_key, const unsigned char *public_key, struct t_cose_key *cose_key_pair) {
     if (!suit_key_size_is_valid(private_key, SECP384R1_PRIVATE_KEY_CHAR_LENGTH) ||
         !suit_key_size_is_valid(public_key, SECP384R1_PUBLIC_KEY_CHAR_LENGTH)) {
         return SUIT_ERR_FATAL;
@@ -142,7 +147,7 @@ suit_err_t suit_create_es384_key_pair(const char *private_key, const char *publi
     return suit_create_openssl_es_key(NID_secp384r1, private_key, public_key, cose_key_pair);
 }
 
-suit_err_t suit_create_es521_key_pair(const char *private_key, const char *public_key, struct t_cose_key *cose_key_pair) {
+suit_err_t suit_create_es521_key_pair(const unsigned char *private_key, const unsigned char *public_key, struct t_cose_key *cose_key_pair) {
     if (!suit_key_size_is_valid(private_key, SECP521R1_PRIVATE_KEY_CHAR_LENGTH) ||
         !suit_key_size_is_valid(public_key, SECP521R1_PUBLIC_KEY_CHAR_LENGTH)) {
         return SUIT_ERR_FATAL;
@@ -150,67 +155,20 @@ suit_err_t suit_create_es521_key_pair(const char *private_key, const char *publi
     return suit_create_openssl_es_key(NID_secp521r1, private_key, public_key, cose_key_pair);
 }
 
-/*
-    \brief      Internal function calls OpenSSL functions to create public key.
-
-    \param[in]  nid                 EC network id.
-    \param[in]  public_key          Pointer of char array type of public key.
-    \param[out] cose_public_key     Pointer and length of the resulting key.
-
-    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
- */
-suit_err_t suit_create_openssl_es_public_key(int nid, const char *public_key, struct t_cose_key *cose_public_key) {
-    EC_GROUP    *ec_group = NULL;
-    EC_KEY      *ec_key = NULL;
-    EC_POINT    *ec_point = NULL;
-    int         result = 0;
-
-    ec_group = EC_GROUP_new_by_curve_name(nid);
-    if (ec_group == NULL) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-    ec_key = EC_KEY_new();
-    if (ec_key == NULL) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-    result = EC_KEY_set_group(ec_key, ec_group);
-    if (!result) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-
-    ec_point = EC_POINT_new(ec_group);
-    if (ec_point == NULL) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-    ec_point = EC_POINT_hex2point(ec_group, public_key, ec_point, NULL);
-    if (ec_point == NULL) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-    result = EC_KEY_set_public_key(ec_key, ec_point);
-    if (result == 0) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-
-    cose_public_key->k.key_ptr  = ec_key;
-    cose_public_key->crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
-    return SUIT_SUCCESS;
-}
-
-suit_err_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
-    //return suit_create_openssl_es_public_key(NID_X9_62_prime256v1, public_key, cose_public_key);
+suit_err_t suit_create_es256_public_key(const unsigned char *public_key, struct t_cose_key *cose_public_key) {
     return suit_create_openssl_es_key(NID_X9_62_prime256v1, NULL, public_key, cose_public_key);
 }
 
-suit_err_t suit_create_es384_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
+suit_err_t suit_create_es384_public_key(const unsigned char *public_key, struct t_cose_key *cose_public_key) {
     return suit_create_openssl_es_key(NID_secp384r1, NULL, public_key, cose_public_key);
 }
 
-suit_err_t suit_create_es521_public_key(const char *public_key, struct t_cose_key *cose_public_key) {
+suit_err_t suit_create_es521_public_key(const unsigned char *public_key, struct t_cose_key *cose_public_key) {
     return suit_create_openssl_es_key(NID_secp521r1, NULL, public_key, cose_public_key);
 }
 
 suit_err_t suit_free_key(struct t_cose_key *key) {
-    EC_KEY_free(key->k.key_ptr);
+    EVP_PKEY_free(key->k.key_ptr);
     return SUIT_SUCCESS;
 }
 

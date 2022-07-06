@@ -80,6 +80,7 @@ suit_err_t suit_verify_cose_sign1(const UsefulBufC signed_cose, const struct t_c
     COSE supports ES256, ES384 and ES512 as alrogithm of signature,
     so T_COSE_ALGORITHM_ES256, T_COSE_ALGORITHM_ES384 or T_COSE_ALGORITHM_ES512 will be set to cose_algorithm_id argument if success.
  */
+#if 0
 suit_err_t suit_get_algorithm_from_cose_key(const struct t_cose_key *key, int32_t *cose_algorithm_id) {
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
     if (key->crypto_lib != T_COSE_CRYPTO_LIB_PSA) {
@@ -109,10 +110,11 @@ suit_err_t suit_get_algorithm_from_cose_key(const struct t_cose_key *key, int32_
     if (key->crypto_lib != T_COSE_CRYPTO_LIB_OPENSSL) {
         return SUIT_ERR_FAILED_TO_VERIFY;
     }
-    const EC_KEY *key_ptr = key->k.key_ptr;
+    const EVP_PKEY *key_ptr = key->k.key_ptr;
     if (key_ptr == NULL) {
         return SUIT_ERR_FAILED_TO_VERIFY;
     }
+    OSSL_PARAM    *params;
     const EC_GROUP *ec_group = EC_KEY_get0_group(key_ptr);
     if (ec_group == NULL) {
         return SUIT_ERR_FAILED_TO_VERIFY;
@@ -134,6 +136,7 @@ suit_err_t suit_get_algorithm_from_cose_key(const struct t_cose_key *key, int32_
 #endif
     return SUIT_SUCCESS;
 }
+#endif
 
 suit_err_t suit_sign_cose_sign1(const UsefulBufC raw_cbor, const struct t_cose_key *key_pair, UsefulBuf *returned_payload) {
     // Create cose signed buffer.
@@ -143,6 +146,7 @@ suit_err_t suit_sign_cose_sign1(const UsefulBufC raw_cbor, const struct t_cose_k
     UsefulBufC tmp_signed_cose;
     UsefulBuf_MAKE_STACK_UB(signed_cose_buffer, 1024);
 
+    /*
     suit_err_t result = suit_get_algorithm_from_cose_key(key_pair, &cose_algorithm_id);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -155,8 +159,9 @@ suit_err_t suit_sign_cose_sign1(const UsefulBufC raw_cbor, const struct t_cose_k
     default:
         return SUIT_ERR_FAILED_TO_VERIFY;
     }
+    */
 
-    t_cose_sign1_sign_init(&sign_ctx, 0, cose_algorithm_id);
+    t_cose_sign1_sign_init(&sign_ctx, 0, T_COSE_ALGORITHM_ES256);
     t_cose_sign1_set_signing_key(&sign_ctx, *key_pair, NULL_Q_USEFUL_BUF_C);
     cose_result = t_cose_sign1_sign_detached(&sign_ctx, NULL_Q_USEFUL_BUF_C, raw_cbor, signed_cose_buffer, &tmp_signed_cose);
     if (cose_result != T_COSE_SUCCESS) {

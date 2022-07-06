@@ -11,22 +11,22 @@
 #include "csuit/suit_manifest_print.h"
 #include "csuit/suit_cose.h"
 #include "suit_examples_common.h"
+#include "trust_anchor_prime256v1.h"
+#include "trust_anchor_prime256v1_pub.h"
 #include "t_cose/t_cose_sign1_verify.h"
 #include "t_cose/q_useful_buf.h"
-#include "openssl/ecdsa.h"
-#include "openssl/obj_mac.h"
 
 #define MAX_FILE_BUFFER_SIZE            2048
 
 int main(int argc, char *argv[]) {
     // check arguments.
-    if (argc < 2) {
-        printf("suit_manifest_encode <private key path> <output manifest file path>");
+    if (argc < 1) {
+        printf("suit_manifest_encode <output manifest file path>");
         return EXIT_FAILURE;
     }
-    char *private_key_file = argv[1];
-    char *manifest_file = argv[2];
+    char *manifest_file = argv[1];
     struct t_cose_key key_pair;
+    /*
     char public_key[PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
     char private_key[PRIME256V1_PRIVATE_KEY_CHAR_SIZE + 1];
 
@@ -48,6 +48,15 @@ int main(int argc, char *argv[]) {
     int32_t result = suit_create_es256_key_pair(private_key, public_key, &key_pair);
     if (result != SUIT_SUCCESS) {
         printf("main : Can't create ES256 key pair.\n");
+        return EXIT_FAILURE;
+    }
+    */
+
+    const unsigned char *public_key = trust_anchor_prime256v1_public_key;
+    const unsigned char *private_key = trust_anchor_prime256v1_private_key;
+    suit_err_t result = suit_create_es256_key_pair(private_key, public_key, &key_pair);
+    if (result != SUIT_SUCCESS) {
+        printf("main : Can't create ES256 key pair. %s(%d)\n", result, suit_err_to_str(result));
         return EXIT_FAILURE;
     }
 

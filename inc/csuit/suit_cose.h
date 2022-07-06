@@ -14,8 +14,9 @@
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
 #include "psa/crypto.h"
 #else
-#include "openssl/ecdsa.h"
-#include "openssl/obj_mac.h"
+#include "openssl/evp.h"
+#include "openssl/param_build.h"
+#include "openssl/ec.h"
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
 
 /*!
@@ -120,30 +121,6 @@ suit_err_t suit_verify_cose_mac(const UsefulBufC signed_cose, const struct t_cos
     \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
  */
 suit_err_t suit_verify_cose_mac0(const UsefulBufC signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload);
-
-/*!
-    \brief  Create ES256 key pair
-
-    \param[in]  public_key          Pointer of char array type of public key.
-    \param[out] cose_public_key     Pointer of struct t_cose_key type of public key.
-
-    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
-
-    The length of the char array public key is estimated from the algorithm and library.
- */
-suit_err_t suit_create_es256_key_pair(const char *private_key, const char *public_key, struct t_cose_key *cose_key_pair);
-
-/*!
-    \brief  Create ES256 public key
-
-    \param[in]  public_key          Pointer of char array type of public key.
-    \param[out] cose_public_key     Pointer of struct t_cose_key type of public key.
-
-    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
-
-    The length of the char array public key is estimated from the algorithm and library.
- */
-suit_err_t suit_create_es256_public_key(const char *public_key, struct t_cose_key *cose_public_key);
 
 #endif  /* SUIT_COSE_H */
 
