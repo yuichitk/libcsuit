@@ -50,7 +50,16 @@ typedef enum cose_tag_key {
 
     \return     This returns one of the error codes defined by \ref cose_tag_key_t.
  */
-cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose);
+cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC signed_cose);
+
+typedef struct suit_key {
+    const unsigned char *private_key;
+    size_t private_key_len;
+    const unsigned char *public_key;
+    size_t public_key_len;
+    int cose_algorithm_id;
+    struct t_cose_key cose_key;
+} suit_key_t;
 
 /*!
     \brief  Generate COSE_Sign1 sined payload.
@@ -61,7 +70,7 @@ cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC *signed_cose);
 
     \return     This returns SUIT_SUCCESS, SUIT_ERR_FAILED_TO_VERIFY or SUIT_ERR_FATAL.
  */
-suit_err_t suit_sign_cose_sign1(const UsefulBufC raw_cbor, const struct t_cose_key *key_pair, UsefulBuf *returned_payload);
+suit_err_t suit_sign_cose_sign1(const UsefulBufC raw_cbor, const suit_key_t *key_pair, UsefulBuf *returned_payload);
 
 /*!
     \brief  Verify COSE_Sign signed payload.
@@ -74,7 +83,7 @@ suit_err_t suit_sign_cose_sign1(const UsefulBufC raw_cbor, const struct t_cose_k
 
     NOTE: Currently not implemented.
  */
-suit_err_t suit_verify_cose_sign(const UsefulBufC signed_cose, const struct t_cose_key *public_key, UsefulBufC returned_payload);
+suit_err_t suit_verify_cose_sign(const UsefulBufC signed_cose, const suit_key_t *public_key, UsefulBufC returned_payload);
 
 /*!
     \brief  Verify COSE_Sign1 signed payload.
@@ -97,7 +106,7 @@ suit_err_t suit_verify_cose_sign(const UsefulBufC signed_cose, const struct t_co
     This function verifies whether the payload correspond to the signature,
     and then extracts payload to returned_payload if success.
  */
-suit_err_t suit_verify_cose_sign1(const UsefulBufC signed_cose, const struct t_cose_key *public_key, UsefulBufC returned_payload);
+suit_err_t suit_verify_cose_sign1(const UsefulBufC signed_cose, const suit_key_t *public_key, UsefulBufC returned_payload);
 
 /*!
     \brief  Verify COSE_Mac signed payload.
@@ -109,7 +118,7 @@ suit_err_t suit_verify_cose_sign1(const UsefulBufC signed_cose, const struct t_c
     \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
  */
 
-suit_err_t suit_verify_cose_mac(const UsefulBufC signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload);
+suit_err_t suit_verify_cose_mac(const UsefulBufC signed_cose, const suit_key_t *public_key, UsefulBufC *returned_payload);
 
 /*!
     \brief  Verify COSE_Mac0 signed payload.
@@ -120,7 +129,7 @@ suit_err_t suit_verify_cose_mac(const UsefulBufC signed_cose, const struct t_cos
 
     \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
  */
-suit_err_t suit_verify_cose_mac0(const UsefulBufC signed_cose, const struct t_cose_key *public_key, UsefulBufC *returned_payload);
+suit_err_t suit_verify_cose_mac0(const UsefulBufC signed_cose, const suit_key_t *public_key, UsefulBufC *returned_payload);
 
 #endif  /* SUIT_COSE_H */
 

@@ -535,10 +535,10 @@ suit_err_t suit_decode_dependencies_from_item(uint8_t mode, QCBORDecodeContext *
     return result;
 }
 
-suit_err_t suit_decode_authentication_block(uint8_t mode, suit_buf_t *buf, suit_buf_t *digest_buf, const struct t_cose_key *public_key) {
+suit_err_t suit_decode_authentication_block(uint8_t mode, suit_buf_t *buf, suit_buf_t *digest_buf, const suit_key_t *public_key) {
     UsefulBufC signed_cose = {buf->ptr, buf->len};
     suit_err_t result;
-    cose_tag_key_t cose_tag = suit_judge_cose_tag_from_buf(&signed_cose);
+    cose_tag_key_t cose_tag = suit_judge_cose_tag_from_buf(signed_cose);
 
     UsefulBufC returned_payload = {.ptr = digest_buf->ptr, .len = digest_buf->len};
     switch (cose_tag) {
@@ -957,7 +957,7 @@ suit_err_t suit_decode_manifest_from_bstr(uint8_t mode, QCBORDecodeContext *cont
     return suit_decode_manifest(mode, &buf, manifest);
 }
 
-suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_authentication_wrapper_t *wrapper, const struct t_cose_key *public_key) {
+suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_authentication_wrapper_t *wrapper, const suit_key_t *public_key) {
     suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_ARRAY);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -998,7 +998,7 @@ suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecod
     return result;
 }
 
-suit_err_t suit_decode_authentication_wrapper(uint8_t mode, suit_buf_t *buf, suit_authentication_wrapper_t *wrapper, const struct t_cose_key *public_key) {
+suit_err_t suit_decode_authentication_wrapper(uint8_t mode, suit_buf_t *buf, suit_authentication_wrapper_t *wrapper, const suit_key_t *public_key) {
     QCBORDecodeContext auth_context;
     QCBORItem item;
     QCBORDecode_Init(&auth_context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
@@ -1010,7 +1010,7 @@ suit_err_t suit_decode_authentication_wrapper(uint8_t mode, suit_buf_t *buf, sui
     return result;
 }
 
-suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
+suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const suit_key_t *public_key) {
     suit_err_t result = SUIT_SUCCESS;
 
     uint64_t puTags[1];
@@ -1162,7 +1162,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
 /*
     Public function. See suit_manifest_data.h
  */
-suit_err_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const struct t_cose_key *public_key) {
+suit_err_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const suit_key_t *public_key) {
     QCBORDecodeContext decode_context;
     QCBORItem item;
     QCBORDecode_Init(&decode_context,

@@ -16,7 +16,7 @@
 #include "t_cose/t_cose_sign1_verify.h"
 #include "t_cose/q_useful_buf.h"
 
-#define MAX_FILE_BUFFER_SIZE            2048
+#define MAX_FILE_BUFFER_SIZE            4096
 
 int main(int argc, char *argv[]) {
     // check arguments.
@@ -25,11 +25,11 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
     char *manifest_file = argv[1];
-    struct t_cose_key key_pair;
+    suit_key_t key_pair;
 
     const unsigned char *public_key = trust_anchor_prime256v1_public_key;
     const unsigned char *private_key = trust_anchor_prime256v1_private_key;
-    suit_err_t result = suit_create_es256_key_pair(private_key, public_key, &key_pair);
+    suit_err_t result = suit_key_init_es256_key_pair(private_key, public_key, &key_pair);
     if (result != SUIT_SUCCESS) {
         printf("main : Can't create ES256 key pair. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;

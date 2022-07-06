@@ -35,6 +35,7 @@ typedef enum {
     SUIT_ERR_TRY_OUT                    = 14, /*! all command_sequence in try-each section failed */
     SUIT_ERR_NOT_FOUND                  = 15, /*! the specified content does not exists or unaccessible */
     SUIT_ERR_INVALID_VALUE              = 16, /*! the input value is invalid */
+    SUIT_ERR_FAILED_TO_SIGN             = 17,
     SUIT_ERR_ABORT                      = 31, /*! abort to execute, mainly for libcsuit internal */
 } suit_err_t;
 
@@ -494,10 +495,15 @@ typedef struct suit_encode {
     UsefulBufC manifest;
     // SUIT_SeverableMembers
     UsefulBufC dependency_resolution;
+    suit_digest_t dependency_resolution_digest;
     UsefulBufC payload_fetch;
+    suit_digest_t payload_fetch_digest;
     UsefulBufC install;
+    suit_digest_t install_digest;
     UsefulBufC text;
+    suit_digest_t text_digest;
     UsefulBufC coswid;
+    suit_digest_t coswid_digest;
 
     uint8_t *buf;
     size_t pos;

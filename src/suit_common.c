@@ -27,6 +27,7 @@ bool suit_continue(uint8_t mode, suit_err_t result) {
             ret = true;
             break;
         case SUIT_ERR_FAILED_TO_VERIFY:
+        case SUIT_ERR_FAILED_TO_SIGN:
             if (mode & SUIT_DECODE_MODE_SKIP_SIGN_FAILURE) {
                 ret = true;
             }

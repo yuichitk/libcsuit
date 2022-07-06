@@ -16,7 +16,7 @@
 #include "t_cose/t_cose_sign1_verify.h"
 #include "t_cose/q_useful_buf.h"
 
-#define MAX_FILE_BUFFER_SIZE            2048
+#define MAX_FILE_BUFFER_SIZE            4096
 
 int main(int argc, char *argv[]) {
     // check arguments.
@@ -24,13 +24,13 @@ int main(int argc, char *argv[]) {
         printf("suit_manifest_parser <manifest file path>\n");
         return EXIT_FAILURE;
     }
-    int32_t result = 0;
+    suit_err_t result = 0;
     char *manifest_file = argv[1];
+    suit_key_t cose_key;
+
     const unsigned char *public_key = trust_anchor_prime256v1_public_key;
     const unsigned char *private_key = trust_anchor_prime256v1_private_key;
-    struct t_cose_key cose_key;
-
-    result = suit_create_es256_key_pair(private_key, public_key, &cose_key);
+    result = suit_key_init_es256_key_pair(private_key, public_key, &cose_key);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to create putlic key. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -106,7 +106,6 @@ int main(int argc, char *argv[]) {
         printf("main : Whole binaries match.\n\n");
     }
 
-out:
     suit_free_key(&cose_key);
     return EXIT_SUCCESS;
 }

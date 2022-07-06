@@ -91,23 +91,26 @@ suit_err_t suit_verify_digest(suit_buf_t *buf, suit_digest_t *digest) {
     return result;
 }
 
-suit_err_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_digest_t *digest) {
+suit_err_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_encode_t *suit_encode, suit_digest_t *digest) {
     suit_err_t result = SUIT_SUCCESS;
+    UsefulBuf digest_buf;
 
-    switch (digest->algorithm_id) {
-    case SUIT_ALGORITHM_ID_SHA256:
-        if (digest->bytes.len < SHA256_DIGEST_WORK_SPACE_LENGTH) {
-            return SUIT_ERR_NO_MEMORY;
-        }
-        result = suit_generate_sha256(ptr, len, (uint8_t *)digest->bytes.ptr, digest->bytes.len);
-        if (result == SUIT_SUCCESS) {
-            /* given length are working memory size, so we must overwrite it into actual hash length */
-            digest->bytes.len = SHA256_DIGEST_LENGTH;
-        }
-        break;
-    default:
-        result = SUIT_ERR_NOT_IMPLEMENTED;
+    result = suit_use_suit_encode_buf(suit_encode, SHA256_DIGEST_WORK_SPACE_LENGTH, &digest_buf);
+    if (result != SUIT_SUCCESS) {
+        return result;
     }
+    result = suit_generate_sha256(ptr, len, digest_buf.ptr, digest_buf.len);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+    /* given length are working memory size, so we must overwrite it into actual hash length */
+    result = suit_fix_suit_encode_buf(suit_encode, SHA256_DIGEST_LENGTH);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+    digest->algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+    digest->bytes.ptr = digest_buf.ptr;
+    digest->bytes.len = digest_buf.len;
     return SUIT_SUCCESS;
 }
 
