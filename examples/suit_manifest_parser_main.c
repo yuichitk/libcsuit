@@ -11,6 +11,8 @@
 #include "csuit/suit_manifest_print.h"
 #include "csuit/suit_cose.h"
 #include "suit_examples_common.h"
+#include "trust_anchor_prime256v1.h"
+#include "trust_anchor_prime256v1_pub.h"
 #include "t_cose/t_cose_sign1_verify.h"
 #include "t_cose/q_useful_buf.h"
 #include "openssl/ecdsa.h"
@@ -31,19 +33,22 @@ size_t read_file(const char *file_path, const size_t write_buf_len, uint8_t *wri
 
 int main(int argc, char *argv[]) {
     // check arguments.
-    if (argc < 3) {
-        printf("suit_manifest_parser <manifest file path> <public key path> [<private key path>]");
+    if (argc < 1) {
+        printf("suit_manifest_parser <manifest file path>");
         return EXIT_FAILURE;
     }
     int32_t result = 0;
     char *manifest_file = argv[1];
-    char *public_key_file = argv[2];
-    char *private_key_file = (argc == 3) ? NULL : argv[3];
+    const char *public_key = trust_anchor_prime256v1_public_key;
+    const char *private_key = trust_anchor_prime256v1_private_key;
+    /*
     char public_key[PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
     char private_key[PRIME256V1_PRIVATE_KEY_CHAR_SIZE + 1];
-    t_cose_key cose_key;
+    */
+    struct t_cose_key cose_key;
 
     // Read der file.
+    /*
     if (private_key_file != NULL) {
         printf("\nmain : Read Private&Public Key.\n");
         uint8_t der_buf[PRIME256V1_PRIVATE_KEY_DER_SIZE];
@@ -60,6 +65,10 @@ int main(int argc, char *argv[]) {
         printf("Private Key : %s\n", private_key);
         printf("Public Key : %s\n", public_key);
         result = suit_create_es256_key_pair(private_key, public_key, &cose_key);
+        if (result != SUIT_SUCCESS) {
+            printf("main : Failed to create key pair. %s(%d)\n", suit_err_to_str(result), result);
+            return EXIT_FAILURE;
+        }
     }
     else {
         printf("\nmain : Read DER file.\n");
@@ -78,7 +87,13 @@ int main(int argc, char *argv[]) {
         read_prime256v1_public_key(der_buf, public_key);
         printf("%s\n", public_key);
         result = suit_create_es256_public_key(public_key, &cose_key);
+        if (result != SUIT_SUCCESS) {
+            printf("main : Failed to create putlic key. %s(%d)\n", suit_err_to_str(result), result);
+            return EXIT_FAILURE;
+        }
     }
+    */
+    result = suit_create_es256_public_key(public_key, &cose_key);
 
     // Read manifest file.
     printf("\nmain : Read Manifest file.\n");
@@ -118,7 +133,6 @@ int main(int argc, char *argv[]) {
     size_t encode_len = MAX_FILE_BUFFER_SIZE;
     printf("\nmain : Encode Manifest.\n");
     result = suit_encode_envelope(mode, &envelope, &cose_key, encode_buf, &encode_len);
-    EC_KEY_free(cose_key.k.key_ptr);
     if (result != SUIT_SUCCESS) {
         printf("main : Fail to encode. %d\n", result);
         return EXIT_FAILURE;
@@ -151,5 +165,7 @@ int main(int argc, char *argv[]) {
         printf("main : Whole binaries match.\n\n");
     }
 
+out:
+    suit_free_key(&cose_key);
     return EXIT_SUCCESS;
 }

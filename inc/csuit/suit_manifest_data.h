@@ -8,7 +8,7 @@
 #define SUIT_MANIFEST_DATA_H
 
 #include "suit_common.h"
-//#include "suit_manifest_print.h"
+struct t_cose_key;
 
 /*!
     \file   suit_manifest_data.h
@@ -100,6 +100,6 @@ suit_err_t suit_decode_digest_from_item(uint8_t mode, QCBORDecodeContext *contex
     }
     \endcode
  */
-suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const t_cose_key *signing_key, uint8_t *buf, size_t *len);
+suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const struct t_cose_key *signing_key, uint8_t *buf, size_t *len);
 
 #endif  // SUIT_MANIFEST_DATA_H

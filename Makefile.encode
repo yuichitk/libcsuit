@@ -4,17 +4,21 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 
-CC		= gcc
 CFLAGS	= -Wall -g
-LDFLAGS	= -lt_cose -lqcbor -lcrypto
+LDFLAGS	= -lt_cose -lqcbor -lm
 INC		= -I ./inc -I ./examples/inc
 TARGET	= ./suit_manifest_encode
-SRCS	= examples/suit_manifest_encode_main.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_manifest_print.c src/suit_common.c src/suit_manifest_decode.c src/suit_manifest_encode.c src/suit_cose.c src/suit_digest.c
+SRCS	= examples/suit_manifest_encode_main.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_common.c src/suit_digest.c src/suit_cose.c src/suit_manifest_encode.c src/suit_manifest_decode.c src/suit_manifest_print.c
 OBJDIR	= ./obj
 OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
-ifdef debug
-    CFLAGS += -DSKIP_ERROR
+ifeq ($(MBEDTLS),1)
+    # use MbedTLS
+    CFLAGS	+= -DLIBCSUIT_PSA_CRYPTO_C=1
+    LDFLAGS	+= -lmbedtls -lmbedx509 -lmbedcrypto
+else
+    # use OpenSSL
+    LDFLAGS += -lcrypto
 endif
 
 $(TARGET):	$(OBJS)

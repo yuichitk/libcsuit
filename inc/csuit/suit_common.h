@@ -193,11 +193,6 @@ typedef enum suit_info_key {
     SUIT_INFO_UNPACK                = 3,
 } suit_info_key_t;
 
-// COSE_Encrypt_Tagged/COSE_Encrypt0_Tagged
-typedef struct suit_encryption_info {
-    //? TODO
-} suit_encryption_info_t;
-
 typedef enum suit_compression_info_key {
     SUIT_COMPRESSION_INVALID    = 0,
     SUIT_COMPRESSION_ALGORITHM  = 1,
@@ -262,6 +257,12 @@ typedef struct suit_buf {
     const uint8_t                   *ptr;
 } suit_buf_t;
 
+// COSE_Encrypt_Tagged/COSE_Encrypt0_Tagged
+typedef struct suit_encryption_info {
+    suit_buf_t cose_encrypt_payload;
+    //? TODO
+} suit_encryption_info_t;
+
 /*
  * SUIT_Digest
  */
@@ -286,7 +287,6 @@ typedef struct suit_components {
     size_t                          len;
     suit_component_identifier_t     comp_id[SUIT_MAX_COMPONENT_NUM];
 } suit_components_t;
-
 
 /*
  * SUIT_Dependency
@@ -503,8 +503,6 @@ typedef struct suit_encode {
     size_t pos;
     const size_t max_pos;
 } suit_encode_t;
-
-typedef struct t_cose_key t_cose_key;
 
 
 suit_err_t suit_error_from_qcbor_error(QCBORError error);

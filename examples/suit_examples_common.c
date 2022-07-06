@@ -6,8 +6,6 @@
 
 #include "suit_examples_common.h"
 
-#if !defined(LIBCSUIT_PSA_CRYPTO_C)
-
 size_t read_from_file(const char *file_path, const size_t buf_len, uint8_t *buf) {
     size_t read_len = 0;
     FILE* fp = fopen(file_path, "rb");
@@ -62,4 +60,3 @@ void read_prime256v1_public_key(const uint8_t *public_key_der, char *public_key)
         i += 2;
     }
 }
-#endif /* LIBCSUIT_PSA_CRYPTO_C */

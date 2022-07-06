@@ -125,7 +125,7 @@ suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, const UsefulB
 
     UsefulBuf_MAKE_STACK_UB(signature, SUIT_ENCODE_MAX_BUFFER_SIZE);
 
-    result = suit_sign_cose_sign1(&c_digest, &signing_key, &signature);
+    result = suit_sign_cose_sign1(c_digest, &signing_key, &signature);
     if (!suit_continue(mode, result)) {
         return result;
     }
@@ -736,7 +736,7 @@ out:
 /*
     Public function. See suit_manifest_data.h
  */
-suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const t_cose_key *signing_key, uint8_t *buf, size_t *len) {
+suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const struct t_cose_key *signing_key, uint8_t *buf, size_t *len) {
     suit_err_t result;
     UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
     suit_encode_t suit_encode = {
