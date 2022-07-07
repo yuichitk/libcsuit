@@ -33,17 +33,15 @@ $(OBJDIR)/%.o:	%.c
 
 all: clean $(TARGET)
 
-PUB_KEY		:= ./testfiles/key/trust_anchor_secp256r1_pub.der
-PRIV_KEY	:= ./testfiles/key/trust_anchor_secp256r1.der
 TEST_NUM	:= 0 1 2 3 4 5
 EXPS		:= $(foreach num,$(TEST_NUM),./testfiles/suit_manifest_exp$(num).cbor)
 define test-one
-	$(TARGET) $1 $2 $3 || exit 1
+	$(TARGET) $1 || exit 1
 
 endef
 
 test: all
-	$(foreach exp,$(EXPS),$(call test-one,$(exp),$(PUB_KEY),$(PRIV_KEY)))
+	$(foreach exp,$(EXPS),$(call test-one,$(exp)))
 
 
 clean:

@@ -98,8 +98,7 @@ suit_err_t suit_encode_digest(const suit_digest_t *digest, suit_encode_t *suit_e
 
 suit_err_t suit_generate_digest_include_header(const uint8_t *ptr, const size_t len, suit_encode_t *suit_encode, suit_digest_t *digest) {
     suit_err_t result = SUIT_SUCCESS;
-    //UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
-    UsefulBuf tmp_buf;// = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->pos], suit_encode->max_pos - suit_encode->pos};
+    UsefulBuf tmp_buf;
     result = suit_use_suit_encode_buf(suit_encode, 0, &tmp_buf);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -155,15 +154,13 @@ suit_err_t suit_encode_append_payloads(uint8_t mode, const suit_envelope_t *enve
 suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, const UsefulBufC *manifest, const suit_key_t signing_key, suit_encode_t *suit_encode, QCBOREncodeContext *context)
 {
     suit_err_t result;
-    //UsefulBuf_MAKE_STACK_UB(digest, SUIT_ENCODE_MAX_BUFFER_SIZE);
-    UsefulBuf digest;// = (UsefulBuf){.ptr = suit_encode->buf[suit_encode->pos], .len = suit_encode->max_pos - suit_encode->pos};
+    UsefulBuf digest;
     result = suit_generate_encoded_digest(manifest->ptr, manifest->len, suit_encode, &digest);
     if (result != SUIT_SUCCESS) {
         return result;
     }
 
-    //UsefulBuf_MAKE_STACK_UB(signature, SUIT_ENCODE_MAX_BUFFER_SIZE);
-    UsefulBuf signature;// = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->pos], .len = suit_encode->max_pos - suit_encode->pos};
+    UsefulBuf signature;
     result = suit_use_suit_encode_buf(suit_encode, 0, &signature);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -180,8 +177,7 @@ suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, const UsefulB
     }
 
     QCBOREncodeContext t_context;
-    //UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
-    UsefulBuf tmp_buf;// = (UsefulBuf){.ptr = suit_envelope->buf[suit_encode->pos], .len = suit_encode->max_pos - suit_encode->pos};
+    UsefulBuf tmp_buf;
     result = suit_use_suit_encode_buf(suit_encode, 0, &tmp_buf);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -210,9 +206,6 @@ suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, const UsefulB
 }
 
 suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_t *params_list, suit_encode_t *suit_encode, QCBOREncodeContext *context) {
-    //UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_ENCODE_ITEM_SIZE);
-    //suit_digest_t digest_buf = {.ptr = tmp_buf.ptr, .algorithm_id = SUIT_ALGORITHM_ID_SHA256};
-
     QCBOREncode_OpenMap(context);
     suit_err_t result = SUIT_SUCCESS;
     for (size_t i = 0; i < params_list->len; i++) {
@@ -237,8 +230,6 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
                 QCBOREncode_AddBytesToMapN(context, item->label, (UsefulBufC){.ptr = item->value.string.ptr, .len = item->value.string.len});
                 break;
             case SUIT_PARAMETER_IMAGE_DIGEST:
-                //tmp_buf.len = SUIT_ENCODE_MAX_ENCODE_ITEM_SIZE;
-                //suit_generate_sha256(ptr, len, digest_buf.ptr, digest_buf.len);
                 QCBOREncode_BstrWrapInMapN(context, item->label);
                 result = suit_encode_append_digest(&item->value.digest, 0, context);
                 QCBOREncode_CloseBstrWrap(context, NULL);
@@ -274,7 +265,6 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
 
 suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, suit_encode_t *suit_encode, UsefulBuf *buf) {
     suit_err_t result = SUIT_SUCCESS;
-    //UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
     UsefulBuf tmp_buf;
     result = suit_use_suit_encode_buf(suit_encode, 0, &tmp_buf);
     if (result != SUIT_SUCCESS) {
@@ -351,25 +341,6 @@ suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, suit_en
     return suit_fix_suit_encode_buf(suit_encode, t_buf.len);
 }
 
-/*
-suit_err_t suit_encode_common_sequence_bstr(const suit_command_sequence_t *cmd_seq, suit_encode_t *suit_encode, UsefulBuf *buf) {
-    UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
-    suit_err_t result = suit_encode_common_sequence((suit_command_sequence_t *)cmd_seq, suit_encode, &tmp_buf);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
-    QCBOREncodeContext context;
-    QCBOREncode_Init(&context, *buf);
-    QCBOREncode_AddBytes(&context, (UsefulBufC){.ptr = tmp_buf.ptr, .len = tmp_buf.len});
-    UsefulBufC t_buf;
-    QCBORError error = QCBOREncode_Finish(&context, &t_buf);
-    if (error != QCBOR_SUCCESS) {
-        return suit_error_from_qcbor_error(error);
-    }
-    *buf = (UsefulBuf){.ptr = (void *)t_buf.ptr, .len = t_buf.len};
-    return result;
-}
-*/
 suit_err_t suit_encode_append_component_identifier(const suit_component_identifier_t *component_id, uint32_t label, QCBOREncodeContext *context) {
     if (label > 0) {
         QCBOREncode_OpenArrayInMapN(context, label);
@@ -731,64 +702,6 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
     return suit_fix_suit_encode_buf(suit_encode, suit_encode->manifest.len);
 }
 
-suit_err_t suit_encode_severable_manifest_members_in_envelope(const suit_envelope_t *envelope, suit_encode_t *suit_encode) {
-    suit_err_t result = SUIT_SUCCESS;
-    const suit_manifest_t *manifest = &envelope->manifest;
-
-    UsefulBuf buf;
-    if (manifest->sev_man_mem.dependency_resolution_status & SUIT_SEVERABLE_IN_ENVELOPE) {
-        //UsefulBuf *dependency_resolution_buf = &suit_encode->dependency_resolution;
-        //buf = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->pos], .len = suit_encode->max_pos - suit_encode->pos};
-        result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.dependency_resolution, suit_encode, &buf);
-        if (result != SUIT_SUCCESS) {
-            goto out;
-        }
-        suit_encode->dependency_resolution = UsefulBuf_Const(buf);
-    }
-    if (manifest->sev_man_mem.payload_fetch_status & SUIT_SEVERABLE_IN_ENVELOPE) {
-        //UsefulBuf *payload_fetch_buf = &suit_encode->payload_fetch;
-        //buf = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->pos], .len = suit_encode->max_pos - suit_encode->pos};
-
-        result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.payload_fetch, suit_encode, &buf);
-        if (result != SUIT_SUCCESS) {
-            goto out;
-        }
-        suit_encode->payload_fetch = UsefulBuf_Const(buf);
-        //suit_encode->pos += buf.len;
-        //*payload_fetch_buf = (UsefulBufC){.ptr = buf.ptr, .len = buf.len};
-    }
-    if (manifest->sev_man_mem.install_status & SUIT_SEVERABLE_IN_ENVELOPE) {
-        //UsefulBufC *install_buf = &suit_encode->install;
-        //buf = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->pos], .len = suit_encode->max_pos - suit_encode->pos};
-
-        result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.install, suit_encode, &buf);
-        if (result != SUIT_SUCCESS) {
-            goto out;
-        }
-        suit_encode->install = UsefulBuf_Const(buf);
-        //suit_encode->pos += buf.len;
-        //*install_buf = (UsefulBufC){.ptr = buf.ptr, .len = buf.len};
-    }
-    if (manifest->sev_man_mem.text_status & SUIT_SEVERABLE_IN_ENVELOPE) {
-        //UsefulBufC *text_buf = &suit_encode->text;
-        //buf = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->pos], .len = suit_encode->max_pos - suit_encode->pos};
-
-        result = suit_encode_text(&manifest->sev_man_mem.text, suit_encode, &buf);
-        if (result != SUIT_SUCCESS) {
-            goto out;
-        }
-        //suit_encode->pos += buf.len;
-        //*text_buf = (UsefulBufC){.ptr = buf.ptr, .len = buf.len};
-        suit_encode->text = UsefulBuf_Const(buf);
-    }
-    if (manifest->sev_man_mem.coswid_status & SUIT_SEVERABLE_IN_ENVELOPE) {
-        suit_encode->coswid = (UsefulBufC){.ptr = manifest->sev_man_mem.coswid.ptr, .len = manifest->sev_man_mem.coswid.len};
-    }
-
-out:
-    return result;
-}
-
 /*
     Public function. See suit_manifest_data.h
  */
@@ -801,12 +714,6 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
         .buf = tmp_buf.ptr
     };
 
-    /*
-    result = suit_encode_severable_manifest_members_in_envelope(envelope, &suit_encode);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
-    */
     result = suit_encode_manifest(envelope, &suit_encode);
     if (result != SUIT_SUCCESS) {
         return result;
