@@ -82,8 +82,9 @@ int main(int argc, char *argv[]) {
     // Compare whole and 
     if (manifest_len != encode_len) {
         printf("main : Lengthes differ %ld => %ld\n", manifest_len, encode_len);
+        printf("#### ORIGINAL ####\n");
         suit_print_hex_in_max(manifest_buf, manifest_len, manifest_len);
-        printf("\n");
+        printf("\n#### ENCODED ####\n");
         suit_print_hex_in_max(encode_buf, encode_len, encode_len);
         printf("\n\n");
         return EXIT_FAILURE;
@@ -92,8 +93,9 @@ int main(int argc, char *argv[]) {
         if (memcmp(&manifest_buf[0], &encode_buf[0], 57) != 0 ||
             memcmp(&manifest_buf[57 + 64], &encode_buf[57 + 64], manifest_len - (57 + 64))) {
             printf("main : encoded binary is differ from original\n");
+            printf("#### ORIGINAL ####\n");
             suit_print_hex_in_max(manifest_buf, manifest_len, manifest_len);
-            printf("\n");
+            printf("\n#### ENCODED ####\n");
             suit_print_hex_in_max(encode_buf, encode_len, encode_len);
             printf("\n\n");
             return EXIT_FAILURE;
