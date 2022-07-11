@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
     printf("\nmain : Encode Manifest.\n");
     result = suit_encode_envelope(mode, &envelope, &key_pair, encode_buf, &encode_len);
     if (result != SUIT_SUCCESS) {
-        printf("main : Fail to encode. %d\n", result);
+        printf("main : Failed to encode. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
 
@@ -125,6 +125,7 @@ int main(int argc, char *argv[]) {
     if (w_len != encode_len) {
         printf("main : Fail to write to %s\n", manifest_file);
     }
+    printf("main : Wrote SUIT manifest to %s.\n", manifest_file);
 
     return EXIT_SUCCESS;
 }
