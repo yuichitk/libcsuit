@@ -37,13 +37,17 @@ cd ./libcsuit
 **(a) Use OpenSSL**
 ```
 docker build -t libcsuit_ossl -f Dockerfile_ossl3 .
-docker run -t libcsuit_ossl
+docker run -t libcsuit_ossl make -f Makefile.encode test
+docker run -t libcsuit_ossl make -f Makefile.parser test
+docker run -t libcsuit_ossl make -f Makefile.process test
 ```
 
 **(b) Use Mbed TLS**
 ```
 docker build -t libcsuit_psa -f Dockerfile_psa .
-docker run -t libcsuit_psa
+docker run -t libcsuit_psa make -f Makefile.encode test
+docker run -t libcsuit_psa make -f Makefile.parser test
+docker run -t libcsuit_psa make -f Makefile.process test
 ```
 
 ### Using Makefiles
