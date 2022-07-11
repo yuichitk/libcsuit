@@ -110,6 +110,9 @@ suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContex
     if (result != SUIT_SUCCESS) {
         return result;
     }
+    if (item->val.uCount >= SUIT_MAX_ARRAY_LENGTH) {
+        return SUIT_ERR_NO_MEMORY;
+    }
 
     params_list->len = item->val.uCount;
     for (size_t i = 0; i < params_list->len; i++) {
@@ -411,6 +414,10 @@ suit_err_t suit_decode_component_identifiers_from_item(uint8_t mode, QCBORDecode
             break;
         }
         if (result == SUIT_SUCCESS) {
+            if (identifier->len >= SUIT_MAX_ARRAY_LENGTH) {
+                result = SUIT_ERR_NO_MEMORY;
+                break;
+            }
             identifier->identifier[identifier->len].ptr = item->val.string.ptr;
             identifier->identifier[identifier->len].len = item->val.string.len;
             identifier->len++;
@@ -448,6 +455,10 @@ suit_err_t suit_decode_components_from_item(uint8_t mode, QCBORDecodeContext *co
             break;
         }
         if (result == SUIT_SUCCESS) {
+            if (components->len >= SUIT_MAX_COMPONENT_NUM) {
+                result = SUIT_ERR_NO_MEMORY;
+                break;
+            }
             result = suit_decode_component_identifiers_from_item(mode, context, item, false, &components->comp_id[components->len]);
             if (result == SUIT_SUCCESS) {
                 components->len++;
@@ -520,6 +531,10 @@ suit_err_t suit_decode_dependencies_from_item(uint8_t mode, QCBORDecodeContext *
             break;
         }
         if (result == SUIT_SUCCESS) {
+            if (dependencies->len >= SUIT_MAX_ARRAY_LENGTH) {
+                result = SUIT_ERR_NO_MEMORY;
+                break;
+            }
             result = suit_decode_dependency_from_item(mode, context, item, false, &dependencies->dependency[dependencies->len]);
             if (result == SUIT_SUCCESS) {
                 dependencies->len++;
@@ -699,6 +714,10 @@ suit_err_t suit_decode_text_from_item(uint8_t mode, QCBORDecodeContext *context,
 
         switch (item->uDataType) {
             case QCBOR_TYPE_ARRAY:
+                if (text->component_len >= SUIT_MAX_ARRAY_LENGTH) {
+                    result = SUIT_ERR_NO_MEMORY;
+                    break;
+                }
                 result = suit_decode_component_identifiers_from_item(mode, context, item, false, &text->component[text->component_len].key);
                 if (result != SUIT_SUCCESS) {
                     if (!suit_qcbor_skip_any(context, item)) {
