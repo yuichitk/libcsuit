@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
 RUN apt-get -y upgrade
-RUN apt-get -y install build-essential curl git
+RUN apt-get -y install curl git gcc gdb make
 
 WORKDIR /home/root
 
@@ -21,7 +21,6 @@ RUN git clone https://github.com/laurencelundblade/QCBOR.git
 WORKDIR ./QCBOR
 RUN git checkout 11ea361d803589dcfa38767594236afbc8789f8b
 RUN make install
-RUN make install_so
 
 WORKDIR /home/root
 RUN git clone https://github.com/laurencelundblade/t_cose.git
@@ -33,7 +32,7 @@ WORKDIR /home/root
 RUN ldconfig
 COPY . ./libcsuit
 WORKDIR ./libcsuit
-RUN make -f Makefile.encode -B
-RUN make -f Makefile.parser -B
+RUN make -f Makefile.encode -B CC=gcc
+RUN make -f Makefile.parser -B CC=gcc
 
 CMD make -f Makefile.parser test

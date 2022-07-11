@@ -31,7 +31,7 @@ $(OBJDIR)/%.o:	%.c
 
 .PHONY: all test clean
 
-all: clean $(TARGET)
+all: $(TARGET)
 
 TEST_NUM	:= 0 1 2 3 4 5
 EXPS		:= $(foreach num,$(TEST_NUM),./testfiles/suit_manifest_exp$(num).cbor)
