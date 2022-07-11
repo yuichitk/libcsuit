@@ -44,18 +44,23 @@ suit_err_t suit_generate_sha256(const uint8_t *tgt_ptr, const size_t tgt_len, ui
 }
 #else
 suit_err_t suit_generate_sha256(const uint8_t *tgt_ptr, const size_t tgt_len, uint8_t *digest_bytes_ptr, const size_t digest_bytes_len) {
-    int result;
-    SHA256_CTX sha256;
-    result = SHA256_Init(&sha256);
-    if (!result) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
+    suit_err_t result = SUIT_ERR_FAILED_TO_VERIFY;
+    if (digest_bytes_len > UINT32_MAX) {
+        return SUIT_ERR_NO_MEMORY;
     }
-    result = SHA256_Update(&sha256, tgt_ptr, tgt_len);
-    if (!result) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
+    unsigned int generated_size = digest_bytes_len;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    if (ctx != NULL
+        && EVP_DigestInit(ctx, EVP_sha256())
+        && EVP_DigestUpdate(ctx, tgt_ptr, tgt_len)
+        && EVP_DigestFinal(ctx, digest_bytes_ptr, &generated_size)
+        && digest_bytes_len == generated_size) {
+        result = SUIT_SUCCESS;
     }
-    result = SHA256_Final(digest_bytes_ptr, &sha256);
-    return (result) ? SUIT_SUCCESS : SUIT_ERR_FAILED_TO_VERIFY;
+    if (ctx != NULL) {
+        EVP_MD_CTX_free(ctx);
+    }
+    return result;
 }
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
 

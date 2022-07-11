@@ -12,13 +12,13 @@
 struct suit_digest;
 struct suit_buf;
 
+#define SHA256_DIGEST_LENGTH 32
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
 #include "psa/crypto.h"
-#define SHA256_DIGEST_LENGTH 32
 #include "mbedtls/md.h"
 #define SHA256_DIGEST_WORK_SPACE_LENGTH MBEDTLS_MD_MAX_SIZE
 #else /* LIBCSUIT_PSA_CRYPTO_C */
-#include "openssl/sha.h"
+#include "openssl/evp.h"
 #define SHA256_DIGEST_WORK_SPACE_LENGTH SHA256_DIGEST_LENGTH
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
 
