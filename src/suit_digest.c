@@ -115,7 +115,7 @@ suit_err_t suit_generate_digest(const uint8_t *ptr, const size_t len, suit_encod
     }
     digest->algorithm_id = SUIT_ALGORITHM_ID_SHA256;
     digest->bytes.ptr = digest_buf.ptr;
-    digest->bytes.len = digest_buf.len;
+    digest->bytes.len = SHA256_DIGEST_LENGTH;
     return SUIT_SUCCESS;
 }
 

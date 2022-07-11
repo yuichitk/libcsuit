@@ -72,7 +72,7 @@ suit_err_t suit_decode_digest_from_item(uint8_t mode, QCBORDecodeContext *contex
     \param[in]      mode        Controls parsing behavior, e.g. #SUIT_DECODE_MODE_STRICT.
     \param[in]      envelope    Input struct of libcsuit, correspond to the SUIT_Envelope.
     \param[in]      signing_key The private key (or key pair) to generate COSE_Sign1 signature.
-    \param[out]     buf         Output buffer of the binary.
+    \param[out]     buf         The pointer of output buffer of the binary.
     \param[in,out]  len         Length of the allocated buf size in input,
                                 and the size of the generated binary size in output.
 
@@ -101,6 +101,6 @@ suit_err_t suit_decode_digest_from_item(uint8_t mode, QCBORDecodeContext *contex
     }
     \endcode
  */
-suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_key_t *signing_key, uint8_t *buf, size_t *len);
+suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_key_t *signing_key, uint8_t **buf, size_t *len);
 
 #endif  // SUIT_MANIFEST_DATA_H

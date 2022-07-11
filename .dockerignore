@@ -1,0 +1,8 @@
+*.md
+suit_*
+QCBOR
+t_cose
+mbedtls
+obj
+Dockerfile*
+test

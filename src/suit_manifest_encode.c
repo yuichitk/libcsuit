@@ -11,7 +11,7 @@
 #include "csuit/suit_manifest_data.h"
 #include "csuit/suit_cose.h"
 #include "csuit/suit_digest.h"
-#define SUIT_ENCODE_MAX_BUFFER_SIZE 4096
+#define SUIT_ENCODE_MAX_BUFFER_SIZE 4096 * 2
 #define SUIT_ENCODE_MAX_ENCODE_ITEM_SIZE 64
 
 /*!
@@ -416,7 +416,8 @@ suit_err_t suit_encode_common(const suit_common_t *suit_common, suit_encode_t *s
         result = suit_error_from_qcbor_error(error);
     }
     *buf = (UsefulBuf){.ptr = (void *)t_buf.ptr, .len = t_buf.len};
-    return suit_fix_suit_encode_buf(suit_encode, t_buf.len);
+    result = suit_fix_suit_encode_buf(suit_encode, t_buf.len);
+    return result;
 }
 
 suit_err_t suit_encode_text(const suit_text_t *text, suit_encode_t *suit_encode, UsefulBuf *buf) {
@@ -492,7 +493,6 @@ suit_err_t suit_encode_text(const suit_text_t *text, suit_encode_t *suit_encode,
 
 suit_err_t suit_encode_text_bstr(const suit_text_t *text, suit_encode_t *suit_encode, UsefulBuf *buf) {
     suit_err_t result = SUIT_SUCCESS;
-    //UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
     UsefulBuf text_buf;
     result = suit_encode_text(text, suit_encode, &text_buf);
     if (result != SUIT_SUCCESS) {
@@ -549,29 +549,28 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
      * because some elements would be taken their digests
      */
     const suit_manifest_t *manifest = &envelope->manifest;
-    //UsefulBuf_MAKE_STACK_UB(suit_common, SUIT_ENCODE_MAX_BUFFER_SIZE);
-    UsefulBuf suit_common;
+    UsefulBuf suit_common = NULLUsefulBuf;
     suit_err_t result = suit_encode_common(&manifest->common, suit_encode, &suit_common);
     if (result != SUIT_SUCCESS) {
         return result;
     }
 
     /* encode unseverable members */
-    UsefulBuf validate_buf;
+    UsefulBuf validate_buf = NULLUsefulBuf;
     if (manifest->unsev_mem.validate.len > 0) {
         result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->unsev_mem.validate, suit_encode, &validate_buf);
         if (result != SUIT_SUCCESS) {
             return result;
         }
     }
-    UsefulBuf load_buf;
+    UsefulBuf load_buf = NULLUsefulBuf;
     if (manifest->unsev_mem.load.len > 0) {
         result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->unsev_mem.load, suit_encode, &load_buf);
         if (result != SUIT_SUCCESS) {
             return result;
         }
     }
-    UsefulBuf run_buf;
+    UsefulBuf run_buf = NULLUsefulBuf;
     if (manifest->unsev_mem.run.len > 0) {
         result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->unsev_mem.run, suit_encode, &run_buf);
         if (result != SUIT_SUCCESS) {
@@ -684,7 +683,7 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
     }
 
     /* Encode whole manifest */
-    UsefulBuf suit_manifest;
+    UsefulBuf suit_manifest = NULLUsefulBuf;
     result = suit_use_suit_encode_buf(suit_encode, 0, &suit_manifest);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -798,13 +797,12 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
 /*
     Public function. See suit_manifest_data.h
  */
-suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_key_t *signing_key, uint8_t *buf, size_t *len) {
+suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_key_t *signing_key, uint8_t **buf, size_t *len) {
     suit_err_t result;
-    UsefulBuf_MAKE_STACK_UB(tmp_buf, SUIT_ENCODE_MAX_BUFFER_SIZE);
     suit_encode_t suit_encode = {
         .pos = 0,
-        .max_pos = tmp_buf.len,
-        .buf = tmp_buf.ptr
+        .max_pos = *len,
+        .buf = *buf
     };
 
     result = suit_encode_manifest(envelope, &suit_encode);
@@ -812,8 +810,13 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
         return result;
     }
 
+    UsefulBuf suit_envelope = NULLUsefulBuf;
+    result = suit_use_suit_encode_buf(&suit_encode, 0, &suit_envelope);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
     QCBOREncodeContext context;
-    QCBOREncode_Init(&context, (UsefulBuf){buf, *len});
+    QCBOREncode_Init(&context, suit_envelope);
     QCBOREncode_AddTag(&context, SUIT_ENVELOPE_CBOR_TAG);
     QCBOREncode_OpenMap(&context);
     /* TODO
@@ -853,7 +856,11 @@ out:
     if (result != SUIT_SUCCESS) {
         return result;
     }
-    *len = tmp.len;
-    return SUIT_SUCCESS;
+    result = suit_fix_suit_encode_buf(&suit_encode, tmp.len);
+    if (result == SUIT_SUCCESS) {
+        *buf = (uint8_t *)tmp.ptr;
+        *len = tmp.len;
+    }
+    return result;
 }
 

@@ -1,10 +1,10 @@
 # [libcsuit](https://github.com/yuichitk/libcsuit/)
 **libcsuit** is a C library for encoding and decoding [IETF SUIT manifests](https://tools.ietf.org/html/draft-ietf-suit-manifest).
-The manifest contains meta-data about the firmware image. The manifest is protected against modification and provides information 
+The manifest contains meta-data about the firmware image. The manifest is protected against modification and provides information
 about the software/firmware author.
 
 For more information on how the IETF SUIT manifest is used to protect firmware updates of IoT devices, please look at the
- [IETF SUIT architecture](https://datatracker.ietf.org/doc/html/draft-ietf-suit-architecture) document and the 
+ [IETF SUIT architecture](https://datatracker.ietf.org/doc/html/draft-ietf-suit-architecture) document and the
  [IETF SUIT](https://datatracker.ietf.org/wg/suit/about/) working group.
 
 ## Overview
@@ -21,8 +21,32 @@ Example programs are offered for testing.
 ## Getting started
 
 This library uses two build systems, namely cmake and classical makefiles.
+To build with makefile you can use docker environment and we recommend you to use it.
 
-### Using Makefiles 
+### Using Docker(RECOMMENDED)
+
+Currently the example codes require some features which corresponding cryptographic library packages (such as libssl-dev or libmbedtls-dev in Debian) do not contain.
+If you download their latest and stable version of source code and build it, your building environment might changed.
+Preventing this, we recommend you to build libcsuit examples with docker.
+
+```bash
+git clone https://github.com/yuichitk/libcsuit
+cd ./libcsuit
+```
+
+**(a) Use OpenSSL**
+```
+docker build -t libcsuit_ossl -f Dockerfile_ossl3 .
+docker run -t libcsuit_ossl
+```
+
+**(b) Use Mbed TLS**
+```
+docker build -t libcsuit_psa -f Dockerfile_psa .
+docker run -t libcsuit_psa
+```
+
+### Using Makefiles
 
 ```bash
 git clone --recurse-submodules https://github.com/yuichitk/libcsuit
@@ -94,8 +118,7 @@ cmake -DMBEDTLS=1 ..
 make 
 ```
 
-If you want to build the code for OpenSSL then omit the '-DMBEDTLS=1' parameter from the cmake invocation. 
-
+If you want to build the code for OpenSSL then omit the '-DMBEDTLS=1' parameter from the cmake invocation.
 
 
 ## SUIT Protocol Message Examples

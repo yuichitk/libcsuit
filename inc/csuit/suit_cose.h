@@ -15,7 +15,6 @@
 #include "psa/crypto.h"
 #else
 #include "openssl/evp.h"
-#include "openssl/param_build.h"
 #include "openssl/ec.h"
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
 
