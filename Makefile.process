@@ -5,11 +5,10 @@
 #
 
 CFLAGS	= -Wall -g
-LDFLAGS	= -lcsuit -lt_cose -lqcbor -lm
+LDFLAGS	= -lt_cose -lqcbor -lm
 INC		= -I ./inc -I ./examples/inc
 TARGET	= ./suit_manifest_process
-SRCS	= examples/suit_manifest_process_main.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_common.c src/suit_digest.c src/suit_cose.c src/suit_manifest_process.c src/suit_manifest_decode.c src/suit_manifest_print.c
-
+SRCS	= examples/suit_manifest_process_main.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_common.c src/suit_digest.c src/suit_cose.c src/suit_manifest_process.c src/suit_manifest_decode.c src/suit_manifest_encode.c src/suit_manifest_print.c
 OBJDIR	= ./obj
 OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 

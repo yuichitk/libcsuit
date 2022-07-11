@@ -33,7 +33,6 @@ RUN ldconfig
 COPY . ./libcsuit
 RUN mv ./libcsuit/.gdbinit /root
 WORKDIR ./libcsuit
-RUN make -f Makefile.encode -B CC=gcc
-RUN make -f Makefile.parser -B CC=gcc
-
-CMD make -f Makefile.parser test
+RUN make -f Makefile.encode CC=gcc
+RUN make -f Makefile.parser CC=gcc
+RUN make -f Makefile.process CC=gcc

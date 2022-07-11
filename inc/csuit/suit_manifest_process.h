@@ -244,7 +244,7 @@ typedef struct suit_inputs {
     uint8_t buf[SUIT_MAX_DATA_SIZE];
     size_t left_len;
     size_t key_len;
-    struct t_cose_key *public_keys;
+    suit_key_t *public_keys;
 } suit_inputs_t;
 
 typedef struct suit_extracted {

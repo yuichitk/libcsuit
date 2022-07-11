@@ -32,6 +32,4 @@ RUN mv ./libcsuit/.gdbinit /root
 WORKDIR ./libcsuit
 RUN make -f Makefile.encode MBEDTLS=1 CC=gcc
 RUN make -f Makefile.parser MBEDTLS=1 CC=gcc
-RUN apt-get -y install vim
-
-CMD make -f Makefile.parser test
+RUN make -f Makefile.process MBEDTLS=1 CC=gcc
