@@ -1030,6 +1030,10 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
             return result;
         }
         if (item->uLabelType == QCBOR_TYPE_TEXT_STRING) {
+            if (envelope->payloads.len >= SUIT_MAX_ARRAY_LENGTH) {
+                result = SUIT_ERR_NO_MEMORY;
+                break;
+            }
             suit_payload_t *payload = &envelope->payloads.payload[envelope->payloads.len];
             payload->key = item->label.string;
             payload->bytes = item->val.string;
