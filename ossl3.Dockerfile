@@ -17,14 +17,12 @@ RUN make install_sw
 ENV LD_LIBRARY_PATH /usr/local/lib64
 RUN ldconfig
 
-RUN git clone https://github.com/laurencelundblade/QCBOR.git /root/QCBOR
+RUN git clone --depth 1 https://github.com/laurencelundblade/QCBOR.git /root/QCBOR
 WORKDIR /root/QCBOR
-RUN git checkout 11ea361d803589dcfa38767594236afbc8789f8b
 RUN make install
 
-RUN git clone https://github.com/laurencelundblade/t_cose.git /root/t_cose
+RUN git clone --depth 1 https://github.com/laurencelundblade/t_cose.git /root/t_cose
 WORKDIR /root/t_cose
-RUN git checkout d5ff4e282d8af34e5756627cf877ab399e7e51af
 RUN make -f Makefile.ossl libt_cose.a install
 
 RUN ldconfig

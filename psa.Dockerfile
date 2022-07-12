@@ -13,22 +13,20 @@ RUN git clone -b v3.1.0 --depth 1 https://github.com/Mbed-TLS/mbedtls.git /root/
 WORKDIR /root/mbedtls
 RUN make install
 
-RUN git clone --single-branch https://github.com/laurencelundblade/QCBOR.git /root/QCBOR
+RUN git clone --depth 1 https://github.com/laurencelundblade/QCBOR.git /root/QCBOR
 WORKDIR /root/QCBOR
-RUN git checkout 11ea361d803589dcfa38767594236afbc8789f8b
 RUN make install
 
-RUN git clone --single-branch https://github.com/laurencelundblade/t_cose.git /root/t_cose
+RUN git clone --depth 1 https://github.com/laurencelundblade/t_cose.git /root/t_cose
 WORKDIR /root/t_cose
-RUN git checkout d5ff4e282d8af34e5756627cf877ab399e7e51af
 RUN make -f Makefile.psa libt_cose.a install
 
 RUN ldconfig
 COPY . /root/libcsuit
 WORKDIR /root/libcsuit
-RUN make -f Makefile.encode MBEDTLS=1 suit_manifest_encode
-RUN make -f Makefile.parser MBEDTLS=1 suit_manifest_parser
-RUN make -f Makefile.process MBEDTLS=1 suit_manifest_process
+RUN make -f Makefile.encode MBEDTLS=1
+RUN make -f Makefile.parser MBEDTLS=1
+RUN make -f Makefile.process MBEDTLS=1
 
 RUN rm -r /root/mbedtls /root/QCBOR /root/t_cose
 RUN apt-get -y purge curl git gcc
