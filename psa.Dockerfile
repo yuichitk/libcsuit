@@ -35,3 +35,5 @@ WORKDIR ./libcsuit
 RUN make -f Makefile.encode MBEDTLS=1 CC=gcc
 RUN make -f Makefile.parser MBEDTLS=1 CC=gcc
 RUN make -f Makefile.process MBEDTLS=1 CC=gcc
+
+CMD make -f Makefile.encode test && make -f Makefile.parser test && make -f Makefile.process test

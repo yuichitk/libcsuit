@@ -1,8 +1,15 @@
 *.md
 suit_*
+libcsuit.a
+libcsuit.so
+CMakeLists.txt
 QCBOR
 t_cose
 mbedtls
 obj
-Dockerfile*
+*Dockerfile
 test
+Doxyfile
+html
+mbedtls_config.h
+tags
