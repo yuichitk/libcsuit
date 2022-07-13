@@ -5,14 +5,17 @@
  */
 
 #include <stdlib.h>
-#include "csuit.h"
-#include "suit_manifest_process.h"
+#include "csuit/csuit.h"
+#include "csuit/suit_manifest_process.h"
 #include "qcbor/qcbor_spiffy_decode.h"
 #include <CUnit/CUnit.h>
 #include <CUnit/Console.h>
 
+#define MAX_FILE_BUFFER_SIZE 4096
+
 void test_csuit_rollback(void);
 void test_csuit_get_digest(void);
+void test_csuit_suit_encode_buf(void);
 
 int main(int argc, char *argv[]) {
     CU_pSuite suite;
@@ -20,6 +23,7 @@ int main(int argc, char *argv[]) {
     suite = CU_add_suite("SUIT", NULL, NULL);
     CU_add_test(suite, "test_csuit_rollback", test_csuit_rollback);
     CU_add_test(suite, "test_csuit_get_digest", test_csuit_get_digest);
+    CU_add_test(suite, "test_csuit_suit_encode_buf", test_csuit_suit_encode_buf);
     CU_console_run_tests();
     CU_cleanup_registry();
     return 0;
@@ -113,7 +117,6 @@ void test_csuit_rollback(void) {
 
 void test_csuit_get_digest(void) {
     QCBORDecodeContext context;
-    QCBORItem item;
     QCBORError error;
     suit_digest_t digest;
 
@@ -178,3 +181,41 @@ void test_csuit_get_digest(void) {
     CU_ASSERT_EQUAL(error, QCBOR_SUCCESS);
     CU_ASSERT_EQUAL(digest.bytes.len, 32);
 }
+
+void test_csuit_suit_encode_buf(void) {
+    suit_err_t result;
+    UsefulBuf_MAKE_STACK_UB(buf, 16);
+    suit_encode_t suit_encode = {
+        .max_pos = buf.len,
+        .buf = buf.ptr,
+    };
+
+    /* memory usage layout test */
+    UsefulBuf buf1;
+    suit_use_suit_encode_buf(&suit_encode, 2, &buf1);
+    memset(buf1.ptr, '1', sizeof(char) * buf1.len);
+    suit_fix_suit_encode_buf(&suit_encode, buf1.len);
+    UsefulBuf buf2;
+    suit_use_suit_encode_buf(&suit_encode, 3, &buf2);
+    memset(buf2.ptr, '2', sizeof(char) * buf2.len);
+    suit_fix_suit_encode_buf(&suit_encode, buf2.len);
+    CU_ASSERT_NSTRING_EQUAL(buf.ptr, "11222", 5);
+
+    /* cause SUIT_ERR_NO_MEMORY on double allocate buf */
+    suit_use_suit_encode_buf(&suit_encode, 2, &buf1);
+    result = suit_use_suit_encode_buf(&suit_encode, 3, &buf2);
+    CU_ASSERT_EQUAL(result, SUIT_ERR_NO_MEMORY);
+    result = suit_fix_suit_encode_buf(&suit_encode, buf1.len);
+    CU_ASSERT_EQUAL(result, SUIT_SUCCESS);
+
+    /* cause SUIT_ERR_NO_MEMORY on buffer overflow */
+    // NOTE: cur_pos == pos == 7
+    UsefulBuf buf3;
+    result = suit_use_suit_encode_buf(&suit_encode, 10, &buf3);
+    CU_ASSERT_EQUAL(result, SUIT_ERR_NO_MEMORY);
+    result = suit_use_suit_encode_buf(&suit_encode, 9, &buf3);
+    CU_ASSERT_EQUAL(result, SUIT_SUCCESS);
+    result = suit_fix_suit_encode_buf(&suit_encode, buf3.len);
+    CU_ASSERT_EQUAL(result, SUIT_SUCCESS);
+}
+
