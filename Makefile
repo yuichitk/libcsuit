@@ -6,8 +6,8 @@
 
 NAME				= libcsuit
 CFLAGS				= -Wall -fPIC
-LDFLAGS				= -lt_cose -lqcbor
-INC					= -I ./inc -I ./t_cose/inc
+LDFLAGS				= -lt_cose -lqcbor -lm
+INC					= -I ./inc
 SRCS				= src/suit_common.c src/suit_manifest_process.c src/suit_manifest_decode.c src/suit_manifest_encode.c src/suit_manifest_print.c src/suit_cose.c src/suit_digest.c
 PUBLIC_INTERFACE	= inc/csuit/csuit.h inc/csuit/suit_common.h inc/csuit/suit_manifest_data.h inc/csuit/suit_manifest_process.h inc/csuit/suit_manifest_print.h inc/csuit/suit_cose.h inc/csuit/suit_digest.h
 OBJDIR				= ./obj
@@ -19,12 +19,13 @@ ifeq ($(MBEDTLS),1)
     LDFLAGS	+= -lmbedtls -lmbedx509 -lmbedcrypto
 else
     # use OpenSSL
+    MBEDTLS=0
     LDFLAGS += -lcrypto
 endif
 
 .PHONY: all so doc install uninstall test clean
 
-all: $(NAME).a
+all: $(NAME).a build_test
 
 so: $(NAME).so
 
@@ -68,8 +69,11 @@ uninstall: $(NAME).a $(PUBLIC_INTERFACE)
 	$(RM) $(addprefix $(DESTDIR)$(PREFIX)/lib/, \
 		$(NAME).a $(NAME).so $(NAME).so.1 $(NAME).so.1.0.0)
 
+build_test:
+	$(MAKE) -C test MBEDTLS=$(MBEDTLS)
+
 test:
-	$(MAKE) -C test run
+	$(MAKE) -C test MBEDTLS=$(MBEDTLS) run
 
 clean:
 	$(RM) -f $(OBJS) $(NAME).a $(NAME).so
