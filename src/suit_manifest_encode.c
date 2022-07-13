@@ -24,13 +24,18 @@
  */
 
 suit_err_t suit_use_suit_encode_buf(suit_encode_t *suit_encode, size_t len, UsefulBuf *buf) {
-    if (len == 0) {
-        len = suit_encode->max_pos - suit_encode->pos;
-    }
-    if (suit_encode->pos + len > suit_encode->max_pos) {
+    if (suit_encode->pos != suit_encode->cur_pos) {
+        /* need to "fix" it */
         return SUIT_ERR_NO_MEMORY;
     }
-    *buf = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->pos], .len = len};
+    if (len == 0) {
+        len = suit_encode->max_pos - suit_encode->cur_pos;
+    }
+    if (suit_encode->cur_pos + len > suit_encode->max_pos) {
+        return SUIT_ERR_NO_MEMORY;
+    }
+    *buf = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->cur_pos], .len = len};
+    suit_encode->cur_pos = suit_encode->pos + len;
     return SUIT_SUCCESS;
 }
 
@@ -39,6 +44,7 @@ suit_err_t suit_fix_suit_encode_buf(suit_encode_t *suit_encode, const size_t use
         return SUIT_ERR_NO_MEMORY;
     }
     suit_encode->pos += used_len;
+    suit_encode->cur_pos = suit_encode->pos;
     return SUIT_SUCCESS;
 }
 
@@ -157,58 +163,17 @@ suit_err_t suit_encode_append_payloads(uint8_t mode, const suit_envelope_t *enve
     return SUIT_SUCCESS;
 }
 
-suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, const UsefulBufC *manifest, const suit_key_t signing_key, suit_encode_t *suit_encode, QCBOREncodeContext *context)
+suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, UsefulBufC digest, UsefulBufC signatures[], size_t num_signature, QCBOREncodeContext *context)
 {
-    suit_err_t result;
-    UsefulBuf digest;
-    result = suit_generate_encoded_digest(manifest->ptr, manifest->len, suit_encode, &digest);
-    if (result != SUIT_SUCCESS) {
-        return result;
+    QCBOREncode_BstrWrapInMapN(context, SUIT_AUTHENTICATION);
+    QCBOREncode_OpenArray(context);
+    QCBOREncode_AddBytes(context, digest);
+    for (size_t i = 0; i < num_signature; i++) {
+        QCBOREncode_AddBytes(context, signatures[i]);
     }
-
-    UsefulBuf signature;
-    result = suit_use_suit_encode_buf(suit_encode, 0, &signature);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
-    result = suit_sign_cose_sign1((UsefulBufC){.ptr = digest.ptr, .len = digest.len}, &signing_key, &signature);
-    if (!suit_continue(mode, result)) {
-        return result;
-    }
-    if (result == SUIT_SUCCESS) {
-        result = suit_fix_suit_encode_buf(suit_encode, signature.len);
-        if (result != SUIT_SUCCESS) {
-            return result;
-        }
-    }
-
-    QCBOREncodeContext t_context;
-    UsefulBuf tmp_buf;
-    result = suit_use_suit_encode_buf(suit_encode, 0, &tmp_buf);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
-    QCBOREncode_Init(&t_context, tmp_buf);
-    QCBOREncode_OpenArray(&t_context);
-    QCBOREncode_AddBytes(&t_context, (UsefulBufC){.ptr = digest.ptr, .len = digest.len});
-    if (signature.len > 0) {
-        QCBOREncode_AddBytes(&t_context, (UsefulBufC){.ptr = signature.ptr, .len = signature.len});
-    }
-    QCBOREncode_CloseArray(&t_context);
-
-    UsefulBufC buf;
-
-    QCBORError error = QCBOREncode_Finish(&t_context, &buf);
-    if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
-        return suit_error_from_qcbor_error(error);
-    }
-    result = suit_fix_suit_encode_buf(suit_encode, buf.len);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
-
-    QCBOREncode_AddBytesToMapN(context, SUIT_AUTHENTICATION, buf);
-    return result;
+    QCBOREncode_CloseArray(context);
+    QCBOREncode_CloseBstrWrap(context, NULL);
+    return SUIT_SUCCESS;
 }
 
 suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_t *params_list, suit_encode_t *suit_encode, QCBOREncodeContext *context) {
@@ -581,15 +546,7 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
     /* encode severable members */
     if (manifest->sev_man_mem.dependency_resolution_status & SUIT_SEVERABLE_EXISTS) {
         UsefulBuf dependency_resolution_buf = NULLUsefulBuf;
-        result = suit_use_suit_encode_buf(suit_encode, 0, &dependency_resolution_buf);
-        if (result != SUIT_SUCCESS) {
-            return result;
-        }
         result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.dependency_resolution, suit_encode, &dependency_resolution_buf);
-        if (result != SUIT_SUCCESS) {
-            return result;
-        }
-        result = suit_fix_suit_encode_buf(suit_encode, dependency_resolution_buf.len);
         if (result != SUIT_SUCCESS) {
             return result;
         }
@@ -606,15 +563,7 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
 
     if (manifest->sev_man_mem.payload_fetch_status & SUIT_SEVERABLE_EXISTS) {
         UsefulBuf payload_fetch_buf = NULLUsefulBuf;
-        result = suit_use_suit_encode_buf(suit_encode, 0, &payload_fetch_buf);
-        if (result != SUIT_SUCCESS) {
-            return result;
-        }
         result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.payload_fetch, suit_encode, &payload_fetch_buf);
-        if (result != SUIT_SUCCESS) {
-            return result;
-        }
-        result = suit_fix_suit_encode_buf(suit_encode, payload_fetch_buf.len);
         if (result != SUIT_SUCCESS) {
             return result;
         }
@@ -631,15 +580,7 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
 
     if (manifest->sev_man_mem.install_status & SUIT_SEVERABLE_EXISTS) {
         UsefulBuf install_buf = NULLUsefulBuf;
-        result = suit_use_suit_encode_buf(suit_encode, 0, &install_buf);
-        if (result != SUIT_SUCCESS) {
-            return result;
-        }
         result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.install, suit_encode, &install_buf);
-        if (result != SUIT_SUCCESS) {
-            return result;
-        }
-        result = suit_fix_suit_encode_buf(suit_encode, install_buf.len);
         if (result != SUIT_SUCCESS) {
             return result;
         }
@@ -810,6 +751,27 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
         return result;
     }
 
+    /* calculate digest and signatures of suit-manifest */
+    UsefulBuf digest;
+    result = suit_generate_encoded_digest(suit_encode.manifest.ptr, suit_encode.manifest.len, &suit_encode, &digest);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+
+    UsefulBuf signature;
+    result = suit_use_suit_encode_buf(&suit_encode, 0, &signature);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+    result = suit_sign_cose_sign1(UsefulBuf_Const(digest), signing_key, &signature);
+    if (!suit_continue(mode, result)) {
+        return result;
+    }
+    result = suit_fix_suit_encode_buf(&suit_encode, signature.len);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+
     UsefulBuf suit_envelope = NULLUsefulBuf;
     result = suit_use_suit_encode_buf(&suit_encode, 0, &suit_envelope);
     if (result != SUIT_SUCCESS) {
@@ -826,7 +788,9 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
     }
     */
 
-    result = suit_encode_append_authentication_wrapper(mode, &suit_encode.manifest, *signing_key, &suit_encode, &context);
+    UsefulBufC signatures[1];
+    signatures[0] = UsefulBuf_Const(signature);
+    result = suit_encode_append_authentication_wrapper(mode, UsefulBuf_Const(digest), signatures, 1, &context);
     if (result != SUIT_SUCCESS) {
         goto out;
     }

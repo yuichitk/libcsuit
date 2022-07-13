@@ -507,6 +507,7 @@ typedef struct suit_encode {
 
     uint8_t *buf;
     size_t pos;
+    size_t cur_pos;
     const size_t max_pos;
 } suit_encode_t;
 

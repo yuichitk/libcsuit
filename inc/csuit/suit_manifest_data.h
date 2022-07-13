@@ -15,8 +15,10 @@
 
     \brief  Declarations of structures and functions
  */
+
 suit_err_t suit_use_suit_encode_buf(suit_encode_t *suit_encode, size_t len, UsefulBuf *buf);
 suit_err_t suit_fix_suit_encode_buf(suit_encode_t *suit_encode, const size_t used_len);
+
 /*!
     \brief Decode SUIT_Compression_Info.
 
