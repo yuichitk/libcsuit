@@ -121,10 +121,11 @@ int main(int argc, char *argv[]) {
         printf("main : Failed to encode. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
+    printf("main : Total buffer memory usage was %ld/%ld bytes\n", ret_pos + encode_len - encode_buf, sizeof(encode_buf));
 
     size_t w_len = write_to_file(manifest_file, encode_len, ret_pos);
     if (w_len != encode_len) {
-        printf("main : Fail to write to %s\n", manifest_file);
+        printf("main : Failed to write to %s\n", manifest_file);
     }
     printf("main : Wrote SUIT manifest to %s.\n", manifest_file);
 

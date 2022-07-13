@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
         printf("main : Failed to encode. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
+    printf("main : Total buffer memory usage was %ld/%ld bytes\n", ret_pos + encode_len - encode_buf, sizeof(encode_buf));
 
     // Compare whole and 
     if (manifest_len != encode_len) {
