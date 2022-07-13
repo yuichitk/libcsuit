@@ -269,6 +269,8 @@ typedef struct suit_extracted {
     suit_digest_t coswid_digest;
 } suit_extracted_t;
 
+void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);
+
 /*!
     \brief  Decode & Process SUIT binary
 
