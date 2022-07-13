@@ -22,7 +22,7 @@ else
     LDFLAGS += -lcrypto
 endif
 
-.PHONY: all so doc install uninstall clean
+.PHONY: all so doc install uninstall test clean
 
 all: $(NAME).a
 
@@ -68,6 +68,9 @@ uninstall: $(NAME).a $(PUBLIC_INTERFACE)
 	$(RM) $(addprefix $(DESTDIR)$(PREFIX)/lib/, \
 		$(NAME).a $(NAME).so $(NAME).so.1 $(NAME).so.1.0.0)
 
-clean:
-	rm -f $(OBJS) $(NAME).a $(NAME).so
+test:
+	$(MAKE) -C test run
 
+clean:
+	$(RM) -f $(OBJS) $(NAME).a $(NAME).so
+	$(MAKE) -C test clean

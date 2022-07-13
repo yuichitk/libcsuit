@@ -9,9 +9,8 @@
 #include "csuit/suit_manifest_process.h"
 #include "qcbor/qcbor_spiffy_decode.h"
 #include <CUnit/CUnit.h>
-#include <CUnit/Console.h>
-
-#define MAX_FILE_BUFFER_SIZE 4096
+#include <CUnit/Automated.h>
+#include <CUnit/Basic.h>
 
 void test_csuit_rollback(void);
 void test_csuit_get_digest(void);
@@ -24,7 +23,8 @@ int main(int argc, char *argv[]) {
     CU_add_test(suite, "test_csuit_rollback", test_csuit_rollback);
     CU_add_test(suite, "test_csuit_get_digest", test_csuit_get_digest);
     CU_add_test(suite, "test_csuit_suit_encode_buf", test_csuit_suit_encode_buf);
-    CU_console_run_tests();
+    CU_basic_set_mode(CU_BRM_SILENT);
+    CU_basic_run_tests();
     CU_cleanup_registry();
     return 0;
 }
