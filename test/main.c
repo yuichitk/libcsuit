@@ -9,7 +9,6 @@
 #include "csuit/suit_manifest_process.h"
 #include "qcbor/qcbor_spiffy_decode.h"
 #include <CUnit/CUnit.h>
-#include <CUnit/Automated.h>
 #include <CUnit/Basic.h>
 
 void test_csuit_rollback(void);
