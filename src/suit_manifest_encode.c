@@ -23,31 +23,6 @@
     and then call suit_encode_envelope() to encode whole SUIT manifest.
  */
 
-suit_err_t suit_use_suit_encode_buf(suit_encode_t *suit_encode, size_t len, UsefulBuf *buf) {
-    if (suit_encode->pos != suit_encode->cur_pos) {
-        /* need to "fix" it */
-        return SUIT_ERR_NO_MEMORY;
-    }
-    if (len == 0) {
-        len = suit_encode->max_pos - suit_encode->cur_pos;
-    }
-    if (suit_encode->cur_pos + len > suit_encode->max_pos) {
-        return SUIT_ERR_NO_MEMORY;
-    }
-    *buf = (UsefulBuf){.ptr = &suit_encode->buf[suit_encode->cur_pos], .len = len};
-    suit_encode->cur_pos = suit_encode->pos + len;
-    return SUIT_SUCCESS;
-}
-
-suit_err_t suit_fix_suit_encode_buf(suit_encode_t *suit_encode, const size_t used_len) {
-    if (suit_encode->pos + used_len > suit_encode->max_pos) {
-        return SUIT_ERR_NO_MEMORY;
-    }
-    suit_encode->pos += used_len;
-    suit_encode->cur_pos = suit_encode->pos;
-    return SUIT_SUCCESS;
-}
-
 suit_err_t suit_encode_append_severed_members(const suit_encode_t *suit_encode, QCBOREncodeContext *context) {
     if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->dependency_resolution)
         && suit_encode->dependency_resolution_digest.bytes.len > 0) {
