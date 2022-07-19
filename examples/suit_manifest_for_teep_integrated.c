@@ -153,5 +153,6 @@ int main(int argc, char *argv[]) {
         printf("main : Skip to write to a file (dry-run).\n");
     }
 
+    suit_free_key(&key_pair);
     return EXIT_SUCCESS;
 }
