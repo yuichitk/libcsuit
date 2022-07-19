@@ -1,0 +1,48 @@
+#
+# Copyright (c) 2020 SECOM CO., LTD. All Rights reserved.
+#
+# SPDX-License-Identifier: BSD-2-Clause
+#
+
+CFLAGS	= -Wall -g
+LDFLAGS	= -lt_cose -lqcbor -lm
+INC		= -I ./inc -I ./examples/inc
+TARGET	= ./suit_manifest_parse_comp
+SRCS	= examples/suit_manifest_parser_for_tamproto.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_common.c src/suit_digest.c src/suit_cose.c src/suit_manifest_decode.c src/suit_manifest_print.c
+
+OBJDIR	= ./obj
+OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
+
+ifeq ($(MBEDTLS),1)
+    # use MbedTLS
+    CFLAGS	+= -DLIBCSUIT_PSA_CRYPTO_C=1
+    LDFLAGS	+= -lmbedtls -lmbedx509 -lmbedcrypto
+else
+    # use OpenSSL
+    LDFLAGS += -lcrypto
+endif
+
+$(TARGET):	$(OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(OBJDIR)/%.o:	%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
+
+.PHONY: all test clean
+
+all: $(TARGET)
+
+TEST_NUM	:= 0 1 2 3 4 5
+EXPS		:= $(foreach num,$(TEST_NUM),./testfiles/suit_manifest_exp$(num).cbor)
+define test-one
+	$(TARGET) $1 || exit 1
+
+endef
+
+test: all
+	$(foreach exp,$(EXPS),$(call test-one,$(exp)))
+
+
+clean:
+	rm -f $(OBJS) $(TARGET)
