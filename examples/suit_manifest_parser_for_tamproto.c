@@ -56,10 +56,12 @@ int main(int argc, char *argv[]) {
     suit_manifest_t *manifest = &envelope.manifest;
     fprintf(stdout, "[%ld,", manifest->sequence_number);
     for (size_t i = 0; i < manifest->common.components.len; i++) {
+        fprintf(stdout, "[");
         suit_print_component_identifier(&manifest->common.components.comp_id[i]);
-        fprintf(stdout, ",");
+        fprintf(stdout, "],");
     }
     fprintf(stdout, "]");
+    fflush(stdout);
 
     suit_free_key(&cose_key);
     return EXIT_SUCCESS;
