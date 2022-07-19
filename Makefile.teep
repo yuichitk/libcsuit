@@ -4,9 +4,8 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 
-CC		= gcc
 CFLAGS	= -Wall -g
-LDFLAGS	= -lt_cose -lqcbor -lcrypto
+LDFLAGS	= -lt_cose -lqcbor -lcrypto -lm
 INC		= -I ./inc -I ./examples/inc
 TARGETu	= ./suit_for_teep_uri
 TARGETi	= ./suit_for_teep_integrated
@@ -48,39 +47,37 @@ $(OBJDIR)/%.o:	%.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
-PRIV_KEY1	:= ./testfiles/key/trust_anchor_secp256r1.der
 OUTPUTu		:= ./testfiles/suit_manifest_expU.cbor
 OUTPUTi		:= ./testfiles/suit_manifest_expI.cbor
 URI			:= https://example.org/8d82573a-926d-4754-9353-32dc29997f74.suit
-PRIV_KEY2	:= ../libteep/testfiles/key/tam_prime256v1.der
 OUTPUTd		:= ./testfiles/suit_manifest_expD.cbor
 OUTPUTid	:= ./testfiles/suit_manifest_expID.cbor
 DEPENDENCY	:= ./testfiles/suit_manifest_expU_fixed.cbor
 OUTPUTr		:= ./testfiles/suit_manifest_expR.cbor
 
-$(OUTPUTu): $(TARGETu) $(PRIV_KEY1)
-	$(TARGETu) $(PRIV_KEY1) $(OUTPUTu)
+$(OUTPUTu): $(TARGETu)
+	$(TARGETu) $(OUTPUTu)
 
-$(OUTPUTd): $(TARGETd) $(OUTPUTu) $(PRIV_KEY2)
-	$(TARGETd) $(OUTPUTu) $(PRIV_KEY2) -u $(URI) -o $(OUTPUTd)
+$(OUTPUTd): $(TARGETd) $(OUTPUTu)
+	$(TARGETd) $(OUTPUTu) -u $(URI) -o $(OUTPUTd)
 
-$(OUTPUTid): $(TARGETd) $(OUTPUTi) $(PRIV_KEY2)
-	$(TARGETd) $(OUTPUTi) $(PRIV_KEY2) -o $(OUTPUTid)
+$(OUTPUTid): $(TARGETd) $(OUTPUTi)
+	$(TARGETd) $(OUTPUTi) -o $(OUTPUTid)
 
-$(OUTPUTi): $(TARGETi) $(PRIV_KEY1)
-	$(TARGETi) $(PRIV_KEY1) $(OUTPUTi)
+$(OUTPUTi): $(TARGETi)
+	$(TARGETi) $(OUTPUTi)
 
-$(OUTPUTr): $(TARGETr) $(PRIV_KEY1)
-	$(TARGETr) $(PRIV_KEY1) $(OUTPUTr)
+$(OUTPUTr): $(TARGETr)
+	$(TARGETr) $(OUTPUTr)
 
 generate: $(OUTPUTu) $(OUTPUTi) $(OUTPUTd) $(OUTPUTr) $(OUTPUTid)
 
 test:
-	$(TARGETu) $(PRIV_KEY1)
-	$(TARGETi) $(PRIV_KEY1)
-	$(TARGETd) $(OUTPUTu) $(PRIV_KEY2) -u $(URI)
-	$(TARGETd) $(OUTPUTi) $(PRIV_KEY2)
-	$(TARGETr) $(PRIV_KEY1)
+	$(TARGETu)
+	$(TARGETi)
+	$(TARGETd) $(OUTPUTu) -u $(URI)
+	$(TARGETd) $(OUTPUTi)
+	$(TARGETr)
 
 clean:
 	rm -f $(OBJS) $(TARGET1) $(TARGET2)

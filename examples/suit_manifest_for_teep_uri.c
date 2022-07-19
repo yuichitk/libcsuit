@@ -10,39 +10,26 @@
 #include "csuit/suit_manifest_print.h"
 #include "csuit/suit_digest.h"
 #include "suit_examples_common.h"
+#include "trust_anchor_prime256v1.h"
+#include "trust_anchor_prime256v1_pub.h"
 
 #define MAX_FILE_BUFFER_SIZE            2048
 
 int main(int argc, char *argv[]) {
     // check arguments.
     if (argc < 1) {
-        printf("%s <private key path> [<output manifest file path>]", argv[0]);
+        printf("%s [<output manifest file path>]", argv[0]);
         return EXIT_FAILURE;
     }
-    char *private_key_file = argv[1];
-    char *manifest_file = (argc >= 2) ? argv[2] : NULL;
-    struct t_cose_key key_pair;
-    char public_key[PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
-    char private_key[PRIME256V1_PRIVATE_KEY_CHAR_SIZE + 1];
-
-    // Read der file.
-    printf("\nmain : Read Private&Public Key.\n");
-    uint8_t der_buf[PRIME256V1_PRIVATE_KEY_DER_SIZE];
-    size_t der_len = read_from_file(private_key_file, PRIME256V1_PRIVATE_KEY_DER_SIZE, der_buf);
-    if (!der_len) {
-        printf("main : Can't read DER file.\n");
-        return EXIT_FAILURE;
-    }
-    suit_print_hex(der_buf, der_len);
-    printf("\n");
+    char *manifest_file = (argc >= 1) ? argv[1] : NULL;
+    suit_key_t key_pair;
+    const unsigned char *public_key = trust_anchor_prime256v1_public_key;
+    const unsigned char *private_key = trust_anchor_prime256v1_private_key;
 
     // Read key pair from der file.
-    read_prime256v1_key_pair(der_buf, private_key, public_key);
-    printf("Private Key : %s\n", private_key);
-    printf("Public Key : %s\n", public_key);
-    int32_t result = suit_create_es256_key_pair(private_key, public_key, &key_pair);
+    suit_err_t result = suit_key_init_es256_key_pair(private_key, public_key, &key_pair);
     if (result != SUIT_SUCCESS) {
-        printf("main : Can't create ES256 key pair.\n");
+        printf("main : Failed to create ES256 key pair. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
 
@@ -97,9 +84,13 @@ int main(int argc, char *argv[]) {
     uint8_t hash[SHA256_DIGEST_LENGTH];
     suit_digest_t image_digest;
     image_digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
+    result = suit_generate_sha256(payload.ptr, payload.len, hash, sizeof(hash));
+    if (result != SUIT_SUCCESS) {
+        printf("main : Failed to generate sha256 hash. %s(%d)\n", suit_err_to_str(result), result);
+        return EXIT_FAILURE;
+    }
     image_digest.bytes.ptr = hash;
     image_digest.bytes.len = sizeof(hash);
-    result = suit_generate_digest(payload.ptr, payload.len, &image_digest);
     params_list->params[2].label = SUIT_PARAMETER_IMAGE_DIGEST,
     params_list->params[2].value.digest = image_digest;;
 
@@ -137,24 +128,25 @@ int main(int argc, char *argv[]) {
     uint8_t mode = SUIT_DECODE_MODE_STRICT;
     result = suit_print_envelope(mode, &envelope, 2);
     if (result != SUIT_SUCCESS) {
-        printf("main : Can't print Manifest file.\n");
+        printf("main : Failed to print Manifest file.\n");
         return EXIT_FAILURE;
     }
 
     // Encode manifest.
     uint8_t encode_buf[MAX_FILE_BUFFER_SIZE];
     size_t encode_len = MAX_FILE_BUFFER_SIZE;
+    uint8_t *ret_pos = encode_buf;
     printf("\nmain : Encode Manifest.\n");
-    result = suit_encode_envelope(mode, &envelope, &key_pair, encode_buf, &encode_len);
+    result = suit_encode_envelope(mode, &envelope, &key_pair, &ret_pos, &encode_len);
     if (result != SUIT_SUCCESS) {
-        printf("main : Fail to encode. %d\n", result);
+        printf("main : Failed to encode. %d\n", result);
         return EXIT_FAILURE;
     }
 
     if (manifest_file != NULL) {
-        size_t w_len = write_to_file(manifest_file, encode_len, encode_buf);
+        size_t w_len = write_to_file(manifest_file, encode_len, ret_pos);
         if (w_len != encode_len) {
-            printf("main : Fail to write to %s\n", manifest_file);
+            printf("main : Failed to write to %s\n", manifest_file);
         }
     }
     else {

@@ -11,11 +11,13 @@
 #include "csuit/suit_manifest_print.h"
 #include "csuit/suit_digest.h"
 #include "suit_examples_common.h"
+#include "tam_es256_private_key.h"
+#include "tam_es256_public_key.h"
 
 #define MAX_FILE_BUFFER_SIZE            2048
 
 int error_print(char *argv0) {
-    printf("%s <manifest to depend> <private key path> [-u <manifest uri>] [-o <output manifest file path>]", argv0);
+    printf("%s <manifest to depend> [-u <manifest uri>] [-o <output manifest file path>]", argv0);
     return EXIT_FAILURE;
 }
 
@@ -27,7 +29,6 @@ int main(int argc, char *argv[]) {
 
     char *input_manifest_file = NULL;
     char *uri = NULL;
-    char *private_key_file = NULL;
     char *output_manifest_file = NULL;
 
     while ((c = getopt(argc, argv, "u:o:")) != -1) {
@@ -47,15 +48,13 @@ int main(int argc, char *argv[]) {
             return error_print(argv[0]);
         }
     }
-    if (argc < optind + 2) {
+    if (argc < optind + 1) {
         return error_print(argv[0]);
     }
     input_manifest_file = argv[optind];
-    private_key_file = argv[optind + 1];
-
-    struct t_cose_key key_pair;
-    char public_key[PRIME256V1_PUBLIC_KEY_CHAR_SIZE + 1];
-    char private_key[PRIME256V1_PRIVATE_KEY_CHAR_SIZE + 1];
+    suit_key_t key_pair;
+    const unsigned char *public_key = tam_es256_public_key;
+    const unsigned char *private_key = tam_es256_private_key;
 
     // Read a SUIT manifest to depend
     printf("\nmain : Read Manifest file to depend.\n");
@@ -73,34 +72,19 @@ int main(int argc, char *argv[]) {
     uint8_t mode = SUIT_DECODE_MODE_SKIP_ANY_ERROR;
     suit_envelope_t read_envelope = (suit_envelope_t){ 0 };
     suit_buf_t buf = {.ptr = manifest_buf, .len = manifest_len};
-    t_cose_key cose_key = {0}; // fake key
+    suit_key_t cose_key = {0}; // fake key
 
     int32_t result = suit_decode_envelope(mode, &buf, &read_envelope, &cose_key);
     if (result != SUIT_SUCCESS) {
-        printf("main : Can't parse Manifest file. err=%d\n", result);
+        printf("main : Failed to parse Manifest file. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
 
     suit_digest_t *digest = &read_envelope.wrapper.digest;
 
-    // Read der file.
-    printf("\nmain : Read Private&Public Key.\n");
-    uint8_t der_buf[PRIME256V1_PRIVATE_KEY_DER_SIZE];
-    size_t der_len = read_from_file(private_key_file, PRIME256V1_PRIVATE_KEY_DER_SIZE, der_buf);
-    if (!der_len) {
-        printf("main : Can't read DER file.\n");
-        return EXIT_FAILURE;
-    }
-    suit_print_hex(der_buf, der_len);
-    printf("\n");
-
-    // Read key pair from der file.
-    read_prime256v1_key_pair(der_buf, private_key, public_key);
-    printf("Private Key : %s\n", private_key);
-    printf("Public Key : %s\n", public_key);
-    result = suit_create_es256_key_pair(private_key, public_key, &key_pair);
+    result = suit_key_init_es256_key_pair(private_key, public_key, &key_pair);
     if (result != SUIT_SUCCESS) {
-        printf("main : Can't create ES256 key pair.\n");
+        printf("main : Failed to create ES256 key pair. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
 
@@ -240,17 +224,18 @@ int main(int argc, char *argv[]) {
     // Encode manifest.
     uint8_t encode_buf[MAX_FILE_BUFFER_SIZE];
     size_t encode_len = MAX_FILE_BUFFER_SIZE;
+    uint8_t *ret_pos = encode_buf;
     printf("\nmain : Encode Manifest.\n");
-    result = suit_encode_envelope(mode, &envelope, &key_pair, encode_buf, &encode_len);
+    result = suit_encode_envelope(mode, &envelope, &key_pair, &ret_pos, &encode_len);
     if (result != SUIT_SUCCESS) {
-        printf("main : Fail to encode. %d\n", result);
+        printf("main : Failed to encode. %d\n", result);
         return EXIT_FAILURE;
     }
 
     if (output_manifest_file != NULL) {
-        size_t w_len = write_to_file(output_manifest_file, encode_len, encode_buf);
+        size_t w_len = write_to_file(output_manifest_file, encode_len, ret_pos);
         if (w_len != encode_len) {
-            printf("main : Fail to write to %s\n", output_manifest_file);
+            printf("main : Failed to write to %s\n", output_manifest_file);
         }
     }
     else {
