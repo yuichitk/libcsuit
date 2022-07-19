@@ -21,7 +21,7 @@
 int main(int argc, char *argv[]) {
     // check arguments.
     if (argc < 1) {
-        printf("suit_manifest_parser <manifest file path>\n");
+        printf("%s <manifest file path>\n", argv[0]);
         return EXIT_FAILURE;
     }
     suit_err_t result = 0;
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     uint8_t manifest_buf[MAX_FILE_BUFFER_SIZE];
     size_t manifest_len = read_from_file(manifest_file, MAX_FILE_BUFFER_SIZE, manifest_buf);
     if (!manifest_len) {
-        printf("main : Can't read Manifest file.\n");
+        printf("main : Failed to read Manifest file.\n");
         return EXIT_FAILURE;
     }
     suit_print_hex(manifest_buf, manifest_len);
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     suit_buf_t buf = {.ptr = manifest_buf, .len = manifest_len};
     result = suit_decode_envelope(mode, &buf, &envelope, &cose_key);
     if (result != SUIT_SUCCESS) {
-        printf("main : Can't parse Manifest file. %s(%d)\n", suit_err_to_str(result), result);
+        printf("main : Failed to parse Manifest file. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
 
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     printf("\nmain : Print Manifest.\n");
     result = suit_print_envelope(mode, &envelope, 2);
     if (result != SUIT_SUCCESS) {
-        printf("main : Can't print Manifest file. %s(%d)\n", suit_err_to_str(result), result);
+        printf("main : Failed to print Manifest file. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
 
