@@ -76,7 +76,7 @@ $(OUTPUTr): $(TARGETr)
 
 generate: $(OUTPUTu) $(OUTPUTi) $(OUTPUTd) $(OUTPUTr) $(OUTPUTid)
 
-test:
+test: $(TARGETu) $(TARGETi) $(TARGETd) $(TARGETr)
 	$(TARGETu)
 	$(TARGETi)
 	$(TARGETd) $(OUTPUTu) -u $(URI)
@@ -84,5 +84,5 @@ test:
 	$(TARGETr)
 
 clean:
-	rm -f $(OBJS) $(TARGET1) $(TARGET2)
+	rm -f $(OBJS) $(TARGETu) $(TARGETi) $(TARGETd) $(TARGETr)
 
