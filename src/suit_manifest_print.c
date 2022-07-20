@@ -94,7 +94,7 @@ const char* suit_manifest_key_to_str(suit_manifest_key_t manifest_key) {
     case SUIT_COSWID:
         return "coswid";
     default:
-        return NULL;
+        return "(NULL)";
     }
 }
 
@@ -107,7 +107,7 @@ const char* suit_common_key_to_str(suit_common_key_t common_key) {
     case SUIT_COMMON_SEQUENCE:
         return "common-sequence";
     default:
-        return NULL;
+        return "(NULL)";
     }
 }
 
