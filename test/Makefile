@@ -5,7 +5,7 @@
 #
 
 CFLAGS	= -Wall
-LDFLAGS	= -L../ -lcsuit -lt_cose -lqcbor -lcunit -lm
+LDFLAGS	= -L../bin -lcsuit -lt_cose -lqcbor -lcunit -lm
 INC		= -I ../inc/
 TARGET	= ./libcsuit_test
 RESULT	= result.txt

@@ -25,17 +25,17 @@ endif
 
 .PHONY: all so doc install uninstall test clean
 
-all: $(NAME).a build_test
+all: ./bin/$(NAME).a build_test
 
-so: $(NAME).so
+so: ./bin/$(NAME).so
 
 doc:
 	doxygen Doxyfile
 
-$(NAME).a: $(OBJS)
+./bin/$(NAME).a: $(OBJS)
 	$(AR) -r $@ $^
 
-$(NAME).so: $(OBJS)
+./bin/$(NAME).so: $(OBJS)
 	$(CC) -shared $^ $(CFLAGS) $(INC) -o $@
 
 
@@ -52,18 +52,18 @@ define install-header
 
 endef
 
-install: $(NAME).a $(PUBLIC_INTERFACE)
+install: ./bin/$(NAME).a $(PUBLIC_INTERFACE)
 	install -d $(DESTDIR)$(PREFIX)/lib/
-	install -m 644 $(NAME).a $(DESTDIR)$(PREFIX)/lib/
+	install -m 644 ./bin/$(NAME).a $(DESTDIR)$(PREFIX)/lib/
 	install -d $(DESTDIR)$(PREFIX)/include/csuit
 	$(foreach header,$(PUBLIC_INTERFACE),$(call install-header,$(header),$(DESTDIR)$(PREFIX)/include/csuit))
 
-install_so: $(NAME).so
-	install -m 755 $(NAME).so $(DESTDIR)$(PREFIX)/lib/$(NAME).so.1.0.0
-	ln -sf $(NAME).so.1 $(DESTDIR)$(PREFIX)/lib/$(NAME).so
-	ln -sf $(NAME).so.1.0.0 $(DESTDIR)$(PREFIX)/lib$(NAME).so.1
+install_so: ./bin/$(NAME).so
+	install -m 755 ./bin/$(NAME).so $(DESTDIR)$(PREFIX)/lib/$(NAME).so.1.0.0
+	ln -sf ./bin/$(NAME).so.1 $(DESTDIR)$(PREFIX)/lib/$(NAME).so
+	ln -sf ./bin/$(NAME).so.1.0.0 $(DESTDIR)$(PREFIX)/lib$(NAME).so.1
 
-uninstall: $(NAME).a $(PUBLIC_INTERFACE)
+uninstall:
 	$(RM) -d $(DESTDIR)$(PREFIX)/include/csuit/*
 	$(RM) -d $(DESTDIR)$(PREFIX)/include/csuit/
 	$(RM) $(addprefix $(DESTDIR)$(PREFIX)/lib/, \
@@ -72,9 +72,9 @@ uninstall: $(NAME).a $(PUBLIC_INTERFACE)
 build_test:
 	$(MAKE) -C test MBEDTLS=$(MBEDTLS)
 
-test:
+test: ./bin/$(NAME).a
 	$(MAKE) -C test MBEDTLS=$(MBEDTLS) run
 
 clean:
-	$(RM) -f $(OBJS) $(NAME).a $(NAME).so
+	$(RM) -f $(OBJS) ./bin/$(NAME).a ./bin/$(NAME).so
 	$(MAKE) -C test clean

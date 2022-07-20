@@ -7,10 +7,10 @@
 CFLAGS	= -Wall -g
 LDFLAGS	= -lt_cose -lqcbor -lcrypto -lm
 INC		= -I ./inc -I ./examples/inc
-TARGETu	= ./suit_for_teep_uri
-TARGETi	= ./suit_for_teep_integrated
-TARGETd	= ./suit_for_teep_depending
-TARGETr	= ./suit_for_teep_delete
+TARGETu	= ./bin/suit_for_teep_uri
+TARGETi	= ./bin/suit_for_teep_integrated
+TARGETd	= ./bin/suit_for_teep_depending
+TARGETr	= ./bin/suit_for_teep_delete
 SRCu	= examples/suit_manifest_for_teep_uri.c
 SRCi	= examples/suit_manifest_for_teep_integrated.c
 SRCd	= examples/suit_manifest_for_teep_depend_uri.c
@@ -32,15 +32,19 @@ endif
 all: $(TARGETu) $(TARGETi) $(TARGETd) $(TARGETr) $(OUTPUTu) $(OUTPUTd) $(OUTPUTi) $(OUTPUTr)
 
 $(TARGETu):	$(OBJu) $(OBJS)
+	mkdir -p ./bin
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(TARGETi):	$(OBJi) $(OBJS) $(TCOSE)
+	mkdir -p ./bin
 	$(CC) -o $@ $^ $(LDFLAGS) $(TCOSE)
 
 $(TARGETd):	$(OBJd) $(OBJS) $(TCOSE)
+	mkdir -p ./bin
 	$(CC) -o $@ $^ $(LDFLAGS) $(TCOSE)
 
 $(TARGETr):	$(OBJr) $(OBJS) $(TCOSE)
+	mkdir -p ./bin
 	$(CC) -o $@ $^ $(LDFLAGS) $(TCOSE)
 
 $(OBJDIR)/%.o:	%.c

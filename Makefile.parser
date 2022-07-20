@@ -7,7 +7,7 @@
 CFLAGS	= -Wall -g
 LDFLAGS	= -lt_cose -lqcbor -lm
 INC		= -I ./inc -I ./examples/inc
-TARGET	= ./suit_manifest_parser
+TARGET	= ./bin/suit_manifest_parser
 SRCS	= examples/suit_manifest_parser_main.c examples/suit_examples_common.c examples/suit_examples_cose.c src/suit_common.c src/suit_digest.c src/suit_cose.c src/suit_manifest_encode.c src/suit_manifest_decode.c src/suit_manifest_print.c
 
 OBJDIR	= ./obj
@@ -23,6 +23,7 @@ else
 endif
 
 $(TARGET):	$(OBJS)
+	mkdir -p ./bin
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o:	%.c

@@ -3,6 +3,7 @@
 suit_*
 libcsuit.a
 libcsuit.so
+bin/*
 test/libcsuit_test
 test/result.txt
 CMakeLists.txt
