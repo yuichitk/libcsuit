@@ -5,7 +5,7 @@
 #
 
 CFLAGS	= -Wall -g
-LDFLAGS	= -lt_cose -lqcbor -lcrypto -lm
+LDFLAGS	= -lt_cose -lqcbor -lm
 INC		= -I ./inc -I ./examples/inc
 TARGETu	= ./bin/suit_for_teep_uri
 TARGETi	= ./bin/suit_for_teep_integrated
@@ -23,8 +23,13 @@ OBJd	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCd)))
 OBJr	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCr)))
 OBJS	= $(addprefix $(OBJDIR)/,$(patsubst %.c,%.o,$(SRCS)))
 
-ifdef debug
-    CFLAGS += -DSKIP_ERROR
+ifeq ($(MBEDTLS),1)
+    # use MbedTLS
+    CFLAGS	+= -DLIBCSUIT_PSA_CRYPTO_C=1
+    LDFLAGS	+= -lmbedtls -lmbedx509 -lmbedcrypto
+else
+    # use OpenSSL
+    LDFLAGS += -lcrypto
 endif
 
 .PHONY: all test generate clean

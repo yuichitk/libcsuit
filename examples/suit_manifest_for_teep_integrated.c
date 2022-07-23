@@ -22,12 +22,12 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
     char *manifest_file = (argc >= 1) ? argv[1] : NULL;
-    suit_key_t key_pair;
+    suit_mechanism_t mechanism = {.cose_tag = CBOR_TAG_COSE_SIGN1};
     const unsigned char *public_key = trust_anchor_prime256v1_public_key;
     const unsigned char *private_key = trust_anchor_prime256v1_private_key;
 
     // Read key pair from der file.
-    suit_err_t result = suit_key_init_es256_key_pair(private_key, public_key, &key_pair);
+    suit_err_t result = suit_key_init_es256_key_pair(private_key, public_key, &mechanism.keys[0]);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to create ES256 key pair. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
     size_t encode_len = MAX_FILE_BUFFER_SIZE;
     uint8_t *ret_pos = encode_buf;
     printf("\nmain : Encode Manifest.\n");
-    result = suit_encode_envelope(mode, &envelope, &key_pair, &ret_pos, &encode_len);
+    result = suit_encode_envelope(mode, &envelope, &mechanism, &ret_pos, &encode_len);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to encode. %d\n", result);
         return EXIT_FAILURE;
@@ -153,6 +153,6 @@ int main(int argc, char *argv[]) {
         printf("main : Skip to write to a file (dry-run).\n");
     }
 
-    suit_free_key(&key_pair);
+    suit_free_key(&mechanism.keys[0]);
     return EXIT_SUCCESS;
 }

@@ -26,11 +26,11 @@ int main(int argc, char *argv[]) {
     }
     suit_err_t result = 0;
     char *manifest_file = argv[1];
-    suit_key_t cose_key;
+    suit_mechanism_t mechanism = {.cose_tag = CBOR_TAG_COSE_SIGN1};
 
     const unsigned char *public_key = trust_anchor_prime256v1_public_key;
     const unsigned char *private_key = trust_anchor_prime256v1_private_key;
-    result = suit_key_init_es256_key_pair(private_key, public_key, &cose_key);
+    result = suit_key_init_es256_key_pair(private_key, public_key, &mechanism.keys[0]);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to create putlic key. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 #endif
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
     suit_buf_t buf = {.ptr = manifest_buf, .len = manifest_len};
-    result = suit_decode_envelope(mode, &buf, &envelope, &cose_key);
+    result = suit_decode_envelope(mode, &buf, &envelope, &mechanism);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to parse Manifest file. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     size_t encode_len = MAX_FILE_BUFFER_SIZE;
     uint8_t *ret_pos = encode_buf;
     printf("\nmain : Encode Manifest.\n");
-    result = suit_encode_envelope(mode, &envelope, &cose_key, &ret_pos, &encode_len);
+    result = suit_encode_envelope(mode, &envelope, &mechanism, &ret_pos, &encode_len);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to encode. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
@@ -110,6 +110,6 @@ int main(int argc, char *argv[]) {
         printf("main : Whole binaries match.\n\n");
     }
 
-    suit_free_key(&cose_key);
+    suit_free_key(&mechanism.keys[0]);
     return EXIT_SUCCESS;
 }

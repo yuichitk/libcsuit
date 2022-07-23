@@ -19,7 +19,7 @@
 
     \brief  This implements libcsuit encoding
 
-    Prepare suit_eocode_t struct and suit_key_t,
+    Prepare suit_eocode_t struct and suit_keys_t,
     and then call suit_encode_envelope() to encode whole SUIT manifest.
  */
 
@@ -138,13 +138,13 @@ suit_err_t suit_encode_append_payloads(uint8_t mode, const suit_envelope_t *enve
     return SUIT_SUCCESS;
 }
 
-suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, UsefulBufC digest, UsefulBufC signatures[], size_t num_signature, QCBOREncodeContext *context)
+suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, UsefulBufC digest, UsefulBuf signatures[], size_t num_signature, QCBOREncodeContext *context)
 {
     QCBOREncode_BstrWrapInMapN(context, SUIT_AUTHENTICATION);
     QCBOREncode_OpenArray(context);
     QCBOREncode_AddBytes(context, digest);
     for (size_t i = 0; i < num_signature; i++) {
-        QCBOREncode_AddBytes(context, signatures[i]);
+        QCBOREncode_AddBytes(context, UsefulBuf_Const(signatures[i]));
     }
     QCBOREncode_CloseArray(context);
     QCBOREncode_CloseBstrWrap(context, NULL);
@@ -713,8 +713,8 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
 /*
     Public function. See suit_manifest_data.h
  */
-suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_key_t *signing_key, uint8_t **buf, size_t *len) {
-    suit_err_t result;
+suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_mechanism_t *mechanism, uint8_t **buf, size_t *len) {
+    suit_err_t result = SUIT_SUCCESS;
     suit_encode_t suit_encode = {
         .buf = *buf,
         .max_pos = *len
@@ -732,18 +732,48 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
         return result;
     }
 
-    UsefulBuf signature;
-    result = suit_use_suit_encode_buf(&suit_encode, 0, &signature);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
-    result = suit_sign_cose_sign1(UsefulBuf_Const(digest), signing_key, &signature);
-    if (!suit_continue(mode, result)) {
-        return result;
-    }
-    result = suit_fix_suit_encode_buf(&suit_encode, signature.len);
-    if (result != SUIT_SUCCESS) {
-        return result;
+    UsefulBuf signatures[SUIT_MAX_ARRAY_LENGTH] = {0};
+    size_t num_signatures;
+    for (num_signatures = 0; num_signatures < SUIT_MAX_KEY_NUM; num_signatures++) {
+        switch (mechanism->keys[num_signatures].cose_algorithm_id) {
+        case T_COSE_ALGORITHM_ES256:
+            result = SUIT_SUCCESS;
+            break;
+        default:
+            result = SUIT_ERR_ABORT;
+        }
+        if (result == SUIT_SUCCESS) {
+        }
+        else if (result == SUIT_ERR_ABORT) {
+            break;
+        }
+        else {
+            return result;
+        }
+
+        result = suit_use_suit_encode_buf(&suit_encode, 0, &signatures[num_signatures]);
+        if (result != SUIT_SUCCESS) {
+            return result;
+        }
+
+        switch (mechanism->cose_tag) {
+        case CBOR_TAG_COSE_SIGN1:
+            result = suit_sign_cose_sign1(UsefulBuf_Const(digest), &mechanism->keys[num_signatures], &signatures[num_signatures]);
+            break;
+        case CBOR_TAG_SIGN:
+        case CBOR_TAG_MAC:
+        case CBOR_TAG_COSE_MAC0:
+        default:
+            result = SUIT_ERR_NOT_IMPLEMENTED;
+        }
+        if (!suit_continue(mode, result)) {
+            return result;
+        }
+
+        result = suit_fix_suit_encode_buf(&suit_encode, signatures[num_signatures].len);
+        if (result != SUIT_SUCCESS) {
+            return result;
+        }
     }
 
     UsefulBuf suit_envelope = NULLUsefulBuf;
@@ -762,9 +792,7 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
     }
     */
 
-    UsefulBufC signatures[1];
-    signatures[0] = UsefulBuf_Const(signature);
-    result = suit_encode_append_authentication_wrapper(mode, UsefulBuf_Const(digest), signatures, 1, &context);
+    result = suit_encode_append_authentication_wrapper(mode, UsefulBuf_Const(digest), signatures, num_signatures, &context);
     if (result != SUIT_SUCCESS) {
         goto out;
     }
