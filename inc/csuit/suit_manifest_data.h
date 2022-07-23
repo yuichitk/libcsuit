@@ -40,7 +40,7 @@ suit_err_t suit_decode_compression_info(uint8_t mode, const suit_buf_t *buf, sui
 
     \return     This returns one of the error codes defined by \ref suit_err_t.
  */
-suit_err_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const suit_key_t *public_key);
+suit_err_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const suit_mechanism_t *mechanism);
 
 /*!
     \brief  Decode array of SUIT_Component_Identifier.
@@ -103,6 +103,6 @@ suit_err_t suit_decode_digest_from_item(uint8_t mode, QCBORDecodeContext *contex
     }
     \endcode
  */
-suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_key_t *signing_key, uint8_t **buf, size_t *len);
+suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_mechanism_t *mechanism, uint8_t **buf, size_t *len);
 
 #endif  // SUIT_MANIFEST_DATA_H

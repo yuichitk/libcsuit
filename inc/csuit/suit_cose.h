@@ -60,6 +60,11 @@ typedef struct suit_key {
     struct t_cose_key cose_key;
 } suit_key_t;
 
+typedef struct suit_mechanism {
+    int cose_tag; // COSE_Sign1, COSE_Sign, COSE_Encrypt0, COSE_Encrypt, etc.
+    suit_key_t keys[SUIT_MAX_KEY_NUM];
+} suit_mechanism_t;
+
 /*!
     \brief  Generate COSE_Sign1 sined payload.
 
