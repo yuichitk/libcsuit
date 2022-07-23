@@ -31,4 +31,7 @@ RUN rm -r /root/mbedtls /root/QCBOR /root/t_cose
 RUN apt-get -y remove curl git gcc python3
 RUN apt-get -y autoremove
 
-CMD make test && make -f Makefile.encode test && make -f Makefile.parser test && make -f Makefile.process test
+CMD make test && \
+    make -f Makefile.encode test && \
+    make -f Makefile.parser test && \
+    make -f Makefile.process test
