@@ -21,7 +21,7 @@
 int main(int argc, char *argv[]) {
     // check arguments.
     if (argc < 1) {
-        printf("suit_manifest_encode <output manifest file path>");
+        printf("%s <output manifest file path>", argv[0]);
         return EXIT_FAILURE;
     }
     char *manifest_file = argv[1];

@@ -51,6 +51,7 @@ suit_err_t suit_encode_append_manifest(const suit_encode_t *suit_encode, QCBOREn
     QCBOREncode_AddBytesToMapN(context, SUIT_MANIFEST, suit_encode->manifest);
     return SUIT_SUCCESS;
 }
+
 suit_err_t suit_encode_append_digest(const suit_digest_t *digest, const uint32_t label, QCBOREncodeContext *context) {
     if (label > 0) {
         /* in map */
