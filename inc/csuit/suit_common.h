@@ -66,12 +66,12 @@ typedef enum suit_envelope_key {
     SUIT_DELEGATION                     = 1,
     SUIT_AUTHENTICATION                 = 2,
     SUIT_MANIFEST                       = 3,
-    SUIT_SEVERED_DEPENDENCY_RESOLUTION  = 7,
-    SUIT_SEVERED_PAYLOAD_FETCH          = 8,
-    SUIT_SEVERED_INSTALL                = 9,
-    SUIT_SEVERED_TEXT                   = 13,
-    SUIT_SEVERED_COSWID                 = 14,
-    SUIT_INTEGRATED_PAYLOAD             = 24,
+    SUIT_SEVERED_DEPENDENCY_RESOLUTION  = 15, // TODO: conflicted with SUIT_VALIDATE
+    SUIT_SEVERED_PAYLOAD_FETCH          = 16,
+    SUIT_SEVERED_INSTALL                = 17,
+    SUIT_SEVERED_TEXT                   = 13, // TODO: test == 13 in example 2
+    SUIT_SEVERED_COSWID                 = 24,
+    SUIT_INTEGRATED_PAYLOAD             = 25,
 } suit_envelope_key_t;
 
 typedef enum suit_algorithm_id {
@@ -89,14 +89,15 @@ typedef enum suit_manifest_key {
     SUIT_MANIFEST_SEQUENCE_NUMBER       = 2,
     SUIT_COMMON                         = 3,
     SUIT_REFERENCE_URI                  = 4,
-    SUIT_DEPENDENCY_RESOLUTION          = 7,
-    SUIT_PAYLOAD_FETCH                  = 8,
-    SUIT_INSTALL                        = 9,
-    SUIT_VALIDATE                       = 10,
-    SUIT_LOAD                           = 11,
-    SUIT_RUN                            = 12,
-    SUIT_TEXT                           = 13,
-    SUIT_COSWID                         = 14,
+    SUIT_VALIDATE                       = 7,
+    SUIT_LOAD                           = 8,
+    SUIT_RUN                            = 9,
+    SUIT_PAYLOAD_FETCH                  = 16,
+    SUIT_INSTALL                        = 17,
+    SUIT_TEXT                           = 23,
+
+    SUIT_DEPENDENCY_RESOLUTION          = 15, // TODO: conflicted with SUIT_VALIDATE
+    SUIT_COSWID                         = 24,
 } suit_manifest_key_t;
 
 typedef enum suit_common_key {
