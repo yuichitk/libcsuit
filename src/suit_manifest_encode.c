@@ -184,12 +184,14 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
                     break;
                 }
                 break;
+            case SUIT_PARAMETER_ENCRYPTION_INFO:
+                QCBOREncode_AddBytesToMapN(context, item->label, (UsefulBufC){.ptr = item->value.string.ptr, .len = item->value.string.len});
+                break;
             case SUIT_PARAMETER_USE_BEFORE:
 
             case SUIT_PARAMETER_STRICT_ORDER:
             case SUIT_PARAMETER_SOFT_FAILURE:
 
-            case SUIT_PARAMETER_ENCRYPTION_INFO:
             case SUIT_PARAMETER_UNPACK_INFO:
             case SUIT_PARAMETER_RUN_ARGS:
 

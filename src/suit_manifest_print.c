@@ -363,12 +363,19 @@ suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_
                     result = suit_print_compression_info(&params_list->params[i].value.string, indent_space + 2);
                 }
                 break;
+            case SUIT_PARAMETER_ENCRYPTION_INFO:
+                printf("SUIT_Encryption_Info\n");
+                if (params_list->params[i].value.string.len > 0) {
+                    printf("%*s", indent_space + 2, "");
+                    suit_print_hex_in_max(params_list->params[i].value.string.ptr, params_list->params[i].value.string.len, SUIT_MAX_PRINT_BYTE_COUNT);
+                    printf("\n");
+                }
+                break;
             case SUIT_PARAMETER_USE_BEFORE:
 
             case SUIT_PARAMETER_STRICT_ORDER:
             case SUIT_PARAMETER_SOFT_FAILURE:
 
-            case SUIT_PARAMETER_ENCRYPTION_INFO:
             case SUIT_PARAMETER_UNPACK_INFO:
             case SUIT_PARAMETER_RUN_ARGS:
 
