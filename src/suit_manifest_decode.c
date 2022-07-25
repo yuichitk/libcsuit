@@ -1089,7 +1089,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                     }
                     break;
                 /* SUIT_Severable_Manifest_members */
-                case SUIT_PAYLOAD_FETCH:
+                case SUIT_SEVERED_PAYLOAD_FETCH:
                     if (!is_authentication_set || !is_manifest_set) {
                         result = SUIT_ERR_FAILED_TO_VERIFY;
                         if (!suit_continue(mode, result)) {
@@ -1108,7 +1108,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                         envelope->manifest.sev_man_mem.payload_fetch_status |= SUIT_SEVERABLE_IN_ENVELOPE;
                     }
                     break;
-                case SUIT_INSTALL:
+                case SUIT_SEVERED_INSTALL:
                     if (!is_authentication_set || !is_manifest_set) {
                         result = SUIT_ERR_FAILED_TO_VERIFY;
                         if (!suit_continue(mode, result)) {
@@ -1127,7 +1127,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                         envelope->manifest.sev_man_mem.install_status |= SUIT_SEVERABLE_IN_ENVELOPE;
                     }
                     break;
-                case SUIT_TEXT:
+                case SUIT_SEVERED_TEXT:
                     if (!is_authentication_set || !is_manifest_set) {
                         result = SUIT_ERR_FAILED_TO_VERIFY;
                         if (!suit_continue(mode, result)) {
@@ -1146,7 +1146,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                         envelope->manifest.sev_man_mem.text_status |= SUIT_SEVERABLE_IN_ENVELOPE;
                     }
                     break;
-                case SUIT_COSWID:
+                case SUIT_SEVERED_COSWID:
                     if (!is_authentication_set || !is_manifest_set) {
                         result = SUIT_ERR_FAILED_TO_VERIFY;
                         if (!suit_continue(mode, result)) {
@@ -1168,7 +1168,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                     envelope->manifest.sev_man_mem.coswid.len = item->val.string.len;
                     break;
                 case SUIT_DELEGATION:
-                case SUIT_DEPENDENCY_RESOLUTION:
+                case SUIT_SEVERED_DEPENDENCY_RESOLUTION:
                 default:
                     // TODO
                     result = SUIT_ERR_NOT_IMPLEMENTED;

@@ -26,23 +26,23 @@
 suit_err_t suit_encode_append_severed_members(const suit_encode_t *suit_encode, QCBOREncodeContext *context) {
     if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->dependency_resolution)
         && suit_encode->dependency_resolution_digest.bytes.len > 0) {
-        QCBOREncode_AddBytesToMapN(context, SUIT_DEPENDENCY_RESOLUTION, suit_encode->dependency_resolution);
+        QCBOREncode_AddBytesToMapN(context, SUIT_SEVERED_DEPENDENCY_RESOLUTION, suit_encode->dependency_resolution);
     }
     if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->payload_fetch)
         && suit_encode->payload_fetch_digest.bytes.len > 0) {
-        QCBOREncode_AddBytesToMapN(context, SUIT_PAYLOAD_FETCH, suit_encode->payload_fetch);
+        QCBOREncode_AddBytesToMapN(context, SUIT_SEVERED_PAYLOAD_FETCH, suit_encode->payload_fetch);
+    }
+    if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->text) // TODO: illegal order?
+        && suit_encode->text_digest.bytes.len > 0) {
+        QCBOREncode_AddBytesToMapN(context, SUIT_SEVERED_TEXT, suit_encode->text);
     }
     if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->install)
         && suit_encode->install_digest.bytes.len > 0) {
-        QCBOREncode_AddBytesToMapN(context, SUIT_INSTALL, suit_encode->install);
-    }
-    if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->text)
-        && suit_encode->text_digest.bytes.len > 0) {
-        QCBOREncode_AddBytesToMapN(context, SUIT_TEXT, suit_encode->text);
+        QCBOREncode_AddBytesToMapN(context, SUIT_SEVERED_INSTALL, suit_encode->install);
     }
     if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->coswid)
         && suit_encode->coswid_digest.bytes.len > 0) {
-        QCBOREncode_AddBytesToMapN(context, SUIT_COSWID, suit_encode->coswid);
+        QCBOREncode_AddBytesToMapN(context, SUIT_SEVERED_COSWID, suit_encode->coswid);
     }
     return SUIT_SUCCESS;
 }
@@ -619,6 +619,18 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
         QCBOREncode_AddBytesToMapN(&context, SUIT_REFERENCE_URI, (UsefulBufC){.ptr = manifest->reference_uri.ptr, .len = manifest->reference_uri.len});
     }
 
+    if (!UsefulBuf_IsNULLOrEmpty(validate_buf)) {
+        QCBOREncode_AddBytesToMapN(&context, SUIT_VALIDATE, UsefulBuf_Const(validate_buf));
+    }
+
+    if (!UsefulBuf_IsNULLOrEmpty(load_buf)) {
+        QCBOREncode_AddBytesToMapN(&context, SUIT_LOAD, UsefulBuf_Const(load_buf));
+    }
+
+    if (!UsefulBuf_IsNULLOrEmpty(run_buf)) {
+        QCBOREncode_AddBytesToMapN(&context, SUIT_RUN, UsefulBuf_Const(run_buf));
+    }
+
     if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->dependency_resolution)) {
         if (suit_encode->dependency_resolution_digest.bytes.len > 0) {
             /* severed */
@@ -659,18 +671,6 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
         else {
             QCBOREncode_AddBytesToMapN(&context, SUIT_INSTALL, suit_encode->install);
         }
-    }
-
-    if (!UsefulBuf_IsNULLOrEmpty(validate_buf)) {
-        QCBOREncode_AddBytesToMapN(&context, SUIT_VALIDATE, UsefulBuf_Const(validate_buf));
-    }
-
-    if (!UsefulBuf_IsNULLOrEmpty(load_buf)) {
-        QCBOREncode_AddBytesToMapN(&context, SUIT_LOAD, UsefulBuf_Const(load_buf));
-    }
-
-    if (!UsefulBuf_IsNULLOrEmpty(run_buf)) {
-        QCBOREncode_AddBytesToMapN(&context, SUIT_RUN, UsefulBuf_Const(run_buf));
     }
 
     if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->text)) {
