@@ -29,4 +29,4 @@ RUN git clone https://github.com/yuichitk/libcsuit.git /root/libcsuit
 WORKDIR /root/libcsuit
 RUN git checkout firmware-encryption
 
-CMD make -f Makefile.cnrtypt MBEDTLS=1 test
+CMD make -f Makefile.encrypt MBEDTLS=1 test
