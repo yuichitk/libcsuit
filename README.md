@@ -46,6 +46,12 @@ docker build -t libcsuit_psa -f psa.Dockerfile .
 docker run -t libcsuit_psa
 ```
 
+**(b) Firmware Encryption with Mbed TLS**
+```
+docker build -t libcsuit_enc -f enc.Dockerfile .
+docker run -t libcsuit_enc
+```
+
 ### Using Makefiles
 
 ```bash
