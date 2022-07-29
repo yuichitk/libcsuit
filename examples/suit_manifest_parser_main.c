@@ -83,11 +83,11 @@ int main(int argc, char *argv[]) {
 
     // Compare whole and 
     if (manifest_len != encode_len) {
-        printf("main : Lengthes differ %ld => %ld\n", manifest_len, encode_len);
+        printf("main : The manifest length is changed %ld => %ld\n", manifest_len, encode_len);
         printf("#### ORIGINAL ####\n");
         suit_print_hex_in_max(manifest_buf, manifest_len, manifest_len);
         printf("\n#### ENCODED ####\n");
-        suit_print_hex_in_max(encode_buf, encode_len, encode_len);
+        suit_print_hex_in_max(ret_pos, encode_len, encode_len);
         printf("\n\n");
         return EXIT_FAILURE;
     }

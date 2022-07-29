@@ -69,7 +69,8 @@ typedef enum suit_envelope_key {
     SUIT_SEVERED_DEPENDENCY_RESOLUTION  = 15, // TODO: conflicted with SUIT_VALIDATE
     SUIT_SEVERED_PAYLOAD_FETCH          = 16,
     SUIT_SEVERED_INSTALL                = 17,
-    SUIT_SEVERED_TEXT                   = 13, // TODO: test == 13 in example 2
+    SUIT_SEVERED_WORKAROUND_TEXT        = 13, // TODO: remove
+    SUIT_SEVERED_TEXT                   = 23,
     SUIT_SEVERED_COSWID                 = 24,
     SUIT_INTEGRATED_PAYLOAD             = 25,
 } suit_envelope_key_t;

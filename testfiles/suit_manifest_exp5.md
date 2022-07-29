@@ -19,11 +19,11 @@
             ] >>,
             / signatures: / << 18([
                 / protected: / << {
-                    / alg / 1:-7 / ES256 /,
+                    / alg / 1:-7 / ES256 /
                 } >>,
                 / unprotected: / {
                 },
-                / payload: / nil,
+                / payload: / null,
                 / signature: / h'91d95d3bb2eaae7b31ff11f4761056e491bcb07470119f9c69388982c3238eabfcb477ec7887f36c31e7d957fe8830b3ae8b9d7d71372de2e71a9a3b67444c4a'
             ]) >>
         ] >>,
@@ -71,13 +71,13 @@
             / install / 17: << [
                 / directive-set-component-index / 12, 0,
                 / directive-set-parameters / 19, {
-                    / uri / 21: 'http://example.com/file1.bin'
+                    / uri / 21: "http://example.com/file1.bin"
                 },
                 / directive-fetch / 21, 2,
                 / condition-image-match / 3, 15,
                 / directive-set-component-index / 12, 1,
                 / directive-set-parameters / 19, {
-                    / uri / 21: 'http://example.com/file2.bin'
+                    / uri / 21: "http://example.com/file2.bin"
                 },
                 / directive-fetch / 21, 2,
                 / condition-image-match / 3, 15

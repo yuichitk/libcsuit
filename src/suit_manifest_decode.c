@@ -1127,6 +1127,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                         envelope->manifest.sev_man_mem.install_status |= SUIT_SEVERABLE_IN_ENVELOPE;
                     }
                     break;
+                case SUIT_SEVERED_WORKAROUND_TEXT:
                 case SUIT_SEVERED_TEXT:
                     if (!is_authentication_set || !is_manifest_set) {
                         result = SUIT_ERR_FAILED_TO_VERIFY;
