@@ -27,7 +27,6 @@
                 / signature / h'ca7f12cb7cf943e91972a0a1a79965c37c6ea823cde791a7d2018705aa9e19a2688008a6866d5664eaa1658bf5d2f84e6a24f78fa1195d8afb07f552077937ad'
             ]) >>
         ] >>,
-        / integrated-payload / "#encrypted-firmware": h'4a229f5c3be5bf7b723c783589a6225c2cd1c0afb8d50b9c406764d684e38cd4595f526cebfbff119ce4',
         / manifest / 3: << {
             / manifest-version / 1: 1,
             / manifest-sequence-number / 2: 0,
@@ -100,7 +99,8 @@
                 / directive-copy / 22, 2,
                 / condition-image-match / 3, 15
             ] >>
-        } >>
+        } >>,
+        / integrated-payload / "#encrypted-firmware": h'4a229f5c3be5bf7b723c783589a6225c2cd1c0afb8d50b9c406764d684e38cd4595f526cebfbff119ce4'
     })
 
 

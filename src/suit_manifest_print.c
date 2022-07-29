@@ -849,11 +849,6 @@ suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, co
         return result;
     }
 
-    // integrated-payload
-    result = suit_print_integrated_payload(mode, &envelope->payloads, indent_space + 2);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
     // manifest
     result = suit_print_manifest(mode, &envelope->manifest, indent_space + 2);
     if (result != SUIT_SUCCESS) {
@@ -901,9 +896,13 @@ suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, co
         printf("\n");
     }
 
+    // integrated-payload
+    result = suit_print_integrated_payload(mode, &envelope->payloads, indent_space + 2);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
 
-    // TODO: SUIT_Integrated_Payload, SUIT_Integrated_Dependency, $$SUIT_Envelope_Extensions
-    // TODO: (int => bstr)
+    // TODO: $$SUIT_Envelope_Extensions
 
     return SUIT_SUCCESS;
 }
