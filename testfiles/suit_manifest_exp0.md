@@ -23,7 +23,7 @@
                 } >>,
                 / unprotected: / {
                 },
-                / payload: / nil,
+                / payload: / null,
                 / signature: / h'01d9cbf51b1ccadf839ec867da85735118ba4c1b513f5df60583e8dd7f8ce4274cd2e2a0f70f8832bfea63983172e77a951e9a36e74cada19321b903a097e4e7'
             ]) >>
         ] >>,
@@ -54,5 +54,5 @@
             / run / 9: << [
                 / directive-run / 23, 2
             ] >>
-        })
+        } >>
     })

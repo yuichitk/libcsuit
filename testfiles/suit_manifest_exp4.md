@@ -19,11 +19,11 @@
             ] >>,
             / signature: / << 18([
                 / protected: / << {
-                    / alg / 1:-7 / ES256 /,
+                    / alg / 1:-7 / ES256 /
                 } >>,
                 / unprotected: / {
                 },
-                / payload: / nil,
+                / payload: / null,
                 / signature: / h'2e263599b0f3613fd3feb0cec1ff55c6b37c521339ef2680dc63de3a5cdfb0e3f44237313e1c17c35f7fa84af82234f50cea551cfdd8179a40dac5136167cd5e'
             ]) >>
         ] >>,
@@ -63,10 +63,10 @@
                         / digest-bytes: / h'0123456789abcdeffedcba987654321000112233445566778899aabbccddeeff'
                     ] >>,
                     / image-size / 14: 76834,
-                    / source-component / 22: 0 / [h'00'] /,
-                    / compression-info / 19, << {
-                        / compression-algorithm / 1: 1 / "zlib" /
-                    } >>
+                    / compression-info / 19: << {
+                        / compression-algorithm / 1: 1 / zlib /
+                    } >>,
+                    / source-component / 22: 0 / [h'00'] /
                 },
                 / directive-copy / 22, 2,
                 / condition-image-match / 3, 15
@@ -78,15 +78,19 @@
             / payload-fetch / 16: << [
                 / directive-set-component-index / 12, 1,
                 / directive-set-parameters / 19, {
-                    / uri / 21: 'http://example.com/file.bin',
-                } ,
-                / directive-fetch / 21, 2 ,
+                    / image-digest / 3: << [
+                        / algorithm-id: / -16 / sha256 /,
+                        / digest-bytes: / h'00112233445566778899aabbccddeeff0123456789abcdeffedcba9876543210'
+                    ] >>,
+                    / uri / 21: "http://example.com/file.bin"
+                },
+                / directive-fetch / 21, 2,
                 / condition-image-match / 3, 15
             ] >>,
             / install / 17: << [
                 / directive-set-component-index / 12, 0,
                 / directive-set-parameters / 19, {
-                    / source-component / 22: 1 / [h'02'] /,
+                    / source-component / 22: 1 / [h'02'] /
                 },
                 / directive-copy / 22, 2,
                 / condition-image-match / 3, 15
