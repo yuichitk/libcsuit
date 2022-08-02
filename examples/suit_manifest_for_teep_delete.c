@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     // Print manifest.
     printf("\nmain : Print Manifest.\n");
     uint8_t mode = SUIT_DECODE_MODE_STRICT;
-    result = suit_print_envelope(mode, &envelope, 2);
+    result = suit_print_envelope(mode, &envelope, 4, 2);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to print Manifest file. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;

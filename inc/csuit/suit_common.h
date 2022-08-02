@@ -398,6 +398,8 @@ typedef struct suit_text {
  */
 typedef struct suit_authentication_wrapper {
     suit_digest_t                   digest;
+    size_t                          signatures_len;
+    suit_buf_t                      signatures[SUIT_MAX_ARRAY_LENGTH];
 } suit_authentication_wrapper_t;
 
 /*

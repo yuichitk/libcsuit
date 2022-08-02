@@ -93,6 +93,7 @@ suit_err_t suit_decode_compression_info(uint8_t mode, const suit_buf_t *buf, sui
         case SUIT_COMPRESSION_ALGORITHM:
             compression_info->algorithm = item.val.int64;
             break;
+        // TODO: $$SUIT_Compression_Info-extensions
         default:
             return SUIT_ERR_NOT_IMPLEMENTED;
         }
@@ -977,6 +978,7 @@ suit_err_t suit_decode_manifest_from_bstr(uint8_t mode, QCBORDecodeContext *cont
 }
 
 suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_authentication_wrapper_t *wrapper, const suit_key_t *public_key) {
+    bool verified = false;
     suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_ARRAY);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -984,8 +986,7 @@ suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecod
     if (item->val.uCount >= SUIT_MAX_ARRAY_LENGTH) {
         return SUIT_ERR_NO_MEMORY;
     }
-
-    size_t len = item->val.uCount;
+    wrapper->signatures_len = item->val.uCount - 1;
 
     result = suit_qcbor_get_next(context, item, QCBOR_TYPE_BYTE_STRING);
     if (!suit_continue(mode, result)) {
@@ -999,22 +1000,22 @@ suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecod
         return result;
     }
 
-    for (size_t i = 1; i < len; i++) {
+    for (size_t i = 0; i < wrapper->signatures_len; i++) {
         result = suit_qcbor_get_next(context, item, QCBOR_TYPE_BYTE_STRING);
         if (!suit_continue(mode, result)) {
             break;
         }
-        suit_buf_t buf;
-        buf.ptr = item->val.string.ptr;
-        buf.len = item->val.string.len;
+        suit_buf_t *buf = &wrapper->signatures[i];
+        buf->ptr = item->val.string.ptr;
+        buf->len = item->val.string.len;
 
-        result = suit_decode_authentication_block(mode, &buf, &digest_buf, public_key);
-        if (result == SUIT_SUCCESS || !suit_continue(mode, result)) {
-            break;
+        result = suit_decode_authentication_block(mode, buf, &digest_buf, public_key);
+        if (result == SUIT_SUCCESS) {
+            verified = true;
         }
     }
 
-    return result;
+    return (verified) ? SUIT_SUCCESS : result;
 }
 
 suit_err_t suit_decode_authentication_wrapper(uint8_t mode, suit_buf_t *buf, suit_authentication_wrapper_t *wrapper, const suit_key_t *public_key) {

@@ -769,17 +769,17 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
         goto out;
     }
 
-    result = suit_encode_append_payloads(mode, envelope, &context);
-    if (result != SUIT_SUCCESS) {
-        goto out;
-    }
-
     result = suit_encode_append_manifest(&suit_encode, &context);
     if (result != SUIT_SUCCESS) {
         goto out;
     }
 
     result = suit_encode_append_severed_members(&suit_encode, &context);
+    if (result != SUIT_SUCCESS) {
+        goto out;
+    }
+
+    result = suit_encode_append_payloads(mode, envelope, &context);
     if (result != SUIT_SUCCESS) {
         goto out;
     }
