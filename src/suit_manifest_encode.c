@@ -19,7 +19,7 @@
 
     \brief  This implements libcsuit encoding
 
-    Prepare suit_eocode_t struct and suit_key_t,
+    Prepare suit_eocode_t struct and suit_keys_t,
     and then call suit_encode_envelope() to encode whole SUIT manifest.
  */
 
@@ -32,13 +32,13 @@ suit_err_t suit_encode_append_severed_members(const suit_encode_t *suit_encode, 
         && suit_encode->payload_fetch_digest.bytes.len > 0) {
         QCBOREncode_AddBytesToMapN(context, SUIT_SEVERED_PAYLOAD_FETCH, suit_encode->payload_fetch);
     }
-    if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->text) // TODO: illegal order?
-        && suit_encode->text_digest.bytes.len > 0) {
-        QCBOREncode_AddBytesToMapN(context, SUIT_SEVERED_TEXT, suit_encode->text);
-    }
     if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->install)
         && suit_encode->install_digest.bytes.len > 0) {
         QCBOREncode_AddBytesToMapN(context, SUIT_SEVERED_INSTALL, suit_encode->install);
+    }
+    if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->text)
+        && suit_encode->text_digest.bytes.len > 0) {
+        QCBOREncode_AddBytesToMapN(context, SUIT_SEVERED_TEXT, suit_encode->text);
     }
     if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->coswid)
         && suit_encode->coswid_digest.bytes.len > 0) {
@@ -51,6 +51,7 @@ suit_err_t suit_encode_append_manifest(const suit_encode_t *suit_encode, QCBOREn
     QCBOREncode_AddBytesToMapN(context, SUIT_MANIFEST, suit_encode->manifest);
     return SUIT_SUCCESS;
 }
+
 suit_err_t suit_encode_append_digest(const suit_digest_t *digest, const uint32_t label, QCBOREncodeContext *context) {
     if (label > 0) {
         /* in map */
@@ -138,13 +139,13 @@ suit_err_t suit_encode_append_payloads(uint8_t mode, const suit_envelope_t *enve
     return SUIT_SUCCESS;
 }
 
-suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, UsefulBufC digest, UsefulBufC signatures[], size_t num_signature, QCBOREncodeContext *context)
+suit_err_t suit_encode_append_authentication_wrapper(uint8_t mode, UsefulBufC digest, UsefulBuf signatures[], size_t num_signature, QCBOREncodeContext *context)
 {
     QCBOREncode_BstrWrapInMapN(context, SUIT_AUTHENTICATION);
     QCBOREncode_OpenArray(context);
     QCBOREncode_AddBytes(context, digest);
     for (size_t i = 0; i < num_signature; i++) {
-        QCBOREncode_AddBytes(context, signatures[i]);
+        QCBOREncode_AddBytes(context, UsefulBuf_Const(signatures[i]));
     }
     QCBOREncode_CloseArray(context);
     QCBOREncode_CloseBstrWrap(context, NULL);
@@ -183,12 +184,14 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
                     break;
                 }
                 break;
+            case SUIT_PARAMETER_ENCRYPTION_INFO:
+                QCBOREncode_AddBytesToMapN(context, item->label, (UsefulBufC){.ptr = item->value.string.ptr, .len = item->value.string.len});
+                break;
             case SUIT_PARAMETER_USE_BEFORE:
 
             case SUIT_PARAMETER_STRICT_ORDER:
             case SUIT_PARAMETER_SOFT_FAILURE:
 
-            case SUIT_PARAMETER_ENCRYPTION_INFO:
             case SUIT_PARAMETER_UNPACK_INFO:
             case SUIT_PARAMETER_RUN_ARGS:
 
@@ -528,12 +531,14 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
         suit_encode->dependency_resolution = UsefulBuf_Const(dependency_resolution_buf);
 
         if (manifest->sev_man_mem.dependency_resolution_status & SUIT_SEVERABLE_IN_ENVELOPE) {
-            suit_digest_t *dependency_resolution_digest = &suit_encode->dependency_resolution_digest;
-            result = suit_generate_digest_include_header(suit_encode->dependency_resolution.ptr, suit_encode->dependency_resolution.len, suit_encode, dependency_resolution_digest);
+            result = suit_generate_digest_include_header(suit_encode->dependency_resolution.ptr, suit_encode->dependency_resolution.len, suit_encode, &suit_encode->dependency_resolution_digest);
             if (result != SUIT_SUCCESS) {
                 return result;
             }
         }
+    }
+    else if (manifest->sev_mem_dig.dependency_resolution.bytes.len > 0) {
+        suit_encode->dependency_resolution_digest = manifest->sev_mem_dig.dependency_resolution;
     }
 
     if (manifest->sev_man_mem.payload_fetch_status & SUIT_SEVERABLE_EXISTS) {
@@ -545,12 +550,14 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
         suit_encode->payload_fetch = UsefulBuf_Const(payload_fetch_buf);
 
         if (manifest->sev_man_mem.payload_fetch_status & SUIT_SEVERABLE_IN_ENVELOPE) {
-            suit_digest_t *payload_fetch_digest = &suit_encode->payload_fetch_digest;
-            result = suit_generate_digest_include_header(suit_encode->payload_fetch.ptr, suit_encode->payload_fetch.len, suit_encode, payload_fetch_digest);
+            result = suit_generate_digest_include_header(suit_encode->payload_fetch.ptr, suit_encode->payload_fetch.len, suit_encode, &suit_encode->payload_fetch_digest);
             if (result != SUIT_SUCCESS) {
                 return result;
             }
         }
+    }
+    else if (manifest->sev_mem_dig.payload_fetch.bytes.len > 0) {
+        suit_encode->payload_fetch_digest = manifest->sev_mem_dig.payload_fetch;
     }
 
     if (manifest->sev_man_mem.install_status & SUIT_SEVERABLE_EXISTS) {
@@ -562,12 +569,14 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
         suit_encode->install = UsefulBuf_Const(install_buf);
 
         if (manifest->sev_man_mem.install_status & SUIT_SEVERABLE_IN_ENVELOPE) {
-            suit_digest_t *install_digest = &suit_encode->install_digest;
-            result = suit_generate_digest_include_header(suit_encode->install.ptr, suit_encode->install.len, suit_encode, install_digest);
+            result = suit_generate_digest_include_header(suit_encode->install.ptr, suit_encode->install.len, suit_encode, &suit_encode->install_digest);
             if (result != SUIT_SUCCESS) {
                 return result;
             }
         }
+    }
+    else if (manifest->sev_mem_dig.install.bytes.len > 0) {
+        suit_encode->install_digest = manifest->sev_mem_dig.install;
     }
 
     if (manifest->sev_man_mem.text_status & SUIT_SEVERABLE_EXISTS) {
@@ -579,23 +588,27 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
         suit_encode->text = UsefulBuf_Const(text_buf);
 
         if (manifest->sev_man_mem.text_status & SUIT_SEVERABLE_IN_ENVELOPE) {
-            suit_digest_t *text_digest = &suit_encode->text_digest;
-            result = suit_generate_digest_include_header(suit_encode->text.ptr, suit_encode->text.len, suit_encode, text_digest);
+            result = suit_generate_digest_include_header(suit_encode->text.ptr, suit_encode->text.len, suit_encode, &suit_encode->text_digest);
             if (result != SUIT_SUCCESS) {
                 return result;
             }
         }
     }
+    else if (manifest->sev_mem_dig.text.bytes.len > 0) {
+        suit_encode->text_digest = manifest->sev_mem_dig.text;
+    }
 
     if (manifest->sev_man_mem.coswid_status & SUIT_SEVERABLE_EXISTS) {
         suit_encode->coswid = (UsefulBufC){.ptr = manifest->sev_man_mem.coswid.ptr, .len = manifest->sev_man_mem.coswid.len};
         if (manifest->sev_man_mem.text_status & SUIT_SEVERABLE_IN_ENVELOPE) {
-            suit_digest_t *coswid_digest = &suit_encode->coswid_digest;
-            result = suit_generate_digest_include_header(suit_encode->coswid.ptr, suit_encode->coswid.len, suit_encode, coswid_digest);
+            result = suit_generate_digest_include_header(suit_encode->coswid.ptr, suit_encode->coswid.len, suit_encode, &suit_encode->coswid_digest);
             if (result != SUIT_SUCCESS) {
                 return result;
             }
         }
+    }
+    else if (manifest->sev_mem_dig.coswid.bytes.len > 0) {
+        suit_encode->coswid_digest = manifest->sev_mem_dig.coswid;
     }
 
     /* Encode whole manifest */
@@ -628,74 +641,64 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
         QCBOREncode_AddBytesToMapN(&context, SUIT_RUN, UsefulBuf_Const(run_buf));
     }
 
-    if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->dependency_resolution)) {
-        if (suit_encode->dependency_resolution_digest.bytes.len > 0) {
-            /* severed */
-            QCBOREncode_AddUInt64(&context, SUIT_DEPENDENCY_RESOLUTION);
-            result = suit_encode_append_digest(&suit_encode->dependency_resolution_digest, 0, &context);
-            if (result != SUIT_SUCCESS) {
-                return result;
-            }
-        }
-        else {
-            QCBOREncode_AddBytesToMapN(&context, SUIT_DEPENDENCY_RESOLUTION, suit_encode->dependency_resolution);
+    if (suit_encode->dependency_resolution_digest.bytes.len > 0) {
+        /* severed */
+        QCBOREncode_AddUInt64(&context, SUIT_DEPENDENCY_RESOLUTION);
+        result = suit_encode_append_digest(&suit_encode->dependency_resolution_digest, 0, &context);
+        if (result != SUIT_SUCCESS) {
+            return result;
         }
     }
-
-    if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->payload_fetch)) {
-        if (suit_encode->payload_fetch_digest.bytes.len > 0) {
-            /* severed */
-            QCBOREncode_AddUInt64(&context, SUIT_PAYLOAD_FETCH);
-            result = suit_encode_append_digest(&suit_encode->payload_fetch_digest, 0, &context);
-            if (result != SUIT_SUCCESS) {
-                return result;
-            }
-        }
-        else {
-            QCBOREncode_AddBytesToMapN(&context, SUIT_PAYLOAD_FETCH, suit_encode->payload_fetch);
-        }
+    else if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->dependency_resolution)) {
+        QCBOREncode_AddBytesToMapN(&context, SUIT_DEPENDENCY_RESOLUTION, suit_encode->dependency_resolution);
     }
 
-    if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->install)) {
-        if (suit_encode->install_digest.bytes.len > 0) {
-            /* severed */
-            QCBOREncode_AddUInt64(&context, SUIT_INSTALL);
-            result = suit_encode_append_digest(&suit_encode->install_digest, 0, &context);
-            if (result != SUIT_SUCCESS) {
-                return result;
-            }
-        }
-        else {
-            QCBOREncode_AddBytesToMapN(&context, SUIT_INSTALL, suit_encode->install);
+    if (suit_encode->payload_fetch_digest.bytes.len > 0) {
+        /* severed */
+        QCBOREncode_AddUInt64(&context, SUIT_PAYLOAD_FETCH);
+        result = suit_encode_append_digest(&suit_encode->payload_fetch_digest, 0, &context);
+        if (result != SUIT_SUCCESS) {
+            return result;
         }
     }
-
-    if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->text)) {
-        if (suit_encode->text_digest.bytes.len > 0) {
-            /* severed */
-            QCBOREncode_AddUInt64(&context, SUIT_TEXT);
-            result = suit_encode_append_digest(&suit_encode->text_digest, 0, &context);
-            if (result != SUIT_SUCCESS) {
-                return result;
-            }
-        }
-        else {
-            QCBOREncode_AddBytesToMapN(&context, SUIT_TEXT, suit_encode->text);
-        }
+    else if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->payload_fetch)) {
+        QCBOREncode_AddBytesToMapN(&context, SUIT_PAYLOAD_FETCH, suit_encode->payload_fetch);
     }
 
-    if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->coswid)) {
-        if (suit_encode->coswid_digest.bytes.len > 0) {
-            /* severed */
-            QCBOREncode_AddUInt64(&context, SUIT_COSWID);
-            result = suit_encode_append_digest(&suit_encode->coswid_digest, 0, &context);
-            if (result != SUIT_SUCCESS) {
-                return result;
-            }
+    if (suit_encode->install_digest.bytes.len > 0) {
+        /* severed */
+        QCBOREncode_AddUInt64(&context, SUIT_INSTALL);
+        result = suit_encode_append_digest(&suit_encode->install_digest, 0, &context);
+        if (result != SUIT_SUCCESS) {
+            return result;
         }
-        else {
-            QCBOREncode_AddBytesToMapN(&context, SUIT_COSWID, suit_encode->coswid);
+    }
+    else if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->install)) {
+        QCBOREncode_AddBytesToMapN(&context, SUIT_INSTALL, suit_encode->install);
+    }
+
+    if (suit_encode->text_digest.bytes.len > 0) {
+        /* severed */
+        QCBOREncode_AddUInt64(&context, SUIT_TEXT);
+        result = suit_encode_append_digest(&suit_encode->text_digest, 0, &context);
+        if (result != SUIT_SUCCESS) {
+            return result;
         }
+    }
+    else if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->text)) {
+        QCBOREncode_AddBytesToMapN(&context, SUIT_TEXT, suit_encode->text);
+    }
+
+    if (suit_encode->coswid_digest.bytes.len > 0) {
+        /* severed */
+        QCBOREncode_AddUInt64(&context, SUIT_COSWID);
+        result = suit_encode_append_digest(&suit_encode->coswid_digest, 0, &context);
+        if (result != SUIT_SUCCESS) {
+            return result;
+        }
+    }
+    else if (!UsefulBuf_IsNULLOrEmptyC(suit_encode->coswid)) {
+        QCBOREncode_AddBytesToMapN(&context, SUIT_COSWID, suit_encode->coswid);
     }
 
     QCBOREncode_CloseMap(&context);
@@ -713,8 +716,8 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
 /*
     Public function. See suit_manifest_data.h
  */
-suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_key_t *signing_key, uint8_t **buf, size_t *len) {
-    suit_err_t result;
+suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_mechanism_t *mechanism, uint8_t **buf, size_t *len) {
+    suit_err_t result = SUIT_SUCCESS;
     suit_encode_t suit_encode = {
         .buf = *buf,
         .max_pos = *len
@@ -732,18 +735,48 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
         return result;
     }
 
-    UsefulBuf signature;
-    result = suit_use_suit_encode_buf(&suit_encode, 0, &signature);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
-    result = suit_sign_cose_sign1(UsefulBuf_Const(digest), signing_key, &signature);
-    if (!suit_continue(mode, result)) {
-        return result;
-    }
-    result = suit_fix_suit_encode_buf(&suit_encode, signature.len);
-    if (result != SUIT_SUCCESS) {
-        return result;
+    UsefulBuf signatures[SUIT_MAX_ARRAY_LENGTH] = {0};
+    size_t num_signatures;
+    for (num_signatures = 0; num_signatures < SUIT_MAX_KEY_NUM; num_signatures++) {
+        switch (mechanism->keys[num_signatures].cose_algorithm_id) {
+        case T_COSE_ALGORITHM_ES256:
+            result = SUIT_SUCCESS;
+            break;
+        default:
+            result = SUIT_ERR_ABORT;
+        }
+        if (result == SUIT_SUCCESS) {
+        }
+        else if (result == SUIT_ERR_ABORT) {
+            break;
+        }
+        else {
+            return result;
+        }
+
+        result = suit_use_suit_encode_buf(&suit_encode, 0, &signatures[num_signatures]);
+        if (result != SUIT_SUCCESS) {
+            return result;
+        }
+
+        switch (mechanism->cose_tag) {
+        case CBOR_TAG_COSE_SIGN1:
+            result = suit_sign_cose_sign1(UsefulBuf_Const(digest), &mechanism->keys[num_signatures], &signatures[num_signatures]);
+            break;
+        case CBOR_TAG_SIGN:
+        case CBOR_TAG_MAC:
+        case CBOR_TAG_COSE_MAC0:
+        default:
+            result = SUIT_ERR_NOT_IMPLEMENTED;
+        }
+        if (!suit_continue(mode, result)) {
+            return result;
+        }
+
+        result = suit_fix_suit_encode_buf(&suit_encode, signatures[num_signatures].len);
+        if (result != SUIT_SUCCESS) {
+            return result;
+        }
     }
 
     UsefulBuf suit_envelope = NULLUsefulBuf;
@@ -762,9 +795,7 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
     }
     */
 
-    UsefulBufC signatures[1];
-    signatures[0] = UsefulBuf_Const(signature);
-    result = suit_encode_append_authentication_wrapper(mode, UsefulBuf_Const(digest), signatures, 1, &context);
+    result = suit_encode_append_authentication_wrapper(mode, UsefulBuf_Const(digest), signatures, num_signatures, &context);
     if (result != SUIT_SUCCESS) {
         goto out;
     }

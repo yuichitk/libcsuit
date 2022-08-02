@@ -19,11 +19,11 @@
             ] >>,
             / signature: / << 18([
                 / protected: / << {
-                    / alg / 1: -7 / ES256 /,
+                    / alg / 1: -7 / ES256 /
                 } >>,
                 / unprotected: / {
                 },
-                / payload: / nil,
+                / payload: / null,
                 / signature: / h'4ba6e9c4bdd65212e2e4775b7f5bb32faf14209f88d9f8b198e21c338770aa542dde07e31fa17ca9dadee4d94c43dfba81819d3588d7fde5eff010b8c7c89277'
             ]) >>
         ] >>,
@@ -65,15 +65,15 @@
         } >>,
         / install / 17: << [
             / directive-set-parameters / 19, {
-              / uri / 21: 'http://example.com/very/long/path/to/file/file.bin',
+              / uri / 21: "http://example.com/very/long/path/to/file/file.bin"
             },
             / directive-fetch / 21, 2,
             / condition-image-match / 3, 15
         ] >>,
         / text / 23: << {
             [h'00']: {
-                / vendor-domain / 3: 'arm.com',
-                / component-description / 5: 'This component is a demonstration. The digest is a sample pattern, not a real one.'
+                / vendor-domain / 3: "arm.com",
+                / component-description / 5: "This component is a demonstration. The digest is a sample pattern, not a real one."
             }
         } >>
     })

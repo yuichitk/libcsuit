@@ -19,11 +19,11 @@
             ] >>,
             / signature: / << 18([
                 / protected: / << {
-                    / alg / 1: -7 / ES256 /,
+                    / alg / 1: -7 / ES256 /
                 } >>,
                 / unprotected: / {
                 },
-                / payload: / nil,
+                / payload: / null,
                 / signature: / h'a78dbd584dbdea66ab024179dac2f4b244940e9dfe1337bb833e3e3df2562a0fceb77e64980e0ddcc24b8abb63b78aad9ad42fd244b684dd39859f84740239e8'
             ]) >>
         ] >>,
@@ -42,18 +42,18 @@
                             / algorithm-id: / -16 / sha256 /,
                             / digest-bytes: / h'00112233445566778899aabbccddeeff0123456789abcdeffedcba9876543210'
                         ] >>,
-                        / image-size / 14: 34768,
+                        / image-size / 14: 34768
                     },
                     / condition-vendor-identifier / 1, 15,
                     / condition-class-identifier / 2, 15
-                ] >>,
+                ] >>
             } >>,
             / validate / 7: << [
                 / condition-image-match / 3, 15
             ] >>,
             / install / 17: << [
                 / directive-set-parameters / 19, {
-                    / uri / 21: 'http://example.com/file.bin',
+                    / uri / 21: "http://example.com/file.bin"
                 },
                 / directive-fetch / 21, 2,
                 / condition-image-match / 3, 15

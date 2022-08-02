@@ -36,4 +36,7 @@ RUN rm -r /root/openssl-3.0.5* /root/QCBOR /root/t_cose
 RUN apt-get -y remove curl git gcc
 RUN apt-get -y autoremove
 
-CMD make test && make -f Makefile.encode test && make -f Makefile.parser test && make -f Makefile.process test
+CMD make test && \
+    make -f Makefile.encode test && \
+    make -f Makefile.parser test && \
+    make -f Makefile.process test

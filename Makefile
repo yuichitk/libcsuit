@@ -33,9 +33,11 @@ doc:
 	doxygen Doxyfile
 
 ./bin/$(NAME).a: $(OBJS)
+	mkdir -p ./bin
 	$(AR) -r $@ $^
 
 ./bin/$(NAME).so: $(OBJS)
+	mkdir -p ./bin
 	$(CC) -shared $^ $(CFLAGS) $(INC) -o $@
 
 
