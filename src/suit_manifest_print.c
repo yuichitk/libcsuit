@@ -486,7 +486,9 @@ suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_
                 }
                 break;
             case SUIT_PARAMETER_IMAGE_DIGEST:
+                printf("<< ");
                 result = suit_print_digest(&params_list->params[i].value.digest, indent_space, indent_delta);
+                printf(" >>");
                 break;
             case SUIT_PARAMETER_COMPONENT_SLOT:
             case SUIT_PARAMETER_IMAGE_SIZE:
@@ -723,11 +725,11 @@ suit_err_t suit_print_digest(const suit_digest_t *digest, const uint32_t indent_
     suit_err_t result = SUIT_SUCCESS;
     if (digest->algorithm_id != SUIT_ALGORITHM_ID_INVALID
         && digest->bytes.len > 0) {
-        printf("<< [\n");
+        printf("[\n");
         printf("%*s/ algorithm-id: / %d / %s /,\n", indent_space + indent_delta, "", digest->algorithm_id, suit_cose_alg_to_str(digest->algorithm_id));
         printf("%*s/ digest-bytes: / ", indent_space + indent_delta, "");
         result = suit_print_hex(digest->bytes.ptr, digest->bytes.len);
-        printf("\n%*s] >>", indent_space, "");
+        printf("\n%*s]", indent_space, "");
     }
     return result;
 }
@@ -1185,12 +1187,12 @@ suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, co
     printf("%*s107({\n", indent_space, "");
     // authentication-wrapper
     printf("%*s/ authentication-wrapper / 2: << [\n", indent_space + indent_delta, "");
-    printf("%*s/ digest: / ", indent_space + 2 * indent_delta, "");
+    printf("%*s/ digest: / << ", indent_space + 2 * indent_delta, "");
     result = suit_print_digest(&envelope->wrapper.digest, indent_space + 2 * indent_delta, indent_delta);
     if (result != SUIT_SUCCESS) {
         return result;
     }
-    printf(",\n");
+    printf(" >>,\n");
     for (size_t i = 0; i < envelope->wrapper.signatures_len; i++) {
         printf("%*s/ signature: / << ", indent_space + 2 * indent_delta, "");
         result = suit_print_signature(&envelope->wrapper.signatures[i], indent_space + 2 * indent_delta, indent_delta);
