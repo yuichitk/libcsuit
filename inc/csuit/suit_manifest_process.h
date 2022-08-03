@@ -252,6 +252,7 @@ typedef struct suit_extracted {
     suit_components_t components;
     suit_payloads_t payloads;
 
+    UsefulBufC manifest;
     UsefulBufC common_sequence;
     // UsefulBufC reference_uri;
     UsefulBufC dependency_resolution;

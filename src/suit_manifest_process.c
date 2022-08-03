@@ -1064,8 +1064,7 @@ error:
 }
 
 
-suit_err_t suit_extract_manifest(UsefulBufC manifest,
-                                 suit_extracted_t *extracted) {
+suit_err_t suit_extract_manifest(suit_extracted_t *extracted) {
     suit_err_t result = SUIT_SUCCESS;
     QCBORDecodeContext context;
     QCBORItem item;
@@ -1073,7 +1072,7 @@ suit_err_t suit_extract_manifest(UsefulBufC manifest,
 
     suit_manifest_key_t manifest_key;
 
-    QCBORDecode_Init(&context, manifest, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_Init(&context, extracted->manifest, QCBOR_DECODE_MODE_NORMAL);
     QCBORDecode_EnterMap(&context, &item);
     if (item.uDataType != QCBOR_TYPE_MAP) {
         result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
@@ -1285,7 +1284,7 @@ suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs) {
                     if (result != SUIT_SUCCESS) {
                         goto error;
                     }
-                    result = suit_extract_manifest(item.val.string, &extracted);
+                    extracted.manifest = item.val.string;
                 }
                 break;
             case SUIT_DELEGATION:
@@ -1317,6 +1316,7 @@ suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs) {
                 QCBORDecode_GetByteString(&context, &extracted.payload_fetch);
                 break;
 
+            case SUIT_SEVERED_WORKAROUND_TEXT:
             case SUIT_SEVERED_TEXT:
                 if (extracted.text.ptr != NULL) {
                     result = SUIT_ERR_REDUNDANT;
@@ -1350,7 +1350,10 @@ suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs) {
         goto out;
     }
 
+    result = suit_extract_manifest(&extracted);
+
     /* TODO: check digests */
+
 
     /* dependency-resolution */
     result = suit_process_common_and_command_sequence(&extracted, SUIT_DEPENDENCY_RESOLUTION, suit_inputs);
