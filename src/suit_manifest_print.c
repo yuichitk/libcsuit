@@ -1214,7 +1214,7 @@ suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, co
     }
     printf(" >>,\n");
     for (size_t i = 0; i < envelope->wrapper.signatures_len; i++) {
-        printf("%*s/ signature: / << ", indent_space + 2 * indent_delta, "");
+        printf("%*s/ signatures: / << ", indent_space + 2 * indent_delta, "");
         result = suit_print_signature(&envelope->wrapper.signatures[i], indent_space + 2 * indent_delta, indent_delta);
         printf(" >>\n");
     }
