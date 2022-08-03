@@ -736,19 +736,18 @@ int32_t suit_print_dependency(const suit_dependency_t *dependency, const uint32_
         return SUIT_ERR_FATAL;
     }
 
-    printf("%*sdependency-digest : SUIT_Digest\n", indent_space, "");
-    result = suit_print_digest(&dependency->digest, indent_space + indent_delta, indent_delta);
+    printf("%*s/ dependency-digest / %d: ", indent_space, "", SUIT_DEPENDENCY_DIGEST);
+    result = suit_print_digest(&dependency->digest, indent_space, indent_delta);
     if (result != SUIT_SUCCESS) {
         return result;
     }
 
     if (dependency->prefix.len > 0) {
-        printf("%*sdependency-prefix : ", indent_space, "");
+        printf("%*s,\n/ dependency-prefix / %d: ", indent_space, "", SUIT_DEPENDENCY_PREFIX);
         result = suit_print_component_identifier(&dependency->prefix);
         if (result != SUIT_SUCCESS) {
             return result;
         }
-        printf("\n");
     }
 
     /* TODO: SUIT_Dependency-extensions */
@@ -958,11 +957,17 @@ suit_err_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, co
     bool comma = false;
     if (manifest->common.dependencies.len > 0) {
         printf("%*s/ dependencies / 1: [\n", indent_space + 2 * indent_delta, "");
+        bool l1_comma = false;
         for (size_t i = 0; i < manifest->common.dependencies.len; i++) {
+            if (l1_comma) {
+                printf(",\n");
+            }
             result = suit_print_dependency(&manifest->common.dependencies.dependency[i], indent_space + 3 * indent_delta, indent_delta);
             if (result != SUIT_SUCCESS) {
                 return result;
             }
+            printf("\n");
+            l1_comma = true;
         }
         printf("%*s]", indent_space + 2 * indent_delta, "");
         comma = true;
@@ -1161,7 +1166,6 @@ suit_err_t suit_print_integrated_payload(uint8_t mode, const suit_payloads_t *pa
     for (size_t i = 0; i < payloads->len; i++) {
         printf("%*s\"%.*s\" : ", indent_space, "", (int)payloads->payload[i].key.len, (char *)payloads->payload[i].key.ptr);
         suit_print_hex(payloads->payload[i].bytes.ptr, payloads->payload[i].bytes.len);
-        printf("\n");
     }
     return SUIT_SUCCESS;
 }
@@ -1262,9 +1266,14 @@ suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, co
     }
 
     // integrated-payload
-    result = suit_print_integrated_payload(mode, &envelope->payloads, indent_space + indent_delta, indent_delta);
-    if (result != SUIT_SUCCESS) {
-        return result;
+    if (envelope->payloads.len > 0) {
+        if (comma) {
+            printf(",\n");
+        }
+        result = suit_print_integrated_payload(mode, &envelope->payloads, indent_space + indent_delta, indent_delta);
+        if (result != SUIT_SUCCESS) {
+            return result;
+        }
     }
 
     // TODO: $$SUIT_Envelope_Extensions
@@ -1280,9 +1289,9 @@ suit_err_t suit_print_run(suit_run_args_t run_args)
     printf("  component-identifier : ");
     suit_print_component_identifier(&run_args.component_identifier);
     printf("\n");
-    printf("  argument(len=%ld) : h'", run_args.args_len);
+    printf("  argument(len=%ld) : ", run_args.args_len);
     suit_print_hex(run_args.args, run_args.args_len);
-    printf("'\n");
+    printf("\n");
     printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", run_args.report.record_on_success, run_args.report.record_on_failure, run_args.report.sysinfo_success, run_args.report.sysinfo_failure);
     printf("}\n\n");
     return SUIT_SUCCESS;
@@ -1336,8 +1345,8 @@ suit_err_t suit_print_store(suit_store_args_t store_args)
     printf("store callback : {\n");
     switch (store_args.key) {
     case SUIT_DEPENDENCIES:
-        printf("  dst-dependnecy-digest :\n");
-        suit_print_digest(&store_args.dst.dependency.digest, 4, 4);
+        printf("  dst-dependnecy-digest : ");
+        suit_print_digest(&store_args.dst.dependency.digest, 2, 2);
         printf("  dst-dependency-prefix : ");
         suit_print_component_identifier(&store_args.dst.dependency.prefix);
         printf("\n");
@@ -1378,8 +1387,8 @@ suit_err_t suit_print_fetch(suit_fetch_args_t fetch_args,
     printf(" (%ld)\n", fetch_args.uri_len);
     switch (fetch_args.key) {
     case SUIT_DEPENDENCIES:
-        printf("  dst-dependnecy-digest :\n");
-        suit_print_digest(&fetch_args.dst.dependency.digest, 4, 4);
+        printf("  dst-dependnecy-digest : ");
+        suit_print_digest(&fetch_args.dst.dependency.digest, 2, 2);
         printf("  dst-dependency-prefix : ");
         suit_print_component_identifier(&fetch_args.dst.dependency.prefix);
         printf("\n");
