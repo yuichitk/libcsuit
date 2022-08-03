@@ -422,7 +422,12 @@ suit_err_t suit_print_string(const suit_buf_t *string) {
     }
     printf("\"");
     for (size_t j = 0; j < string->len; j++) {
-        putchar(string->ptr[j]);
+        if (string->ptr[j] == '\n') {
+            putchar('\\'); putchar('n');
+        }
+        else {
+            putchar(string->ptr[j]);
+        }
     }
     printf("\"");
     return SUIT_SUCCESS;
