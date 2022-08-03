@@ -508,7 +508,7 @@ suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_
                 if (params_list->params[i].value.string.len > 0) {
                     result = suit_print_compression_info(&params_list->params[i].value.string, indent_space + indent_delta, indent_delta);
                 }
-                printf("%*s}", indent_space, "");
+                printf("%*s} >>", indent_space, "");
                 break;
             case SUIT_PARAMETER_ENCRYPTION_INFO:
                 printf("SUIT_Encryption_Info\n");
@@ -580,11 +580,30 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
                 break;
             case SUIT_DIRECTIVE_TRY_EACH:
                 printf("[\n");
-                result = suit_decode_command_sequence(mode, &cmd_seq->commands[i].value.string, &tmp_cmd_seq);
-                if (result == SUIT_SUCCESS) {
-                    result = suit_print_cmd_seq(mode, &tmp_cmd_seq, indent_space + indent_delta, indent_delta);
+                bool l1_comma = false;
+                while (1) {
+                    result = suit_decode_command_sequence(mode, &cmd_seq->commands[i].value.string, &tmp_cmd_seq);
+                    if (result != SUIT_SUCCESS) {
+                        break;
+                    }
+                    if (l1_comma) {
+                        printf(",\n");
+                    }
+                    printf("%*s<< [\n", indent_space + indent_delta, "");
+                    result = suit_print_cmd_seq(mode, &tmp_cmd_seq, indent_space + 2 * indent_delta, indent_delta);
+                    if (result != SUIT_SUCCESS) {
+                        break;
+                    }
+                    printf("%*s] >>", indent_space + indent_delta, "");
+                    l1_comma = true;
+                    if (i + 1 < cmd_seq->len && cmd_seq->commands[i + 1].label == SUIT_DIRECTIVE_TRY_EACH) {
+                        i++;
+                    }
+                    else {
+                        break;
+                    }
                 }
-                printf("%*s]", indent_space, "");
+                printf("\n%*s]", indent_space, "");
                 break;
             case SUIT_CONDITION_USE_BEFORE:
             case SUIT_CONDITION_ABORT:
@@ -604,6 +623,7 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
                 printf("?");
                 break;
             default:
+                result = SUIT_ERR_INVALID_KEY;
                 break;
         }
         if (result != SUIT_SUCCESS) {
