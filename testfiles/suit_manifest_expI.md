@@ -6,145 +6,53 @@
 {: numbered='no'}
 
 ~~~~
-/ SUIT_Envelope_Tagged / 107( {
-  / suit-authentication-wrapper / 2: << [
-    << [
-      / suit-digest-algorithm-id: / -16 / suit-cose-alg-sha256 /,
-      / suit-digest-bytes: / h'14A98BE957DE38FAE37376EA491FD6CAD9BFBD3C90051C8F5B017D7A496C3B05'
+/ SUIT_Envelope = / 107({
+  / authentication-wrapper / 2: << [
+    / digest: / << [
+      / algorithm-id: / -16 / SHA-256 /,
+      / digest-bytes: / h'e8b5ec4510260b42b489fdec4b4918e8e97eb6e135c1b3b40e82419bf79224de'
     ] >>,
-    << / COSE_Sign1_Tagged / 18( [
+    / signatures: / << 18([
       / protected: / << {
-        / algorithm-id / 1: -7 / ES256 /
+        / alg / 1: -7 / ES256 /
       } >>,
-      / unprotected: / {},
+      / unprotected: / {
+      },
       / payload: / null,
-      / signature: / h'4093B323953785981EB607C8BA61B21E5C4F85726A2AF48C1CB05BD4401B1B1565070728FDA38E6496D631E1D23F966CFF7805EDE721D48507D9192993DA8722'
-    ] ) >>
+      / signature: / h'c3c646030a93ec39e3f27111be73a2810a9f7a57bb34e9c9916fc0601eab8eb506b96c70864149664c1d090757714ace153fbb982dfda5b3fc150d89581e3994'
+    ]) >>
   ] >>,
-  / suit-integrated-payload / "#tc": h'48656C6C6F2C2053656375726520576F726C6421', / "Hello, Secure World!" /
-  / suit-manifest / 3: << {
-    / suit-manifest-version / 1: 1,
-    / suit-manifest-sequence-number / 2: 3,
-    / suit-common / 3: << {
-      / suit-components / 2: [
-        [
-          h'544545502D446576696365',           / "TEEP-Device" /
-          h'5365637572654653',                 / "SecureFS" /
-          h'8D82573A926D4754935332DC29997F74', / tc-uuid /
-          h'7461'                              / "ta" /
-        ]
+  / manifest / 3: << {
+    / manifest-version / 1: 1,
+    / manifest-sequence-number / 2: 3,
+    / common / 3: << {
+      / components / 2: [
+        [h'544545502d446576696365', h'5365637572654653', h'8d82573a926d4754935332dc29997f74', h'7461']
       ],
-      / suit-common-sequence / 4: << [
-        / suit-directive-override-parameters / 20, {
-          / suit-parameter-vendor-identifier / 1: h'C0DDD5F15243566087DB4F5B0AA26C2F',
-          / suit-parameter-class-identifier / 2: h'DB42F7093D8C55BAA8C5265FC5820F4E',
-          / suit-parameter-image-digest / 3: << [
-            / suit-digest-algorithm-id: / -16 / suit-cose-alg-sha256 /,
-            / suit-digest-bytes: / h'8CF71AC86AF31BE184EC7A05A411A8C3A14FD9B77A30D046397481469468ECE8'
+      / common-sequence / 4: << [
+        / directive-override-parameters / 20, {
+          / vendor-id / 1: h'c0ddd5f15243566087db4f5b0aa26c2f' / c0ddd5f1-5243-5660-87db-4f5b0aa26c2f /,
+          / class-id / 2: h'db42f7093d8c55baa8c5265fc5820f4e' / db42f709-3d8c-55ba-a8c5-265fc5820f4e /,
+          / image-digest / 3: << [
+            / algorithm-id: / -16 / SHA-256 /,
+            / digest-bytes: / h'8cf71ac86af31be184ec7a05a411a8c3a14fd9b77a30d046397481469468ece8'
           ] >>,
-          / suit-parameter-image-size / 14: 20
+          / image-size / 14: 20
         },
-        / suit-condition-vendor-identifier / 1, 15,
-        / suit-condition-class-identifier / 2, 15
+        / condition-vendor-identifier / 1, 15,
+        / condition-class-identifier / 2, 15
       ] >>
     } >>,
-    / suit-install / 9: << [
-      / suit-directive-override-parameters / 20, {
-        / suit-parameter-uri / 21: "#tc"
+    / install / 17: << [
+      / directive-override-parameters / 20, {
+        / uri / 21: "#tc"
       },
-      / suit-directive-fetch / 21, 15,
-      / suit-condition-image-match / 3, 15
+      / directive-fetch / 21, 15,
+      / condition-image-match / 3, 15
     ] >>
-  } >>
-} )
-~~~~
-
-
-### CBOR Binary Representation
-{: numbered='no'}
-
-~~~~
-D8 6B                                               # tag(107) / SUIT_Envelope_Tagged /
-   A3                                               # map(3)
-      02                                            # unsigned(2) / suit-authentication-wrapper /
-      58 73                                         # bytes(115)
-         82                                         # array(2)
-            58 24                                   # bytes(36)
-               82                                   # array(2)
-                  2F                                # negative(15) / -16 = suit-cose-alg-sha256 /
-                  58 20                             # bytes(32)
-                     14A98BE957DE38FAE37376EA491FD6CAD9BFBD3C90051C8F5B017D7A496C3B05
-            58 4A                                   # bytes(74)
-               D2                                   # tag(18) / COSE_Sign1_Tagged /
-                  84                                # array(4)
-                     43                             # bytes(3)
-                        A1                          # map(1)
-                           01                       # unsigned(1) / algorithm-id /
-                           26                       # negative(6) / -7 = ES256 /
-                     A0                             # map(0)
-                     F6                             # primitive(22) / null /
-                     58 40                          # bytes(64)
-                        4093B323953785981EB607C8BA61B21E5C4F85726A2AF48C1CB05BD4401B1B1565070728FDA38E6496D631E1D23F966CFF7805EDE721D48507D9192993DA8722
-      63                                            # text(3) / suit-integrated-payload /
-         237463                                     # "#tc"
-      54                                            # bytes(20)
-         48656C6C6F2C2053656375726520576F726C6421   # "Hello, Secure World!"
-      03                                            # unsigned(3) / suit-manifest: /
-      58 9A                                         # bytes(154)
-         A4                                         # map(4)
-            01                                      # unsigned(1) / suit-manifest-version: /
-            01                                      # unsigned(1)
-            02                                      # unsigned(2) / suit-manifest-sequence-number: /
-            03                                      # unsigned(3)
-            03                                      # unsigned(3) / suit-common: /
-            58 84                                   # bytes(132)
-               A2                                   # map(2)
-                  02                                # unsigned(2) / suit-components: /
-                  81                                # array(1)
-                     84                             # array(4)
-                        4B                          # bytes(11)
-                           544545502D446576696365   # "TEEP-Device"
-                        48                          # bytes(8)
-                           5365637572654653         # "SecureFS"
-                        50                          # bytes(16)
-                           8D82573A926D4754935332DC29997F74 # tc-uuid
-                        42                          # bytes(2)
-                           7461                     # "ta"
-                  04                                # unsigned(4) / suit-common-sequence: /
-                  58 54                             # bytes(84)
-                     86                             # array(6)
-                        14                          # unsigned(20) / suit-directive-override-parameters: /
-                        A4                          # map(4)
-                           01                       # unsigned(1) / suit-parameter-vendor-identifier: /
-                           50                       # bytes(16)
-                              C0DDD5F15243566087DB4F5B0AA26C2F
-                           02                       # unsigned(2) / suit-parameter-class-identifier: /
-                           50                       # bytes(16)
-                              DB42F7093D8C55BAA8C5265FC5820F4E
-                           03                       # unsigned(3) / suit-parameter-image-digest: /
-                           58 24                    # bytes(36)
-                              82                    # array(2)
-                                 2F                 # negative(15) / -16 = suit-cose-alg-sha256 /
-                                 58 20              # bytes(32)
-                                    8CF71AC86AF31BE184EC7A05A411A8C3A14FD9B77A30D046397481469468ECE8
-                           0E                       # unsigned(14) / suit-parameter-image-size: /
-                           14                       # unsigned(20)
-                        01                          # unsigned(1) / suit-condition-vendor-identifier: /
-                        0F                          # unsigned(15)
-                        02                          # unsigned(2) / suit-condition-class-identifier: /
-                        0F                          # unsigned(15)
-            09                                      # unsigned(9) / suit-install: /
-            4C                                      # bytes(12)
-               86                                   # array(6)
-                  14                                # unsigned(20) / suit-directive-override-parameters: /
-                  A1                                # map(1)
-                     15                             # unsigned(21) / suit-parameter-uri: /
-                     63                             # text(3)
-                        237463                      # "#tc"
-                  15                                # unsigned(21) / suit-directive-fetch: /
-                  0F                                # unsigned(15)
-                  03                                # unsigned(3) / suit-condition-image-match: /
-                  0F                                # unsigned(15)
+  } >>,
+  "#tc" : h'48656c6c6f2c2053656375726520576f726c6421'
+})
 ~~~~
 
 
@@ -152,15 +60,15 @@ D8 6B                                               # tag(107) / SUIT_Envelope_T
 {: numbered='no'}
 
 ~~~~
-D86BA3025873825824822F582014A98BE957DE38FAE37376EA491FD6CAD9
-BFBD3C90051C8F5B017D7A496C3B05584AD28443A10126A0F658404093B3
-23953785981EB607C8BA61B21E5C4F85726A2AF48C1CB05BD4401B1B1565
-070728FDA38E6496D631E1D23F966CFF7805EDE721D48507D9192993DA87
-22632374635448656C6C6F2C2053656375726520576F726C642103589AA4
-01010203035884A20281844B544545502D44657669636548536563757265
-4653508D82573A926D4754935332DC29997F744274610458548614A40150
-C0DDD5F15243566087DB4F5B0AA26C2F0250DB42F7093D8C55BAA8C5265F
-C5820F4E035824822F58208CF71AC86AF31BE184EC7A05A411A8C3A14FD9
-B77A30D046397481469468ECE80E14010F020F094C8614A1156323746315
-0F030F
+d86ba3025873825824822f5820e8b5ec4510260b42b489fdec4b4918e8e9
+7eb6e135c1b3b40e82419bf79224de584ad28443a10126a0f65840c3c646
+030a93ec39e3f27111be73a2810a9f7a57bb34e9c9916fc0601eab8eb506
+b96c70864149664c1d090757714ace153fbb982dfda5b3fc150d89581e39
+9403589aa401010203035884a20281844b544545502d4465766963654853
+65637572654653508d82573a926d4754935332dc29997f74427461045854
+8614a40150c0ddd5f15243566087db4f5b0aa26c2f0250db42f7093d8c55
+baa8c5265fc5820f4e035824822f58208cf71ac86af31be184ec7a05a411
+a8c3a14fd9b77a30d046397481469468ece80e14010f020f114c8614a115
+63237463150f030f632374635448656c6c6f2c2053656375726520576f72
+6c6421
 ~~~~
