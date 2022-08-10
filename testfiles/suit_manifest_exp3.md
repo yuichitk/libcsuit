@@ -6,7 +6,7 @@
 
 # SUIT Manifest
     B.4.  Example 3: A/B images
-    https://tools.ietf.org/html/draft-ietf-suit-manifest-18#appendix-B.4
+    https://tools.ietf.org/html/draft-ietf-suit-manifest-19#appendix-B.4
 
 
 ## CBOR Diagnostic
@@ -14,17 +14,17 @@
     107({
         / authentication-wrapper / 2: << [
             / digest: / << [
-                / algorithm-id: / -16 / sha256 /,
-                / digest-bytes: / h'c98d9240343ee1ac12ba833c04fb9006e70f62c7e4c36edb0b2a356d59c2f86c'
+                / algorithm-id: / -16 / SHA-256 /,
+                / digest-bytes: / h'b3e6a52776bf3ed218feba031c609c98260e1a52fc1f019683edb6d1c5c4a379'
             ] >>,
-            / signature: / << 18([
+            / signatures: / << 18([
                 / protected: / << {
                     / alg / 1: -7 / ES256 /
                 } >>,
                 / unprotected: / {
                 },
                 / payload: / null,
-                / signature: / h'451b3099c7914ef4c54b633688471b8d0f940d09eeca41c159927a9f044bddec536f83da5f1b1047bc415be013d71524ad82e4ac792a61f93dbdc875a7a6adeb'
+                / signature: / h'9ff1d63474897d302f7ec4ab98cb07e22c9853b92a56e3ec9286a4e248d4ac59665de35824c1caad4b056b35e8a40c60086f36eb519e31c7710db4fdc0b99eff'
             ]) >>
         ] >>,
         / manifest / 3: << {
@@ -32,7 +32,7 @@
             / manifest-sequence-number / 2: 3,
             / common / 3: << {
                 / components / 2: [
-                     [h'00']
+                    [h'00']
                 ],
                 / common-sequence / 4: << [
                     / directive-override-parameters / 20, {
@@ -42,12 +42,12 @@
                     / directive-try-each / 15, [
                         << [
                             / directive-override-parameters / 20, {
-                                / offset / 5: 33792
+                                / component-slot / 5: 0
                             },
                             / condition-component-slot / 5, 5,
                             / directive-override-parameters / 20, {
                                 / image-digest / 3: << [
-                                    / algorithm-id: / -16 / sha256 /,
+                                    / algorithm-id: / -16 / SHA-256 /,
                                     / digest-bytes: / h'00112233445566778899aabbccddeeff0123456789abcdeffedcba9876543210'
                                 ] >>,
                                 / image-size / 14: 34768
@@ -55,12 +55,12 @@
                         ] >>,
                         << [
                             / directive-override-parameters / 20, {
-                                / offset / 5: 541696
+                                / component-slot / 5: 1
                             },
                             / condition-component-slot / 5, 5,
                             / directive-override-parameters / 20, {
-                                / image-digest: / 3: << [
-                                    / algorithm-id: / -16 / sha256 /,
+                                / image-digest / 3: << [
+                                    / algorithm-id: / -16 / SHA-256 /,
                                     / digest-bytes: / h'0123456789abcdeffedcba987654321000112233445566778899aabbccddeeff'
                                 ] >>,
                                 / image-size / 14: 76834
@@ -77,20 +77,20 @@
             / install / 17: << [
                 / directive-try-each / 15, [
                     << [
-                        / directive-set-parameters / 19, {
-                            / offset / 5: 33792
+                        / directive-override-parameters / 20, {
+                            / component-slot / 5: 0
                         },
                         / condition-component-slot / 5, 5,
-                        / directive-set-parameters / 19, {
+                        / directive-override-parameters / 20, {
                             / uri / 21: "http://example.com/file1.bin"
                         }
                     ] >>,
                     << [
-                        / directive-set-parameters / 19, {
-                            / offset / 5:541696
+                        / directive-override-parameters / 20, {
+                            / component-slot / 5: 1
                         },
                         / condition-component-slot / 5, 5,
-                        / directive-set-parameters / 19, {
+                        / directive-override-parameters / 20, {
                             / uri / 21: "http://example.com/file2.bin"
                         }
                     ] >>

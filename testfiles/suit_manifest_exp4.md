@@ -6,7 +6,7 @@
 
 # SUIT Manifest
     B.5.  Example 4: Load and Decompress from External Storage
-    https://tools.ietf.org/html/draft-ietf-suit-manifest-18#appendix-B.5
+    https://tools.ietf.org/html/draft-ietf-suit-manifest-19#appendix-B.5
 
 
 ## CBOR Diagnostic
@@ -14,17 +14,17 @@
     107({
         / authentication-wrapper / 2: << [
             / digest: / << [
-                / algorithm-id: / -16 / sha256 /,
-                / digest-bytes: / h'601ebc1bb2e12cbaf408b1bca72fae0d9987498acfa16130ce4cf5cc9ea74c7c'
+                / algorithm-id: / -16 / SHA-256 /,
+                / digest-bytes: / h'838eb848698c9d9dd29b5930102ea1f29743857d975f52ed4d19589b821e82cf'
             ] >>,
-            / signature: / << 18([
+            / signatures: / << 18([
                 / protected: / << {
-                    / alg / 1:-7 / ES256 /
+                    / alg / 1: -7 / ES256 /
                 } >>,
                 / unprotected: / {
                 },
                 / payload: / null,
-                / signature: / h'2e263599b0f3613fd3feb0cec1ff55c6b37c521339ef2680dc63de3a5cdfb0e3f44237313e1c17c35f7fa84af82234f50cea551cfdd8179a40dac5136167cd5e'
+                / signature: / h'5ee9d2698734cef75582a2c188a328b06d414b20dff7043528045a3fc2bdcb6be36887e2dfdb6ea5ab91d74077a6cc806c4580026bfea22c4f3153e1d9692c5a'
             ]) >>
         ] >>,
         / manifest / 3: << {
@@ -42,7 +42,7 @@
                         / vendor-id / 1: h'fa6b4a53d5ad5fdfbe9de663e4d41ffe' / fa6b4a53-d5ad-5fdf-be9d-e663e4d41ffe /,
                         / class-id / 2: h'1492af1425695e48bf429b2d51f2ab45' / 1492af14-2569-5e48-bf42-9b2d51f2ab45 /,
                         / image-digest / 3: << [
-                            / algorithm-id: / -16 / sha256 /,
+                            / algorithm-id: / -16 / SHA-256 /,
                             / digest-bytes: / h'00112233445566778899aabbccddeeff0123456789abcdeffedcba9876543210'
                         ] >>,
                         / image-size / 14: 34768
@@ -57,16 +57,13 @@
             ] >>,
             / load / 8: << [
                 / directive-set-component-index / 12, 2,
-                / directive-set-parameters / 19, {
+                / directive-override-parameters / 20, {
                     / image-digest / 3: << [
-                        / algorithm-id: / -16 / sha256 /,
+                        / algorithm-id: / -16 / SHA-256 /,
                         / digest-bytes: / h'0123456789abcdeffedcba987654321000112233445566778899aabbccddeeff'
                     ] >>,
                     / image-size / 14: 76834,
-                    / compression-info / 19: << {
-                        / compression-algorithm / 1: 1 / zlib /
-                    } >>,
-                    / source-component / 22: 0 / [h'00'] /
+                    / source-component / 22: 0
                 },
                 / directive-copy / 22, 2,
                 / condition-image-match / 3, 15
@@ -77,9 +74,9 @@
             ] >>,
             / payload-fetch / 16: << [
                 / directive-set-component-index / 12, 1,
-                / directive-set-parameters / 19, {
+                / directive-override-parameters / 20, {
                     / image-digest / 3: << [
-                        / algorithm-id: / -16 / sha256 /,
+                        / algorithm-id: / -16 / SHA-256 /,
                         / digest-bytes: / h'00112233445566778899aabbccddeeff0123456789abcdeffedcba9876543210'
                     ] >>,
                     / uri / 21: "http://example.com/file.bin"
@@ -89,8 +86,8 @@
             ] >>,
             / install / 17: << [
                 / directive-set-component-index / 12, 0,
-                / directive-set-parameters / 19, {
-                    / source-component / 22: 1 / [h'02'] /
+                / directive-override-parameters / 20, {
+                    / source-component / 22: 1
                 },
                 / directive-copy / 22, 2,
                 / condition-image-match / 3, 15
