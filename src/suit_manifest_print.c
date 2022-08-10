@@ -1203,8 +1203,7 @@ suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, co
     }
     suit_err_t result = SUIT_SUCCESS;
     bool comma = false;
-    printf("%*s/ SUIT_Envelope = /\n", indent_space, "");
-    printf("%*s107({\n", indent_space, "");
+    printf("%*s/ SUIT_Envelope = / 107({\n", indent_space, "");
     // authentication-wrapper
     printf("%*s/ authentication-wrapper / 2: << [\n", indent_space + indent_delta, "");
     printf("%*s/ digest: / << ", indent_space + 2 * indent_delta, "");
