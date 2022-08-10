@@ -56,13 +56,18 @@ $(OBJDIR)/%.o:	%.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
+URI			:= https://example.org/8d82573a-926d-4754-9353-32dc29997f74.suit
 OUTPUTu		:= ./testfiles/suit_manifest_expU.cbor
 OUTPUTi		:= ./testfiles/suit_manifest_expI.cbor
-URI			:= https://example.org/8d82573a-926d-4754-9353-32dc29997f74.suit
 OUTPUTd		:= ./testfiles/suit_manifest_expD.cbor
-OUTPUTid	:= ./testfiles/suit_manifest_expID.cbor
-DEPENDENCY	:= ./testfiles/suit_manifest_expU_fixed.cbor
 OUTPUTr		:= ./testfiles/suit_manifest_expR.cbor
+DEPENDENCY	:= ./testfiles/suit_manifest_expU_fixed.cbor
+OUTPUTid	:= ./testfiles/suit_manifest_expID.cbor
+
+MARKDOWNu	:= ./testfiles/suit_manifest_expU.md
+MARKDOWNi	:= ./testfiles/suit_manifest_expI.md
+MARKDOWNd	:= ./testfiles/suit_manifest_expD.md
+MARKDOWNr	:= ./testfiles/suit_manifest_expR.md
 
 $(OUTPUTu): $(TARGETu)
 	$(TARGETu) $(OUTPUTu)
@@ -82,7 +87,7 @@ $(OUTPUTi): $(TARGETi)
 $(OUTPUTr): $(TARGETr)
 	$(TARGETr) $(OUTPUTr)
 
-generate: $(OUTPUTu) $(OUTPUTi) $(OUTPUTd) $(OUTPUTr) $(OUTPUTid)
+generate: $(OUTPUTu) $(OUTPUTi) $(OUTPUTd) $(OUTPUTr) $(OUTPUTid) $(MARKDOWNu) $(MARKDOWNi) $(MARKDOWNd) $(MARKDOWNr)
 
 test: $(TARGETu) $(TARGETi) $(TARGETd) $(TARGETr)
 	$(TARGETu)
@@ -91,6 +96,24 @@ test: $(TARGETu) $(TARGETi) $(TARGETd) $(TARGETr)
 	$(TARGETd) $(OUTPUTi)
 	$(TARGETr)
 
+GENERATE_SCRIPT	:=	./generate_teep_example.sh
+PARSER		:= ./bin/suit_manifest_parser
+$(PARSER):
+	$(MAKE) -f Makefile.parser
+
+$(MARKDOWNu): $(OUTPUTu) $(GENERATE_SCRIPT) $(PARSER)
+	$(shell $(GENERATE_SCRIPT) "U" "Example 1: SUIT Manifest pointing to URI of the Trusted Component Binary {#suit-uri}")
+
+$(MARKDOWNi): $(OUTPUTi) $(GENERATE_SCRIPT) $(PARSER)
+	$(shell $(GENERATE_SCRIPT) "I" "Example 2: SUIT Manifest including the Trusted Component Binary {#suit-integrated}")
+
+$(MARKDOWNd): $(OUTPUTd) $(GENERATE_SCRIPT) $(PARSER)
+	$(shell $(GENERATE_SCRIPT) "D" "Example 3: Supplying Personalization Data for Trusted Component Binary {#suit-personalization}")
+
+$(MARKDOWNr): $(OUTPUTr) $(GENERATE_SCRIPT) $(PARSER)
+	$(shell $(GENERATE_SCRIPT) "R" "E.4. Example 4: Unlink a Trusted Component {#suit-unlink}")
+
 clean:
 	rm -f $(OBJS) $(TARGETu) $(TARGETi) $(TARGETd) $(TARGETr)
+
 
