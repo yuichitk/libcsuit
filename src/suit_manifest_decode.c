@@ -809,18 +809,18 @@ suit_err_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *cont
         int64_t label = item->label.int64;
         switch (label) {
             case SUIT_MANIFEST_VERSION:
-                if (item->uDataType != QCBOR_TYPE_INT64) {
+                if (!suit_qcbor_value_is_uint64(item)) {
                     result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
                     break;
                 }
-                manifest->version = (uint32_t) item->val.uint64;
+                manifest->version = item->val.uint64;
                 break;
             case SUIT_MANIFEST_SEQUENCE_NUMBER:
-                if (item->uDataType != QCBOR_TYPE_INT64) {
+                if (!suit_qcbor_value_is_uint64(item)) {
                     result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
                     break;
                 }
-                manifest->sequence_number = (uint32_t) item->val.uint64;
+                manifest->sequence_number = item->val.uint64;
                 break;
             case SUIT_COMMON:
                 result = suit_decode_common_from_bstr(mode, context, item, false, &manifest->common);
