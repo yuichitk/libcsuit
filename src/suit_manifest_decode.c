@@ -259,6 +259,7 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
                 case SUIT_DIRECTIVE_FETCH:
                 case SUIT_DIRECTIVE_COPY:
                 case SUIT_DIRECTIVE_RUN:
+                case SUIT_DIRECTIVE_UNLINK:
                     result = suit_qcbor_get_next_uint(context, item);
                     if (!suit_continue(mode, result)) {
                         break;
@@ -331,7 +332,6 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
                 case SUIT_DIRECTIVE_FETCH_URI_LIST:
                 case SUIT_DIRECTIVE_SWAP:
                 case SUIT_DIRECTIVE_RUN_SEQUENCE:
-                case SUIT_DIRECTIVE_UNLINK:
                 default:
                     // TODO
                     result = SUIT_ERR_NOT_IMPLEMENTED;
