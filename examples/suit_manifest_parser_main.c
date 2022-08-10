@@ -23,8 +23,12 @@
 int main(int argc, char *argv[]) {
     // check arguments.
     if (argc < 1) {
-        printf("%s <manifest file path>\n", argv[0]);
+        printf("%s <manifest file path> [tabstop 4]\n", argv[0]);
         return EXIT_FAILURE;
+    }
+    uint16_t tabstop = 4;
+    if (argc >= 3) {
+        tabstop = atoi(argv[2]);
     }
     suit_err_t result = 0;
     char *manifest_file = argv[1];
@@ -73,7 +77,7 @@ int main(int argc, char *argv[]) {
 
     // Print manifest.
     printf("\nmain : Print Manifest.\n");
-    result = suit_print_envelope(mode, &envelope, 4, 4);
+    result = suit_print_envelope(mode, &envelope, 4, tabstop);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to print Manifest file. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
