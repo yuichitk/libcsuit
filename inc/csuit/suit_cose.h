@@ -62,7 +62,8 @@ typedef struct suit_key {
 
 typedef struct suit_mechanism {
     int cose_tag; // COSE_Sign1, COSE_Sign, COSE_Encrypt0, COSE_Encrypt, etc.
-    suit_key_t keys[SUIT_MAX_KEY_NUM];
+    suit_key_t key;
+    bool use;
 } suit_mechanism_t;
 
 /*!

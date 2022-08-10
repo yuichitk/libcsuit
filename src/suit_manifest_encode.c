@@ -716,7 +716,7 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
 /*
     Public function. See suit_manifest_data.h
  */
-suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_mechanism_t *mechanism, uint8_t **buf, size_t *len) {
+suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, const suit_mechanism_t *mechanisms, uint8_t **buf, size_t *len) {
     suit_err_t result = SUIT_SUCCESS;
     suit_encode_t suit_encode = {
         .buf = *buf,
@@ -736,9 +736,12 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
     }
 
     UsefulBuf signatures[SUIT_MAX_ARRAY_LENGTH] = {0};
-    size_t num_signatures;
-    for (num_signatures = 0; num_signatures < SUIT_MAX_KEY_NUM; num_signatures++) {
-        switch (mechanism->keys[num_signatures].cose_algorithm_id) {
+    size_t num_signatures = 0;
+    for (size_t i = 0; i < SUIT_MAX_KEY_NUM; i++) {
+        if (mechanisms[i].use == false) {
+            continue;
+        }
+        switch (mechanisms[i].key.cose_algorithm_id) {
         case T_COSE_ALGORITHM_ES256:
             result = SUIT_SUCCESS;
             break;
@@ -759,9 +762,9 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
             return result;
         }
 
-        switch (mechanism->cose_tag) {
+        switch (mechanisms[i].cose_tag) {
         case CBOR_TAG_COSE_SIGN1:
-            result = suit_sign_cose_sign1(UsefulBuf_Const(digest), &mechanism->keys[num_signatures], &signatures[num_signatures]);
+            result = suit_sign_cose_sign1(UsefulBuf_Const(digest), &mechanisms[i].key, &signatures[num_signatures]);
             break;
         case CBOR_TAG_SIGN:
         case CBOR_TAG_MAC:
@@ -777,6 +780,7 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
         if (result != SUIT_SUCCESS) {
             return result;
         }
+        num_signatures++;
     }
 
     UsefulBuf suit_envelope = NULLUsefulBuf;

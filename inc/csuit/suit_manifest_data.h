@@ -40,7 +40,7 @@ suit_err_t suit_decode_compression_info(uint8_t mode, const suit_buf_t *buf, sui
 
     \return     This returns one of the error codes defined by \ref suit_err_t.
  */
-suit_err_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const suit_mechanism_t *mechanism);
+suit_err_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, suit_mechanism_t *mechanism);
 
 /*!
     \brief  Decode array of SUIT_Component_Identifier.

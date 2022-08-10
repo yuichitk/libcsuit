@@ -977,7 +977,7 @@ suit_err_t suit_decode_manifest_from_bstr(uint8_t mode, QCBORDecodeContext *cont
     return suit_decode_manifest(mode, &buf, manifest);
 }
 
-suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_authentication_wrapper_t *wrapper, const suit_mechanism_t *mechanism) {
+suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_authentication_wrapper_t *wrapper, suit_mechanism_t mechanisms[]) {
     bool verified = false;
     suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_ARRAY);
     if (result != SUIT_SUCCESS) {
@@ -1009,23 +1009,30 @@ suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecod
         buf->ptr = item->val.string.ptr;
         buf->len = item->val.string.len;
 
-        result = suit_decode_authentication_block(mode, buf, &digest_buf, &mechanism->keys[i]);
-        if (result == SUIT_ERR_FAILED_TO_VERIFY) {
-            continue;
-        }
-        else if (result == SUIT_SUCCESS || !suit_continue(mode, result)) {
-            break;
+        for (int32_t j = 0; j < SUIT_MAX_KEY_NUM; j++) {
+            result = suit_decode_authentication_block(mode, buf, &digest_buf, &mechanisms[j].key);
+            if (result == SUIT_SUCCESS) {
+                verified = true;
+                mechanisms[j].use = true;
+                continue;
+            }
+            else if (result == SUIT_ERR_FAILED_TO_VERIFY) {
+                continue;
+            }
+            else if (!suit_continue(mode, result)) {
+                return result;
+            }
         }
     }
 
     return (verified) ? SUIT_SUCCESS : result;
 }
 
-suit_err_t suit_decode_authentication_wrapper(uint8_t mode, suit_buf_t *buf, suit_authentication_wrapper_t *wrapper, const suit_mechanism_t *mechanism) {
+suit_err_t suit_decode_authentication_wrapper(uint8_t mode, suit_buf_t *buf, suit_authentication_wrapper_t *wrapper, suit_mechanism_t mechanisms[]) {
     QCBORDecodeContext auth_context;
     QCBORItem item;
     QCBORDecode_Init(&auth_context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
-    suit_err_t result = suit_decode_authentication_wrapper_from_item(mode, &auth_context, &item, true, wrapper, mechanism);
+    suit_err_t result = suit_decode_authentication_wrapper_from_item(mode, &auth_context, &item, true, wrapper, mechanisms);
     QCBORError error = QCBORDecode_Finish(&auth_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
@@ -1033,7 +1040,7 @@ suit_err_t suit_decode_authentication_wrapper(uint8_t mode, suit_buf_t *buf, sui
     return result;
 }
 
-suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, const suit_mechanism_t *mechanism) {
+suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_envelope_t *envelope, suit_mechanism_t mechanisms[]) {
     suit_err_t result = SUIT_SUCCESS;
 
     uint64_t puTags[1];
@@ -1071,7 +1078,7 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                     }
                     buf.ptr = item->val.string.ptr;
                     buf.len = item->val.string.len;
-                    result = suit_decode_authentication_wrapper(mode, &buf, &envelope->wrapper, mechanism);
+                    result = suit_decode_authentication_wrapper(mode, &buf, &envelope->wrapper, mechanisms);
                     if (result == SUIT_SUCCESS) {
                         is_authentication_set = true;
                     }
@@ -1190,13 +1197,13 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
 /*
     Public function. See suit_manifest_data.h
  */
-suit_err_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, const suit_mechanism_t *mechanism) {
+suit_err_t suit_decode_envelope(uint8_t mode, suit_buf_t *buf, suit_envelope_t *envelope, suit_mechanism_t mechanisms[]) {
     QCBORDecodeContext decode_context;
     QCBORItem item;
     QCBORDecode_Init(&decode_context,
                      (UsefulBufC){buf->ptr, buf->len},
                      QCBOR_DECODE_MODE_NORMAL);
-    suit_err_t result = suit_decode_envelope_from_item(mode, &decode_context, &item, true, envelope, mechanism);
+    suit_err_t result = suit_decode_envelope_from_item(mode, &decode_context, &item, true, envelope, mechanisms);
     QCBORError error = QCBORDecode_Finish(&decode_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);

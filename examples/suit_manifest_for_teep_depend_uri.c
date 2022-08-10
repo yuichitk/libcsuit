@@ -72,20 +72,22 @@ int main(int argc, char *argv[]) {
     suit_envelope_t read_envelope = (suit_envelope_t){ 0 };
     suit_buf_t buf = {.ptr = manifest_buf, .len = manifest_len};
 
-    suit_mechanism_t mechanism = {.cose_tag = CBOR_TAG_COSE_SIGN1};
-    int32_t result = suit_decode_envelope(mode, &buf, &read_envelope, &mechanism);
+    suit_mechanism_t mechanisms[SUIT_MAX_KEY_NUM];
+    suit_err_t result = suit_key_init_es256_key_pair(private_key, public_key, &mechanisms[0].key);
+    if (result != SUIT_SUCCESS) {
+        printf("main : Failed to create ES256 key pair. %s(%d)\n", suit_err_to_str(result), result);
+        return EXIT_FAILURE;
+    }
+    mechanisms[0].cose_tag = CBOR_TAG_COSE_SIGN1;
+    mechanisms[0].use = true;
+
+    result = suit_decode_envelope(mode, &buf, &read_envelope, mechanisms);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to parse Manifest file. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
 
     suit_digest_t *digest = &read_envelope.wrapper.digest;
-
-    result = suit_key_init_es256_key_pair(private_key, public_key, &mechanism.keys[0]);
-    if (result != SUIT_SUCCESS) {
-        printf("main : Failed to create ES256 key pair. %s(%d)\n", suit_err_to_str(result), result);
-        return EXIT_FAILURE;
-    }
 
     // Generate manifest
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
@@ -225,7 +227,7 @@ int main(int argc, char *argv[]) {
     size_t encode_len = MAX_FILE_BUFFER_SIZE;
     uint8_t *ret_pos = encode_buf;
     printf("\nmain : Encode Manifest.\n");
-    result = suit_encode_envelope(mode, &envelope, &mechanism, &ret_pos, &encode_len);
+    result = suit_encode_envelope(mode, &envelope, mechanisms, &ret_pos, &encode_len);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to encode. %d\n", result);
         return EXIT_FAILURE;
@@ -241,6 +243,6 @@ int main(int argc, char *argv[]) {
         printf("main : Skip to write to a file (dry-run).\n");
     }
 
-    suit_free_key(&mechanism.keys[0]);
+    suit_free_key(&mechanisms[0].key);
     return EXIT_SUCCESS;
 }

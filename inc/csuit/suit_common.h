@@ -51,7 +51,7 @@ typedef enum {
 #define SUIT_DECODE_MODE_SKIP_ANY_ERROR       255
 
 #define SUIT_MAX_ARRAY_LENGTH           20
-#define SUIT_MAX_KEY_NUM                4
+#define SUIT_MAX_KEY_NUM                4 /* must be <=64 */
 #define SUIT_MAX_NAME_LENGTH            256 /* the length of path or name such as component_identifier */
 #define SUIT_MAX_URI_LENGTH             256 /* the length of uri to fetch something */
 #define SUIT_MAX_COMPONENT_NUM          3
