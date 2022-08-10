@@ -67,8 +67,11 @@ OUTPUTr		:= ./testfiles/suit_manifest_expR.cbor
 $(OUTPUTu): $(TARGETu)
 	$(TARGETu) $(OUTPUTu)
 
-$(OUTPUTd): $(TARGETd) $(OUTPUTu)
-	$(TARGETd) $(OUTPUTu) -u $(URI) -o $(OUTPUTd)
+$(DEPENDENCY): $(OUTPUTu)
+	cp $(OUTPUTu) $(DEPENDENCY)
+
+$(OUTPUTd): $(TARGETd) $(DEPENDENCY)
+	$(TARGETd) $(DEPENDENCY) -u $(URI) -o $(OUTPUTd)
 
 $(OUTPUTid): $(TARGETd) $(OUTPUTi)
 	$(TARGETd) $(OUTPUTi) -o $(OUTPUTid)
