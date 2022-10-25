@@ -9,14 +9,10 @@
 #define SUIT_EXAMPLES_COMMON_H
 
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <csuit/suit_cose.h>
-#if !defined(LIBCSUIT_PSA_CRYPTO_C)
-#include "openssl/param_build.h"
-#endif
 
 #define PRIME256V1_PUBLIC_KEY_DER_SIZE      91
 #define PRIME256V1_PUBLIC_KEY_CHAR_SIZE     130

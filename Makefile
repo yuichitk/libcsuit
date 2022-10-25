@@ -25,7 +25,7 @@ endif
 
 .PHONY: all so doc install uninstall test clean
 
-all: ./bin/$(NAME).a build_test
+all: ./bin/$(NAME).a
 
 so: ./bin/$(NAME).so
 
@@ -74,7 +74,7 @@ uninstall:
 build_test:
 	$(MAKE) -C test MBEDTLS=$(MBEDTLS)
 
-test: ./bin/$(NAME).a
+test: ./bin/$(NAME).a build_test
 	$(MAKE) -C test MBEDTLS=$(MBEDTLS) run
 
 clean:

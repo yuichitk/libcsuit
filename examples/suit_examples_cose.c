@@ -63,6 +63,7 @@ suit_err_t suit_create_es_key(suit_key_t *key) {
 }
 
 #else /* LIBCSUIT_PSA_CRYPTO_C */
+#if OPENSSL_VERSION_NUMBER >= OPENSSL_VERSION_300
 /*
     \brief      Internal function calls OpenSSL functions to create public key.
 
@@ -144,6 +145,71 @@ out:
     OSSL_PARAM_BLD_free(param_bld);
     return result;
 }
+#else /* OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_300 */
+suit_err_t suit_create_es_key(suit_key_t *key) {
+    /* ****************************************** */
+    /* cose algorithm enum -> openssl group name  */
+    /* ****************************************** */
+    const char *group_name;
+    switch (key->cose_algorithm_id) {
+    case T_COSE_ALGORITHM_ES256:
+        group_name = "prime256v1";
+        break;
+    case T_COSE_ALGORITHM_ES384:
+        group_name = "secp384r1";
+        break;
+    case T_COSE_ALGORITHM_ES512:
+        group_name = "secp521r1";
+        break;
+    default:
+        return SUIT_ERR_INVALID_VALUE;
+    }
+
+    /* ********************************* */
+    /* create EC_KEY based on group name */
+    /* ********************************* */
+    int curveID = OBJ_txt2nid(group_name);
+    EC_KEY *pEC = EC_KEY_new_by_curve_name(curveID);
+    if (!pEC) {
+        return SUIT_ERR_FATAL;
+    }
+
+    /* ****************************************************************** */
+    /* set a public key raw data and a private key raw data into EC_KEY   */
+    /* ****************************************************************** */
+    if(!EC_KEY_oct2key(pEC,(unsigned char*) key->public_key, key->public_key_len, NULL)) {
+        goto err;
+    }
+    if (key->private_key != NULL) {
+        if(!EC_KEY_oct2priv(pEC,(unsigned char*) key->private_key, key->private_key_len)) {
+            goto err;
+        }
+    }
+
+    /* ************************* */
+    /* validity check of EC_KEY  */
+    /* ************************* */
+    if (!EC_KEY_check_key(pEC)){
+        goto err;
+    }
+
+    /* *************************************** */
+    /* EC_KEY -> EVP_PKEY and set out variable */
+    /* *************************************** */
+    EVP_PKEY *pkey = EVP_PKEY_new();
+    if (!EVP_PKEY_set1_EC_KEY(pkey, pEC)) {
+        goto err;
+    } else {
+        key->cose_key.k.key_ptr  = pkey;
+        key->cose_key.crypto_lib = T_COSE_CRYPTO_LIB_OPENSSL;
+        EC_KEY_free(pEC);
+        return SUIT_SUCCESS;
+    }
+err:
+    EC_KEY_free(pEC);
+    return SUIT_ERR_FATAL;
+}
+#endif /* OPENSSL_VERSION_NUMBER */
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
 
 suit_err_t suit_key_init_es256_key_pair(const unsigned char *private_key, const unsigned char *public_key, suit_key_t *cose_key_pair) {

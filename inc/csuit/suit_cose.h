@@ -14,8 +14,14 @@
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
 #include "psa/crypto.h"
 #else
+#include "openssl/opensslv.h"
 #include "openssl/evp.h"
 #include "openssl/ec.h"
+
+#if OPENSSL_VERSION_NUMBER >= OPENSSL_VERSION_300
+#include "openssl/param_build.h"
+#endif
+
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
 
 /*!
