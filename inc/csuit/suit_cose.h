@@ -18,6 +18,8 @@
 #include "openssl/evp.h"
 #include "openssl/ec.h"
 
+#define OPENSSL_VERSION_111 0x10101000L
+#define OPENSSL_VERSION_300 0x30000000L
 #if OPENSSL_VERSION_NUMBER >= OPENSSL_VERSION_300
 #include "openssl/param_build.h"
 #endif
