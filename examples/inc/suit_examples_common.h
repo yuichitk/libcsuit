@@ -36,12 +36,6 @@
 #define SECP521R1_PUBLIC_KEY_LENGTH         133
 #define SECP521R1_PUBLIC_KEY_CHAR_LENGTH    266
 
-
-typedef struct uint8_buf {
-    uint8_t     *ptr;
-    size_t      len;
-} uint8_buf_t;
-
 size_t read_from_file(const char *file_path, const size_t buf_len, uint8_t *buf);
 size_t write_to_file(const char *file_path, const size_t buf_len, const void *buf);
 
