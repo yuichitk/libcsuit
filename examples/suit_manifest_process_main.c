@@ -24,7 +24,7 @@
 
 #define NUM_PUBLIC_KEYS                 1
 /* TC signer's public_key */
-const uint8_t *public_keys[NUM_PUBLIC_KEYS] = {
+const unsigned char *public_keys[NUM_PUBLIC_KEYS] = {
     trust_anchor_prime256v1_public_key,
 };
 
@@ -152,26 +152,29 @@ int main(int argc, char *argv[]) {
     }
     int32_t result = 0;
     int i;
-    suit_key_t cose_keys[NUM_PUBLIC_KEYS];
 
     suit_inputs_t suit_inputs = {0};
     suit_inputs.left_len = SUIT_MAX_DATA_SIZE;
     suit_inputs.ptr = suit_inputs.buf;
-
     suit_inputs.key_len = NUM_PUBLIC_KEYS;
-    suit_inputs.public_keys = cose_keys;
 
     // Read key from der file.
     // This code is only available for openssl prime256v1.
     printf("\nmain : Read public key from DER file.\n");
     for (i = 0; i < NUM_PUBLIC_KEYS; i++) {
-        result = suit_key_init_es256_public_key(public_keys[i], &suit_inputs.public_keys[i]);
+        result = suit_key_init_es256_public_key(public_keys[i], &suit_inputs.mechanisms[i].key);
+        if (result != SUIT_SUCCESS) {
+            printf("\nmain : Failed to initialize public key. %s(%d)\n", suit_err_to_str(result), result);
+            return EXIT_FAILURE;
+        }
+        suit_inputs.mechanisms[i].use = true;
+        suit_inputs.mechanisms[i].cose_tag = CBOR_TAG_COSE_SIGN1;
     }
     // Read manifest file.
     printf("\nmain : Read Manifest file.\n");
     suit_inputs.manifest.len = read_from_file(argv[1], MAX_FILE_BUFFER_SIZE, suit_inputs.buf);
     if (suit_inputs.manifest.len <= 0) {
-        printf("main : Can't read Manifest file.\n");
+        printf("main : Failed to read Manifest file.\n");
         return EXIT_FAILURE;
     }
     suit_inputs.manifest.ptr = suit_inputs.buf;
@@ -181,7 +184,7 @@ int main(int argc, char *argv[]) {
     printf("\nmain : Decode Manifest file.\n");
     result = suit_process_envelope(&suit_inputs);
     if (result != SUIT_SUCCESS) {
-        printf("main : Can't parse Manifest file. err=%d\n", result);
+        printf("main : Failed to parse Manifest file. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
 
