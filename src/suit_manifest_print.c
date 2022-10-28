@@ -89,8 +89,8 @@ const char* suit_manifest_key_to_str(suit_manifest_key_t manifest_key) {
         return "validate";
     case SUIT_LOAD:
         return "load";
-    case SUIT_RUN:
-        return "run";
+    case SUIT_INVOKE:
+        return "invoke";
     case SUIT_TEXT:
         return "text";
     case SUIT_COSWID:
@@ -106,8 +106,8 @@ const char* suit_common_key_to_str(suit_common_key_t common_key) {
         return "dependencies";
     case SUIT_COMPONENTS:
         return "components";
-    case SUIT_COMMON_SEQUENCE:
-        return "common-sequence";
+    case SUIT_SHARED_SEQUENCE:
+        return "shared-sequence";
     default:
         return "(NULL)";
     }
@@ -127,16 +127,10 @@ const char* suit_command_sequence_key_to_str(suit_con_dir_key_t condition_direct
         return "condition-component-slot";
     case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
         return "directive-set-component-index";
-    case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
-        return "directive-set-dependency-index";
     case SUIT_CONDITION_ABORT:
         return "condition-abort";
     case SUIT_DIRECTIVE_TRY_EACH:
         return "directive-try-each";
-    case SUIT_DIRECTIVE_DO_EACH:
-        return "directive-do-each";
-    case SUIT_DIRECTIVE_MAP_FILTER:
-        return "directive-map-filter";
     case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
         return "directive-process-dependency";
     case SUIT_DIRECTIVE_SET_PARAMETERS:
@@ -147,8 +141,8 @@ const char* suit_command_sequence_key_to_str(suit_con_dir_key_t condition_direct
         return "directive-fetch";
     case SUIT_DIRECTIVE_COPY:
         return "directive-copy";
-    case SUIT_DIRECTIVE_RUN:
-        return "directive-run";
+    case SUIT_DIRECTIVE_INVOKE:
+        return "directive-invoke";
     case SUIT_CONDITION_DEVICE_IDENTIFIER:
         return "condition-device-identifier";
     case SUIT_CONDITION_IMAGE_NOT_MATCH:
@@ -161,8 +155,6 @@ const char* suit_command_sequence_key_to_str(suit_con_dir_key_t condition_direct
         return "condition-version";
     case SUIT_DIRECTIVE_WAIT:
         return "directive-wait";
-    case SUIT_DIRECTIVE_FETCH_URI_LIST:
-        return "directive-fetch-uri-list";
     case SUIT_DIRECTIVE_SWAP:
         return "directive-swap";
     case SUIT_DIRECTIVE_RUN_SEQUENCE:
@@ -194,16 +186,12 @@ const char* suit_parameter_key_to_str(suit_parameter_key_t parameter) {
         return "image-size";
     case SUIT_PARAMETER_ENCRYPTION_INFO:
         return "encryption-info";
-    case SUIT_PARAMETER_COMPRESSION_INFO:
-        return "compression-info";
-    case SUIT_PARAMETER_UNPACK_INFO:
-        return "unpack-info";
     case SUIT_PARAMETER_URI:
         return "uri";
     case SUIT_PARAMETER_SOURCE_COMPONENT:
         return "source-component";
-    case SUIT_PARAMETER_RUN_ARGS:
-        return "run-args";
+    case SUIT_PARAMETER_INVOKE_ARGS:
+        return "invoke-args";
     case SUIT_PARAMETER_DEVICE_IDENTIFIER:
         return "device-identifier";
     case SUIT_PARAMETER_MINIMUM_BATTERY:
@@ -214,8 +202,6 @@ const char* suit_parameter_key_to_str(suit_parameter_key_t parameter) {
         return "version";
     case SUIT_PARAMETER_WAIT_INFO:
         return "wait-info";
-    case SUIT_PARAMETER_URI_LIST:
-        return "uri-list";
     default:
         return "(NULL)";
     }
@@ -227,38 +213,6 @@ const char* suit_info_key_to_str(const suit_info_key_t info_key) {
         return "default";
     case SUIT_INFO_ENCRYPTION:
         return "SUIT_Encryption_Info";
-    case SUIT_INFO_COMPRESSION:
-        return "SUIT_Compression_Info";
-    case SUIT_INFO_UNPACK:
-        return "SUIT_Unpack_Info";
-    default:
-        return "(NULL)";
-    }
-}
-
-const char* suit_compression_algorithm_to_str(const suit_compression_algorithm_t algorithm) {
-    switch (algorithm) {
-    case SUIT_COMPRESSION_ALGORITHM_ZLIB:
-        return "zlib";
-    case SUIT_COMPRESSION_ALGORITHM_BROTLI:
-        return "brotli";
-    case SUIT_COMPRESSION_ALGORITHM_ZSTD:
-        return "zstd";
-    default:
-        return "(NULL)";
-    }
-}
-
-const char* suit_unpack_algorithm_to_str(const suit_unpack_algorithm_t algorithm) {
-    switch (algorithm) {
-    case SUIT_UNPACK_ALGORITHM_HEX:
-        return "HEX";
-    case SUIT_UNPACK_ALGORITHM_ELF:
-        return "ELF";
-    case SUIT_UNPACK_ALGORITHM_COFF:
-        return "COFF";
-    case SUIT_UNPACK_ALGORITHM_SREC:
-        return "SREC";
     default:
         return "(NULL)";
     }
@@ -451,21 +405,6 @@ suit_err_t suit_print_uuid(const suit_buf_t *buf) {
     return SUIT_SUCCESS;
 }
 
-suit_err_t suit_print_compression_info(const suit_buf_t *buf, const uint32_t indent_space, const uint32_t indent_delta) {
-    if (buf == NULL) {
-        return SUIT_ERR_FATAL;
-    }
-    suit_compression_info_t compression_info = {0};
-    suit_err_t result = suit_decode_compression_info(SUIT_DECODE_MODE_STRICT, buf, &compression_info);
-    if (result != SUIT_SUCCESS) {
-        return result;
-    }
-    if (compression_info.algorithm != SUIT_COMPRESSION_ALGORITHM_INVALID) {
-        printf("%*s/ compression-algorithm / %d: %d / %s /\n", indent_space, "", SUIT_COMPRESSION_ALGORITHM, compression_info.algorithm, suit_compression_algorithm_to_str(compression_info.algorithm));
-    }
-    return SUIT_SUCCESS;
-}
-
 suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_list, const uint32_t indent_space, const uint32_t indent_delta) {
     suit_err_t result = SUIT_SUCCESS;
     for (size_t i = 0; i < params_list->len; i++) {
@@ -503,13 +442,6 @@ suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_
                     printf("NULL");
                 }
                 break;
-            case SUIT_PARAMETER_COMPRESSION_INFO:
-                printf("<< {\n");
-                if (params_list->params[i].value.string.len > 0) {
-                    result = suit_print_compression_info(&params_list->params[i].value.string, indent_space + indent_delta, indent_delta);
-                }
-                printf("%*s} >>", indent_space, "");
-                break;
             case SUIT_PARAMETER_ENCRYPTION_INFO:
                 printf("SUIT_Encryption_Info\n");
                 if (params_list->params[i].value.string.len > 0) {
@@ -523,15 +455,13 @@ suit_err_t suit_print_suit_parameters_list(const suit_parameters_list_t *params_
             case SUIT_PARAMETER_STRICT_ORDER:
             case SUIT_PARAMETER_SOFT_FAILURE:
 
-            case SUIT_PARAMETER_UNPACK_INFO:
-            case SUIT_PARAMETER_RUN_ARGS:
+            case SUIT_PARAMETER_INVOKE_ARGS:
 
             case SUIT_PARAMETER_DEVICE_IDENTIFIER:
             case SUIT_PARAMETER_MINIMUM_BATTERY:
             case SUIT_PARAMETER_UPDATE_PRIORITY:
             case SUIT_PARAMETER_VERSION:
             case SUIT_PARAMETER_WAIT_INFO:
-            case SUIT_PARAMETER_URI_LIST:
 
             default:
                 result = SUIT_ERR_FATAL;
@@ -562,11 +492,10 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
             case SUIT_CONDITION_IMAGE_MATCH:
             case SUIT_CONDITION_COMPONENT_SLOT:
             case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
-            case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
             case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
             case SUIT_DIRECTIVE_FETCH:
             case SUIT_DIRECTIVE_COPY:
-            case SUIT_DIRECTIVE_RUN:
+            case SUIT_DIRECTIVE_INVOKE:
             case SUIT_DIRECTIVE_UNLINK:
                 printf("%lu", cmd_seq->commands[i].value.uint64);
                 break;
@@ -613,10 +542,7 @@ suit_err_t suit_print_cmd_seq(uint8_t mode, const suit_command_sequence_t *cmd_s
             case SUIT_CONDITION_UPDATE_AUTHORIZED:
             case SUIT_CONDITION_VERSION:
 
-            case SUIT_DIRECTIVE_DO_EACH:
-            case SUIT_DIRECTIVE_MAP_FILTER:
             case SUIT_DIRECTIVE_WAIT:
-            case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:
             case SUIT_DIRECTIVE_RUN_SEQUENCE:
                 result = SUIT_ERR_FATAL;
@@ -1056,12 +982,12 @@ suit_err_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, co
         printf("%*s] >>", indent_space + indent_delta, "");
         comma = true;
     }
-    if (manifest->unsev_mem.run.len > 0) {
+    if (manifest->unsev_mem.invoke.len > 0) {
         if (comma) {
             printf(",\n");
         }
-        printf("%*s/ run / 9: << [\n", indent_space + indent_delta, "");
-        result = suit_print_cmd_seq(mode, &manifest->unsev_mem.run, indent_space + 2 * indent_delta, indent_delta);
+        printf("%*s/ invoke / 9: << [\n", indent_space + indent_delta, "");
+        result = suit_print_cmd_seq(mode, &manifest->unsev_mem.invoke, indent_space + 2 * indent_delta, indent_delta);
         if (result != SUIT_SUCCESS) {
             return result;
         }
@@ -1309,23 +1235,23 @@ suit_err_t suit_print_envelope(uint8_t mode, const suit_envelope_t *envelope, co
     return SUIT_SUCCESS;
 }
 
-suit_err_t suit_print_run(suit_run_args_t run_args)
+suit_err_t suit_print_invoke(suit_invoke_args_t invoke_args)
 {
-    printf("run callback : {\n");
+    printf("invoke callback : {\n");
     printf("  component-identifier : ");
-    suit_print_component_identifier(&run_args.component_identifier);
+    suit_print_component_identifier(&invoke_args.component_identifier);
     printf("\n");
-    printf("  argument(len=%ld) : ", run_args.args_len);
-    suit_print_hex(run_args.args, run_args.args_len);
+    printf("  argument(len=%ld) : ", invoke_args.args_len);
+    suit_print_hex(invoke_args.args, invoke_args.args_len);
     printf("\n");
-    printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", run_args.report.record_on_success, run_args.report.record_on_failure, run_args.report.sysinfo_success, run_args.report.sysinfo_failure);
+    printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", invoke_args.report.record_on_success, invoke_args.report.record_on_failure, invoke_args.report.sysinfo_success, invoke_args.report.sysinfo_failure);
     printf("}\n\n");
     return SUIT_SUCCESS;
 }
 
-suit_err_t suit_run_callback(suit_run_args_t run_args)
+suit_err_t suit_invoke_callback(suit_invoke_args_t invoke_args)
 {
-    return suit_print_run(run_args);
+    return suit_print_invoke(invoke_args);
 }
 
 suit_err_t suit_print_copy(suit_copy_args_t copy_args)
@@ -1345,12 +1271,6 @@ suit_err_t suit_print_copy(suit_copy_args_t copy_args)
         break;
     case SUIT_INFO_ENCRYPTION:
         /* TODO: nothing to be printed */
-        break;
-    case SUIT_INFO_COMPRESSION:
-        printf("{algorithm : %s}", suit_compression_algorithm_to_str(copy_args.info.compression.algorithm));
-        break;
-    case SUIT_INFO_UNPACK:
-        printf("{algorithm : %s}", suit_unpack_algorithm_to_str(copy_args.info.unpack.algorithm));
         break;
     }
     printf("\n");
@@ -1454,7 +1374,7 @@ suit_err_t suit_print_report(suit_report_args_t report_args)
         switch (report_args.level1.manifest_key) {
         case SUIT_COMMON:
             printf(", %d(%s)", report_args.level2.common_key, suit_common_key_to_str(report_args.level2.common_key));
-            if (report_args.level2.common_key == SUIT_COMMON_SEQUENCE) {
+            if (report_args.level2.common_key == SUIT_SHARED_SEQUENCE) {
                 printf(", %d(%s)", report_args.level3.condition_directive, suit_command_sequence_key_to_str(report_args.level3.condition_directive));
                 switch (report_args.level3.condition_directive) {
                 case SUIT_DIRECTIVE_SET_PARAMETERS:
@@ -1468,7 +1388,7 @@ suit_err_t suit_print_report(suit_report_args_t report_args)
             break;
         case SUIT_INSTALL:
         case SUIT_VALIDATE:
-        case SUIT_RUN:
+        case SUIT_INVOKE:
             printf(", %d(%s)", report_args.level2.condition_directive, suit_command_sequence_key_to_str(report_args.level2.condition_directive));
             switch (report_args.level2.condition_directive) {
             case SUIT_DIRECTIVE_SET_PARAMETERS:
