@@ -74,14 +74,14 @@ typedef struct suit_report_args {
     suit_rep_policy_t report;
 } suit_report_args_t;
 
-typedef struct suit_run_args {
+typedef struct suit_invoke_args {
     suit_component_identifier_t component_identifier;
     /* basically byte-string value, so may not '\0' terminated */
     uint8_t args[SUIT_MAX_ARGS_LENGTH];
     size_t args_len;
 
     suit_rep_policy_t report;
-} suit_run_args_t;
+} suit_invoke_args_t;
 
 typedef struct suit_copy_args {
     suit_component_identifier_t src;
@@ -90,8 +90,6 @@ typedef struct suit_copy_args {
     suit_info_key_t info_key;
     union {
         suit_encryption_info_t encryption;
-        suit_compression_info_t compression;
-        suit_unpack_info_t unpack;
     } info;
 
     suit_rep_policy_t report;
@@ -176,23 +174,21 @@ typedef struct suit_parameter_args {
     /* default True */
     suit_parameter_bool_t       strict_order;
 
-    /* default True if suit-directive-try-each is involved,
+    /* default True if suit-directive-try-each is invoked,
        default False if suit-directive-run-sequence is invoked */
     suit_parameter_bool_t       soft_failure;
 
     uint64_t                    image_size;
 
     suit_encryption_info_t      encryption_info;
-    suit_compression_info_t     compression_info;
-    suit_unpack_info_t          unpack_info;
 
     /* uri is combined in uri-list */
     //suit_buf_t                uri;
 
     uint64_t                    source_component;
 
-    /* used in suit-directive-run */
-    UsefulBufC                  run_args;
+    /* used in suit-directive-invoke */
+    UsefulBufC                  invoke_args;
 
     /* positive minimum battery level in mWh */
     int64_t                     minimum_battery;
@@ -253,7 +249,7 @@ typedef struct suit_extracted {
     suit_payloads_t payloads;
 
     UsefulBufC manifest;
-    UsefulBufC common_sequence;
+    UsefulBufC shared_sequence;
     // UsefulBufC reference_uri;
     UsefulBufC dependency_resolution;
     suit_digest_t dependency_resolution_digest;
@@ -263,7 +259,7 @@ typedef struct suit_extracted {
     suit_digest_t install_digest;
     UsefulBufC validate;
     UsefulBufC load;
-    UsefulBufC run;
+    UsefulBufC invoke;
     UsefulBufC text;
     suit_digest_t text_digest;
     UsefulBufC coswid;
@@ -279,7 +275,7 @@ void suit_process_digest(QCBORDecodeContext *context, suit_digest_t *digest);
     \return         This returns one of the error codes defined by \ref suit_err_t.
 
     Process one or more SUIT_Envelope(s) like below.
-    Libcsuit parse suit-install, suit-run, ... and call some callback functions respectively.
+    Libcsuit parse suit-install, suit-invoke, ... and call some callback functions respectively.
     If any error occurred, report callback function will be called if set.
     There are callbacks just printing the argument in the library, you can overwrite it
     with linker options (see Makefile.process for example).

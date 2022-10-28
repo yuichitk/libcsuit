@@ -28,8 +28,6 @@ const char* suit_common_key_to_str(suit_common_key_t common_key);
 const char* suit_command_sequence_key_to_str(suit_con_dir_key_t condition_directive);
 const char* suit_parameter_key_to_str(suit_parameter_key_t parameter);
 const char* suit_info_key_to_str(const suit_info_key_t info_key);
-const char* suit_compression_algorithm_to_str(const suit_compression_algorithm_t algorithm);
-const char* suit_unpack_algorithm_to_str(const suit_unpack_algorithm_t algorithm);
 const char* suit_err_to_str(suit_err_t error);
 
 suit_err_t suit_print_hex_in_max(const uint8_t *array, const size_t size, const size_t max_print_size);
@@ -69,11 +67,11 @@ suit_err_t suit_store_callback(suit_store_args_t store_args);
 suit_err_t suit_copy_callback(suit_copy_args_t copy_args);
 
 /*!
-    \brief Print SUIT run callback
-    \param[in]      run_args        Run and suit-report arguments. See \ref suit_run_args_t.
+    \brief Print SUIT invoke callback
+    \param[in]      invoke_args        Run and suit-report arguments. See \ref suit_invoke_args_t.
     \return         This returns one of the error codes defined by \ref suit_err_t.
 */
-suit_err_t suit_run_callback(suit_run_args_t run_args);
+suit_err_t suit_invoke_callback(suit_invoke_args_t invoke_args);
 
 /*!
     \brief Print SUIT report callback
