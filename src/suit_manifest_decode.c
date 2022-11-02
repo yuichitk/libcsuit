@@ -79,33 +79,6 @@ suit_err_t suit_decode_digest_from_bstr(uint8_t mode, QCBORDecodeContext *contex
     return suit_decode_digest(mode, &buf, digest);
 }
 
-suit_err_t suit_decode_compression_info(uint8_t mode, const suit_buf_t *buf, suit_compression_info_t *compression_info) {
-    QCBORDecodeContext context;
-    QCBORItem item;
-    QCBORError error;
-
-    QCBORDecode_Init(&context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
-    QCBORDecode_EnterMap(&context, &item);
-    size_t map_length = item.val.uCount;
-    for (size_t i = 0; i < map_length; i++) {
-        QCBORDecode_GetNext(&context, &item);
-        switch (item.label.int64) {
-        case SUIT_COMPRESSION_ALGORITHM:
-            compression_info->algorithm = item.val.int64;
-            break;
-        // TODO: $$SUIT_Compression_Info-extensions
-        default:
-            return SUIT_ERR_NOT_IMPLEMENTED;
-        }
-    }
-    QCBORDecode_ExitMap(&context);
-    error = QCBORDecode_Finish(&context);
-    if (error != QCBOR_SUCCESS) {
-        return suit_error_from_qcbor_error(error);
-    }
-    return SUIT_SUCCESS;
-}
-
 suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_parameters_list_t *params_list) {
     suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
     if (result != SUIT_SUCCESS) {
@@ -142,7 +115,6 @@ suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContex
                 break;
             case SUIT_PARAMETER_VENDOR_IDENTIFIER:
             case SUIT_PARAMETER_CLASS_IDENTIFIER:
-            case SUIT_PARAMETER_COMPRESSION_INFO:
                 if (item->uDataType != QCBOR_TYPE_BYTE_STRING) {
                     result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
                     break;
@@ -154,21 +126,22 @@ suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContex
                 result = suit_decode_digest_from_bstr(mode, context, item, false, &params_list->params[i].value.digest);
                 break;
 
-            case SUIT_PARAMETER_USE_BEFORE:
 
             case SUIT_PARAMETER_STRICT_ORDER:
             case SUIT_PARAMETER_SOFT_FAILURE:
-
-            case SUIT_PARAMETER_ENCRYPTION_INFO:
-            case SUIT_PARAMETER_UNPACK_INFO:
-            case SUIT_PARAMETER_RUN_ARGS:
-
+            case SUIT_PARAMETER_INVOKE_ARGS:
             case SUIT_PARAMETER_DEVICE_IDENTIFIER:
+
+            case SUIT_PARAMETER_USE_BEFORE:
             case SUIT_PARAMETER_MINIMUM_BATTERY:
             case SUIT_PARAMETER_UPDATE_PRIORITY:
             case SUIT_PARAMETER_VERSION:
             case SUIT_PARAMETER_WAIT_INFO:
-            case SUIT_PARAMETER_URI_LIST:
+
+            /* draft-ietf-suit-firmware-encryption */
+            case SUIT_PARAMETER_ENCRYPTION_INFO:
+            //case SUIT_PARAMETER_URI_LIST:
+
             default:
                 result = SUIT_ERR_NOT_IMPLEMENTED;
                 if (!suit_qcbor_skip_any(context, item)) {
@@ -202,14 +175,14 @@ bool is_suit_directive_only(uint64_t label) {
         case SUIT_DIRECTIVE_FETCH:
         case SUIT_DIRECTIVE_COPY:
         case SUIT_DIRECTIVE_SWAP:
-        case SUIT_DIRECTIVE_RUN:
-        case SUIT_DIRECTIVE_FETCH_URI_LIST:
+        case SUIT_DIRECTIVE_INVOKE:
+        //case SUIT_DIRECTIVE_FETCH_URI_LIST:
             return true;
     }
     return false;
 }
 
-suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq, bool is_common_sequence) {
+suit_err_t suit_decode_command_shared_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq, bool is_shared_sequence) {
     /* NOTE:
      * SUIT_Common_Sequence  = [ + (SUIT_Condition // SUIT_Common_Commands) ]
      * SUIT_Command_Sequence = [ + (SUIT_Condition // SUIT_Directive // SUIT_Command_Custom ] */
@@ -241,7 +214,7 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
         }
         else {
             /* SUIT_Condition // SUIT_Directive */
-            if (is_common_sequence && is_suit_directive_only(label)) {
+            if (is_shared_sequence && is_suit_directive_only(label)) {
                 /* SUIT_Command_Custom should not come, so skip them */
                 result = SUIT_ERR_FATAL;
                 if (!suit_continue(mode, result)) {
@@ -251,14 +224,24 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
             switch (label) {
                 case SUIT_CONDITION_VENDOR_IDENTIFIER:
                 case SUIT_CONDITION_CLASS_IDENTIFIER:
+                case SUIT_CONDITION_DEVICE_IDENTIFIER:
                 case SUIT_CONDITION_IMAGE_MATCH:
                 case SUIT_CONDITION_COMPONENT_SLOT:
-                case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
-                case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
-                case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
+                case SUIT_CONDITION_CHECK_CONTENT:
+                case SUIT_CONDITION_ABORT:
+
+                case SUIT_DIRECTIVE_WRITE:
+
                 case SUIT_DIRECTIVE_FETCH:
                 case SUIT_DIRECTIVE_COPY:
-                case SUIT_DIRECTIVE_RUN:
+
+                case SUIT_DIRECTIVE_SWAP:
+                case SUIT_DIRECTIVE_INVOKE:
+
+                case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
+
+                /* draft-ietf-suit-trust-domains */
+                case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
                 case SUIT_DIRECTIVE_UNLINK:
                     result = suit_qcbor_get_next_uint(context, item);
                     if (!suit_continue(mode, result)) {
@@ -291,6 +274,10 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
                         }
                     }
                     break;
+                case SUIT_DIRECTIVE_RUN_SEQUENCE:
+                    /* TODO: store SUIT_Command_Sequence */
+                    result = SUIT_ERR_NOT_IMPLEMENTED;
+                    break;
                 case SUIT_DIRECTIVE_TRY_EACH:
                     result = suit_qcbor_get_next(context, item, QCBOR_TYPE_ARRAY);
                     if (result != SUIT_SUCCESS) {
@@ -319,19 +306,16 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
                         }
                     }
                     break;
+
+                case SUIT_DIRECTIVE_WAIT:
+
+                /* draft-ietf-suit-update-management */
                 case SUIT_CONDITION_USE_BEFORE:
-                case SUIT_CONDITION_ABORT:
-                case SUIT_CONDITION_DEVICE_IDENTIFIER:
                 case SUIT_CONDITION_IMAGE_NOT_MATCH:
                 case SUIT_CONDITION_MINIMUM_BATTERY:
                 case SUIT_CONDITION_UPDATE_AUTHORIZED:
                 case SUIT_CONDITION_VERSION:
-                case SUIT_DIRECTIVE_DO_EACH:
-                case SUIT_DIRECTIVE_MAP_FILTER:
-                case SUIT_DIRECTIVE_WAIT:
-                case SUIT_DIRECTIVE_FETCH_URI_LIST:
-                case SUIT_DIRECTIVE_SWAP:
-                case SUIT_DIRECTIVE_RUN_SEQUENCE:
+
                 default:
                     // TODO
                     result = SUIT_ERR_NOT_IMPLEMENTED;
@@ -347,15 +331,15 @@ suit_err_t suit_decode_command_common_sequence_from_item(uint8_t mode, QCBORDeco
     return result;
 }
 
-suit_err_t suit_decode_common_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmn_seq) {
-    return suit_decode_command_common_sequence_from_item(mode, context, item, next, cmn_seq, true);
+suit_err_t suit_decode_shared_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmn_seq) {
+    return suit_decode_command_shared_sequence_from_item(mode, context, item, next, cmn_seq, true);
 }
 
-suit_err_t suit_decode_common_sequence(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmn_seq) {
+suit_err_t suit_decode_shared_sequence(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmn_seq) {
     QCBORDecodeContext cmn_seq_context;
     QCBORItem item;
     QCBORDecode_Init(&cmn_seq_context, (UsefulBufC){buf->ptr, buf->len}, QCBOR_DECODE_MODE_NORMAL);
-    suit_err_t result = suit_decode_common_sequence_from_item(mode, &cmn_seq_context, &item, true, cmn_seq);
+    suit_err_t result = suit_decode_shared_sequence_from_item(mode, &cmn_seq_context, &item, true, cmn_seq);
     QCBORError error = QCBORDecode_Finish(&cmn_seq_context);
     if (error != QCBOR_SUCCESS && result == SUIT_SUCCESS) {
         result = suit_error_from_qcbor_error(error);
@@ -363,7 +347,7 @@ suit_err_t suit_decode_common_sequence(uint8_t mode, const suit_buf_t *buf, suit
     return result;
 }
 
-suit_err_t suit_decode_common_sequence_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmn_seq) {
+suit_err_t suit_decode_shared_sequence_from_bstr(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmn_seq) {
     suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_BYTE_STRING);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -375,7 +359,7 @@ suit_err_t suit_decode_common_sequence_from_bstr(uint8_t mode, QCBORDecodeContex
 }
 
 suit_err_t suit_decode_command_sequence_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_command_sequence_t *cmd_seq) {
-    return suit_decode_command_common_sequence_from_item(mode, context, item, next, cmd_seq, false);
+    return suit_decode_command_shared_sequence_from_item(mode, context, item, next, cmd_seq, false);
 }
 
 suit_err_t suit_decode_command_sequence(uint8_t mode, const suit_buf_t *buf, suit_command_sequence_t *cmd_seq) {
@@ -585,8 +569,8 @@ suit_err_t suit_decode_common_from_item(uint8_t mode, QCBORDecodeContext *contex
             case SUIT_COMPONENTS:
                 result = suit_decode_components_from_item(mode, context, item, false, &common->components);
                 break;
-            case SUIT_COMMON_SEQUENCE:
-                result = suit_decode_common_sequence_from_bstr(mode, context, item, false, &common->cmd_seq);
+            case SUIT_SHARED_SEQUENCE:
+                result = suit_decode_shared_sequence_from_bstr(mode, context, item, false, &common->cmd_seq);
                 break;
             default:
                 // TODO
@@ -922,8 +906,8 @@ suit_err_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *cont
             case SUIT_LOAD:
                 result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->unsev_mem.load);
                 break;
-            case SUIT_RUN:
-                result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->unsev_mem.run);
+            case SUIT_INVOKE:
+                result = suit_decode_command_sequence_from_bstr(mode, context, item, false, &manifest->unsev_mem.invoke);
                 break;
 
             case SUIT_REFERENCE_URI:
