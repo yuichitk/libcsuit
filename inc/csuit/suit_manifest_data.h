@@ -20,17 +20,6 @@ suit_err_t suit_use_suit_encode_buf(suit_encode_t *suit_encode, size_t len, Usef
 suit_err_t suit_fix_suit_encode_buf(suit_encode_t *suit_encode, const size_t used_len);
 
 /*!
-    \brief Decode SUIT_Compression_Info.
-
-    \param[in]  mode                Controls parsing behavior, e.g. #SUIT_DECODE_MODE_STRICT.
-    \param[in]  buf                 Pointer and length of input byte string wrapped SUIT_Compression_Info.
-    \param[out] compression_info    Pointer of output structure to hold the parsing result of SUIT_Compression_Info.
-
-    \return     This returns one of the error codes defined by \ref suit_err_t.
- */
-suit_err_t suit_decode_compression_info(uint8_t mode, const suit_buf_t *buf, suit_compression_info_t *compression_info);
-
-/*!
     \brief  Decode SUIT binary.
 
     \param[in]  mode        This ontrols parsing behavior, e.g. #SUIT_DECODE_MODE_STRICT.

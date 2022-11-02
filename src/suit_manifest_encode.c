@@ -174,34 +174,29 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
                 break;
             case SUIT_PARAMETER_VENDOR_IDENTIFIER:
             case SUIT_PARAMETER_CLASS_IDENTIFIER:
-            case SUIT_PARAMETER_COMPRESSION_INFO:
                 QCBOREncode_AddBytesToMapN(context, item->label, (UsefulBufC){.ptr = item->value.string.ptr, .len = item->value.string.len});
                 break;
             case SUIT_PARAMETER_IMAGE_DIGEST:
                 QCBOREncode_BstrWrapInMapN(context, item->label);
                 result = suit_encode_append_digest(&item->value.digest, 0, context);
                 QCBOREncode_CloseBstrWrap(context, NULL);
-                if (result != SUIT_SUCCESS) {
-                    break;
-                }
                 break;
+
             case SUIT_PARAMETER_ENCRYPTION_INFO:
-                QCBOREncode_AddBytesToMapN(context, item->label, (UsefulBufC){.ptr = item->value.string.ptr, .len = item->value.string.len});
+                /* TODO */
                 break;
             case SUIT_PARAMETER_USE_BEFORE:
 
             case SUIT_PARAMETER_STRICT_ORDER:
             case SUIT_PARAMETER_SOFT_FAILURE:
 
-            case SUIT_PARAMETER_UNPACK_INFO:
-            case SUIT_PARAMETER_RUN_ARGS:
+            case SUIT_PARAMETER_INVOKE_ARGS:
 
             case SUIT_PARAMETER_DEVICE_IDENTIFIER:
             case SUIT_PARAMETER_MINIMUM_BATTERY:
             case SUIT_PARAMETER_UPDATE_PRIORITY:
             case SUIT_PARAMETER_VERSION:
             case SUIT_PARAMETER_WAIT_INFO:
-            case SUIT_PARAMETER_URI_LIST:
             default:
                 result = SUIT_ERR_NOT_IMPLEMENTED;
         }
@@ -213,7 +208,7 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
     return result;
 }
 
-suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, suit_encode_t *suit_encode, UsefulBuf *buf) {
+suit_err_t suit_encode_shared_sequence(suit_command_sequence_t *cmd_seq, suit_encode_t *suit_encode, UsefulBuf *buf) {
     suit_err_t result = SUIT_SUCCESS;
     UsefulBuf tmp_buf;
     result = suit_use_suit_encode_buf(suit_encode, 0, &tmp_buf);
@@ -234,11 +229,10 @@ suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, suit_en
             case SUIT_CONDITION_IMAGE_MATCH:
             case SUIT_CONDITION_COMPONENT_SLOT:
             case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
-            case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
             case SUIT_DIRECTIVE_PROCESS_DEPENDENCY:
             case SUIT_DIRECTIVE_FETCH:
             case SUIT_DIRECTIVE_COPY:
-            case SUIT_DIRECTIVE_RUN:
+            case SUIT_DIRECTIVE_INVOKE:
             case SUIT_DIRECTIVE_UNLINK:
                 QCBOREncode_AddUInt64(&context, item->label);
                 QCBOREncode_AddUInt64(&context, item->value.uint64);
@@ -268,10 +262,7 @@ suit_err_t suit_encode_common_sequence(suit_command_sequence_t *cmd_seq, suit_en
             case SUIT_CONDITION_UPDATE_AUTHORIZED:
             case SUIT_CONDITION_VERSION:
 
-            case SUIT_DIRECTIVE_DO_EACH:
-            case SUIT_DIRECTIVE_MAP_FILTER:
             case SUIT_DIRECTIVE_WAIT:
-            case SUIT_DIRECTIVE_FETCH_URI_LIST:
             case SUIT_DIRECTIVE_SWAP:
             case SUIT_DIRECTIVE_RUN_SEQUENCE:
             default:
@@ -307,8 +298,8 @@ suit_err_t suit_encode_append_component_identifier(const suit_component_identifi
 }
 
 suit_err_t suit_encode_common(const suit_common_t *suit_common, suit_encode_t *suit_encode, UsefulBuf *buf) {
-    UsefulBuf suit_common_sequence_buf;
-    suit_err_t result = suit_encode_common_sequence((suit_command_sequence_t *)&suit_common->cmd_seq, suit_encode, &suit_common_sequence_buf);
+    UsefulBuf suit_shared_sequence_buf;
+    suit_err_t result = suit_encode_shared_sequence((suit_command_sequence_t *)&suit_common->cmd_seq, suit_encode, &suit_shared_sequence_buf);
     if (result != SUIT_SUCCESS) {
         return result;
     }
@@ -349,8 +340,8 @@ suit_err_t suit_encode_common(const suit_common_t *suit_common, suit_encode_t *s
     }
 
     // suit-common-sequence
-    if (suit_common_sequence_buf.len > 0) {
-        QCBOREncode_AddBytesToMapN(&context, SUIT_COMMON_SEQUENCE, UsefulBuf_Const(suit_common_sequence_buf));
+    if (suit_shared_sequence_buf.len > 0) {
+        QCBOREncode_AddBytesToMapN(&context, SUIT_SHARED_SEQUENCE, UsefulBuf_Const(suit_shared_sequence_buf));
     }
 
     QCBOREncode_CloseMap(&context);
@@ -502,21 +493,21 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
     /* encode unseverable members */
     UsefulBuf validate_buf = NULLUsefulBuf;
     if (manifest->unsev_mem.validate.len > 0) {
-        result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->unsev_mem.validate, suit_encode, &validate_buf);
+        result = suit_encode_shared_sequence((suit_command_sequence_t *)&manifest->unsev_mem.validate, suit_encode, &validate_buf);
         if (result != SUIT_SUCCESS) {
             return result;
         }
     }
     UsefulBuf load_buf = NULLUsefulBuf;
     if (manifest->unsev_mem.load.len > 0) {
-        result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->unsev_mem.load, suit_encode, &load_buf);
+        result = suit_encode_shared_sequence((suit_command_sequence_t *)&manifest->unsev_mem.load, suit_encode, &load_buf);
         if (result != SUIT_SUCCESS) {
             return result;
         }
     }
-    UsefulBuf run_buf = NULLUsefulBuf;
-    if (manifest->unsev_mem.run.len > 0) {
-        result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->unsev_mem.run, suit_encode, &run_buf);
+    UsefulBuf invoke_buf = NULLUsefulBuf;
+    if (manifest->unsev_mem.invoke.len > 0) {
+        result = suit_encode_shared_sequence((suit_command_sequence_t *)&manifest->unsev_mem.invoke, suit_encode, &invoke_buf);
         if (result != SUIT_SUCCESS) {
             return result;
         }
@@ -525,7 +516,7 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
     /* encode severable members */
     if (manifest->sev_man_mem.dependency_resolution_status & SUIT_SEVERABLE_EXISTS) {
         UsefulBuf dependency_resolution_buf = NULLUsefulBuf;
-        result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.dependency_resolution, suit_encode, &dependency_resolution_buf);
+        result = suit_encode_shared_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.dependency_resolution, suit_encode, &dependency_resolution_buf);
         if (result != SUIT_SUCCESS) {
             return result;
         }
@@ -544,7 +535,7 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
 
     if (manifest->sev_man_mem.payload_fetch_status & SUIT_SEVERABLE_EXISTS) {
         UsefulBuf payload_fetch_buf = NULLUsefulBuf;
-        result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.payload_fetch, suit_encode, &payload_fetch_buf);
+        result = suit_encode_shared_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.payload_fetch, suit_encode, &payload_fetch_buf);
         if (result != SUIT_SUCCESS) {
             return result;
         }
@@ -563,7 +554,7 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
 
     if (manifest->sev_man_mem.install_status & SUIT_SEVERABLE_EXISTS) {
         UsefulBuf install_buf = NULLUsefulBuf;
-        result = suit_encode_common_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.install, suit_encode, &install_buf);
+        result = suit_encode_shared_sequence((suit_command_sequence_t *)&manifest->sev_man_mem.install, suit_encode, &install_buf);
         if (result != SUIT_SUCCESS) {
             return result;
         }
@@ -638,8 +629,8 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
         QCBOREncode_AddBytesToMapN(&context, SUIT_LOAD, UsefulBuf_Const(load_buf));
     }
 
-    if (!UsefulBuf_IsNULLOrEmpty(run_buf)) {
-        QCBOREncode_AddBytesToMapN(&context, SUIT_RUN, UsefulBuf_Const(run_buf));
+    if (!UsefulBuf_IsNULLOrEmpty(invoke_buf)) {
+        QCBOREncode_AddBytesToMapN(&context, SUIT_INVOKE, UsefulBuf_Const(invoke_buf));
     }
 
     if (suit_encode->dependency_resolution_digest.bytes.len > 0) {

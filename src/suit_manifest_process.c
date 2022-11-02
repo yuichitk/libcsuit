@@ -19,39 +19,6 @@
 #include "csuit/suit_manifest_process.h"
 #include "csuit/suit_manifest_print.h"
 
-suit_err_t suit_set_compression_info(QCBORDecodeContext *context,
-                                     suit_compression_info_t *compression_info) {
-    union {
-        uint64_t u64;
-    } val;
-    compression_info->algorithm = SUIT_COMPRESSION_ALGORITHM_INVALID;
-    QCBORItem item;
-    QCBORDecode_EnterBstrWrapped(context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
-    QCBORDecode_EnterMap(context, &item);
-    if (item.uDataType != QCBOR_TYPE_MAP) {
-        return SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
-    }
-    const size_t length = item.val.uCount;
-    for (size_t i = 0; i < length; i++) {
-        QCBORDecode_PeekNext(context, &item);
-        if (!(item.uLabelType == QCBOR_TYPE_INT64 || item.uLabelType == QCBOR_TYPE_UINT64)) {
-            return SUIT_ERR_INVALID_TYPE_OF_KEY;
-        }
-        const uint64_t label = item.label.uint64;
-        switch (label) {
-        case SUIT_COMPRESSION_ALGORITHM:
-            QCBORDecode_GetUInt64(context, &val.u64);
-            compression_info->algorithm = val.u64;
-            break;
-        default:
-            return SUIT_ERR_NOT_IMPLEMENTED;
-        }
-    }
-    QCBORDecode_ExitMap(context);
-    QCBORDecode_ExitBstrWrapped(context);
-    return SUIT_SUCCESS;
-}
-
 suit_err_t suit_set_parameters(QCBORDecodeContext *context,
                                const suit_con_dir_key_t directive,
                                suit_parameter_args_t *parameters,
@@ -72,7 +39,6 @@ suit_err_t suit_set_parameters(QCBORDecodeContext *context,
         UsefulBufC str;
         bool b;
         suit_digest_t digest;
-        suit_compression_info_t compression_info;
     } val;
 
     size_t length = item.val.uCount;
@@ -158,16 +124,6 @@ suit_err_t suit_set_parameters(QCBORDecodeContext *context,
                 }
             }
             break;
-        case SUIT_PARAMETER_COMPRESSION_INFO:
-            result = suit_set_compression_info(context, &val.compression_info);
-            for (size_t j = 0; j < index.len; j++) {
-                uint8_t tmp_index = index.index[j].val + (index.is_dependency) * SUIT_MAX_COMPONENT_NUM;
-                if (!(parameters[tmp_index].exists & SUIT_PARAMETER_CONTAINS_COMPRESSION_INFO) || directive == SUIT_DIRECTIVE_OVERRIDE_PARAMETERS) {
-                    parameters[tmp_index].exists |= SUIT_PARAMETER_CONTAINS_COMPRESSION_INFO;
-                    parameters[tmp_index].compression_info = val.compression_info;
-                }
-            }
-            break;
         case SUIT_PARAMETER_COMPONENT_SLOT:
             QCBORDecode_GetUInt64(context, &val.u64);
             for (size_t j = 0; j < index.len; j++) {
@@ -183,15 +139,13 @@ suit_err_t suit_set_parameters(QCBORDecodeContext *context,
         case SUIT_PARAMETER_STRICT_ORDER:
 
         case SUIT_PARAMETER_ENCRYPTION_INFO:
-        case SUIT_PARAMETER_UNPACK_INFO:
-        case SUIT_PARAMETER_RUN_ARGS:
+        case SUIT_PARAMETER_INVOKE_ARGS:
 
         case SUIT_PARAMETER_DEVICE_IDENTIFIER:
         case SUIT_PARAMETER_MINIMUM_BATTERY:
         case SUIT_PARAMETER_UPDATE_PRIORITY:
         case SUIT_PARAMETER_VERSION:
         case SUIT_PARAMETER_WAIT_INFO:
-        case SUIT_PARAMETER_URI_LIST:
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
         }
@@ -213,7 +167,7 @@ error:
             (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = SUIT_COMMON,
-                .level2.common_key = SUIT_COMMON_SEQUENCE,
+                .level2.common_key = SUIT_SHARED_SEQUENCE,
                 .level3.condition_directive = directive,
                 .level4.parameter = parameter,
                 .qcbor_error = error,
@@ -268,15 +222,14 @@ suit_err_t suit_process_dependency(suit_extracted_t *extracted,
 
 suit_err_t suit_set_index(QCBORDecodeContext *context,
                           const suit_extracted_t *extracted,
-                          suit_index_t *index,
-                          suit_con_dir_key_t condition_directive_key) {
+                          suit_index_t *index) {
     union {
         uint64_t u64;
         bool b;
     } val;
 
     *index = (suit_index_t){0};
-    index->is_dependency = (condition_directive_key == SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX) ? 1 : 0;
+    index->is_dependency = 0; /* TODO: is_dependency should be removed */
 
     QCBORItem item;
     QCBORError error;
@@ -292,15 +245,7 @@ suit_err_t suit_set_index(QCBORDecodeContext *context,
         index->index[0].val = (uint8_t)val.u64;
         break;
     case QCBOR_TYPE_TRUE:
-        if (condition_directive_key == SUIT_DIRECTIVE_SET_COMPONENT_INDEX) {
-            index->len = extracted->components.len;
-        }
-        else if (condition_directive_key == SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX) {
-            index->len = extracted->dependencies.len;
-        }
-        else {
-            return SUIT_ERR_INVALID_KEY;
-        }
+        index->len = extracted->components.len;
         for (uint8_t i = 0; i < index->len; i++) {
             index->index[i].val = i;
         }
@@ -310,13 +255,11 @@ suit_err_t suit_set_index(QCBORDecodeContext *context,
         break;
     case QCBOR_TYPE_ARRAY:
         QCBORDecode_EnterArray(context, &item);
-        const size_t length = item.val.uCount;
-        if ((condition_directive_key == SUIT_DIRECTIVE_SET_COMPONENT_INDEX && length > SUIT_MAX_COMPONENT_NUM) ||
-            (condition_directive_key == SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX && length > SUIT_MAX_DEPENDENCY_NUM)) {
+        if (item.val.uCount > SUIT_MAX_COMPONENT_NUM) {
             return SUIT_ERR_NO_MEMORY;
         }
-        index->len = length;
-        for (size_t i = 0; i < length; i++) {
+        index->len = item.val.uCount;
+        for (size_t i = 0; i < index->len; i++) {
             QCBORDecode_GetUInt64(context, &val.u64);
             if (val.u64 > UINT8_MAX) {
                 return SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
@@ -350,7 +293,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
         };
         suit_store_args_t store;
         suit_copy_args_t copy;
-        suit_run_args_t run;
+        suit_invoke_args_t invoke;
     } args;
     union {
         uint64_t u64;
@@ -379,9 +322,8 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
 
         switch (condition_directive_key) {
         case SUIT_DIRECTIVE_SET_COMPONENT_INDEX:
-        case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
             // TODO: support also bool or [ + uint ] index
-            result = suit_set_index(&context, extracted, &index, condition_directive_key);
+            result = suit_set_index(&context, extracted, &index);
             break;
         case SUIT_DIRECTIVE_OVERRIDE_PARAMETERS:
             // TODO: support also bool or [ + uint ] index
@@ -491,28 +433,16 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                 const uint8_t tmp_index = index.index[j].val + index.is_dependency * SUIT_MAX_COMPONENT_NUM;
 
                 args.copy = (suit_copy_args_t){0};
-                /* TODO
-                if (parameters[tmp_index].encryption_info.) {
-                } else
-                */
-                if (parameters[tmp_index].compression_info.algorithm != SUIT_COMPRESSION_ALGORITHM_INVALID) {
-                    args.copy.info_key = SUIT_INFO_COMPRESSION;
-                    args.copy.info.compression = parameters[tmp_index].compression_info;
-                }
-                else if (parameters[tmp_index].unpack_info.algorithm != SUIT_UNPACK_ALGORITHM_INVALID) {
-                    args.copy.info_key = SUIT_INFO_UNPACK;
-                    args.copy.info.unpack = parameters[tmp_index].unpack_info;
-                }
-                else {
-                    args.copy.info_key = SUIT_INFO_DEFAULT;
-                }
+                args.copy.info_key = SUIT_INFO_DEFAULT;
+                /* TODO solve SUIT_INFO_ENCRYPTION_INFO */
+
                 args.copy.report.val = val.u64;
                 args.copy.src = extracted->components.comp_id[parameters[tmp_index].source_component];
                 args.copy.dst = extracted->components.comp_id[tmp_index];
                 result = suit_copy_callback(args.copy);
             }
             break;
-        case SUIT_DIRECTIVE_RUN:
+        case SUIT_DIRECTIVE_INVOKE:
             QCBORDecode_GetUInt64(&context, &val.u64);
             for (size_t j = 0; j < index.len; j++) {
                 const uint8_t tmp_index = index.index[j].val + index.is_dependency * SUIT_MAX_COMPONENT_NUM;
@@ -521,15 +451,15 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                     result = SUIT_ERR_NO_ARGUMENT;
                     goto error;
                 }
-                args.run = (suit_run_args_t){0};
-                args.run.report.val = val.u64;
+                args.invoke = (suit_invoke_args_t){0};
+                args.invoke.report.val = val.u64;
 
-                args.run.component_identifier = extracted->components.comp_id[tmp_index];
-                args.run.args_len = parameters[tmp_index].run_args.len;
-                if (args.run.args_len > 0) {
-                    memcpy(args.run.args, parameters[tmp_index].run_args.ptr, args.run.args_len);
+                args.invoke.component_identifier = extracted->components.comp_id[tmp_index];
+                args.invoke.args_len = parameters[tmp_index].invoke_args.len;
+                if (args.invoke.args_len > 0) {
+                    memcpy(args.invoke.args, parameters[tmp_index].invoke_args.ptr, args.invoke.args_len);
                 }
-                result = suit_run_callback(args.run);
+                result = suit_invoke_callback(args.invoke);
             }
             break;
         case SUIT_DIRECTIVE_TRY_EACH:
@@ -651,10 +581,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
             // TODO: check condition
             break;
 
-        case SUIT_DIRECTIVE_DO_EACH:
-        case SUIT_DIRECTIVE_MAP_FILTER:
         case SUIT_DIRECTIVE_WAIT:
-        case SUIT_DIRECTIVE_FETCH_URI_LIST:
         case SUIT_DIRECTIVE_SWAP:
         case SUIT_DIRECTIVE_RUN_SEQUENCE:
         default:
@@ -703,7 +630,7 @@ error:
 
 }
 
-suit_err_t suit_process_common_sequence(suit_extracted_t *extracted,
+suit_err_t suit_process_shared_sequence(suit_extracted_t *extracted,
                                         suit_parameter_args_t parameters[]) {
     suit_err_t result = SUIT_SUCCESS;
     QCBORDecodeContext context;
@@ -719,7 +646,7 @@ suit_err_t suit_process_common_sequence(suit_extracted_t *extracted,
         bool b;
     } val;
 
-    QCBORDecode_Init(&context, extracted->common_sequence, QCBOR_DECODE_MODE_NORMAL);
+    QCBORDecode_Init(&context, extracted->shared_sequence, QCBOR_DECODE_MODE_NORMAL);
     QCBORDecode_EnterArray(&context, &item);
     if (item.uDataType != QCBOR_TYPE_ARRAY) {
         result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
@@ -749,21 +676,6 @@ suit_err_t suit_process_common_sequence(suit_extracted_t *extracted,
                 goto error;
             }
             index.is_dependency = 0;
-            index.len = 1;
-            index.index[0].val = (uint8_t)val.u64;
-            break;
-        case SUIT_DIRECTIVE_SET_DEPENDENCY_INDEX:
-            // TODO: support also bool or [ + uint ] index
-            QCBORDecode_GetUInt64(&context, &val.u64);
-            if (val.u64 >= extracted->components.len) {
-                result = SUIT_ERR_NO_MEMORY;
-                goto error;
-            }
-            if (val.u64 > UINT8_MAX) {
-                result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
-                goto error;
-            }
-            index.is_dependency = 1;
             index.len = 1;
             index.index[0].val = (uint8_t)val.u64;
             break;
@@ -886,7 +798,7 @@ error:
             (suit_report_args_t) {
                 .level0 = SUIT_MANIFEST,
                 .level1.manifest_key = SUIT_COMMON,
-                .level2.common_key = SUIT_COMMON_SEQUENCE,
+                .level2.common_key = SUIT_SHARED_SEQUENCE,
                 .level3.condition_directive = condition_directive_key,
                 .level4.parameter = SUIT_PARAMETER_INVALID,
                 .qcbor_error = error,
@@ -921,19 +833,19 @@ suit_err_t suit_process_common_and_command_sequence(suit_extracted_t *extracted,
     case SUIT_LOAD:
         command_buf = extracted->load;
         break;
-    case SUIT_RUN:
-        command_buf = extracted->run;
+    case SUIT_INVOKE:
+        command_buf = extracted->invoke;
         break;
     default:
         return SUIT_ERR_INVALID_KEY;
     }
     if (command_buf.len == 0 || command_buf.ptr == NULL) {
-        /* no need to execute common_sequence */
+        /* no need to execute shared_sequence */
         return SUIT_SUCCESS;
     }
 
     memset(parameters, 0, sizeof(parameters));
-    result = suit_process_common_sequence(extracted, parameters);
+    result = suit_process_shared_sequence(extracted, parameters);
     if (result != SUIT_SUCCESS) {
         goto error;
     }
@@ -1031,8 +943,8 @@ suit_err_t suit_extract_common(QCBORDecodeContext *context,
         case SUIT_COMPONENTS:
             result = suit_decode_components_from_item(SUIT_DECODE_MODE_STRICT, context, &item, true, &extracted->components);
             break;
-        case SUIT_COMMON_SEQUENCE:
-            QCBORDecode_GetByteString(context, &extracted->common_sequence);
+        case SUIT_SHARED_SEQUENCE:
+            QCBORDecode_GetByteString(context, &extracted->shared_sequence);
             break;
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
@@ -1173,9 +1085,9 @@ suit_err_t suit_extract_manifest(suit_extracted_t *extracted) {
                 result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
             }
             break;
-        case SUIT_RUN:
+        case SUIT_INVOKE:
             if (item.uDataType == QCBOR_TYPE_BYTE_STRING) {
-                QCBORDecode_GetByteString(&context, &extracted->run);
+                QCBORDecode_GetByteString(&context, &extracted->invoke);
             }
             else {
                 result = SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
@@ -1385,8 +1297,8 @@ suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs) {
         goto error;
     }
 
-    /* run */
-    result = suit_process_common_and_command_sequence(&extracted, SUIT_RUN, suit_inputs);
+    /* invoke */
+    result = suit_process_common_and_command_sequence(&extracted, SUIT_INVOKE, suit_inputs);
     if (result != SUIT_SUCCESS) {
         goto error;
     }
