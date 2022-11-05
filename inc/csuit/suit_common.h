@@ -66,10 +66,9 @@ typedef enum suit_envelope_key {
     SUIT_DELEGATION                     = 1,
     SUIT_AUTHENTICATION                 = 2,
     SUIT_MANIFEST                       = 3,
-    SUIT_SEVERED_DEPENDENCY_RESOLUTION  = 15, // TODO: conflicted with SUIT_VALIDATE
+    SUIT_SEVERED_DEPENDENCY_RESOLUTION  = 15,
     SUIT_SEVERED_PAYLOAD_FETCH          = 16,
     SUIT_SEVERED_INSTALL                = 17,
-    SUIT_SEVERED_WORKAROUND_TEXT        = 13, // TODO: remove
     SUIT_SEVERED_TEXT                   = 23,
     SUIT_SEVERED_COSWID                 = 24,
     SUIT_INTEGRATED_PAYLOAD             = 25,
@@ -111,15 +110,14 @@ typedef enum suit_manifest_key {
 
 typedef enum suit_common_key {
     SUIT_COMMON_KEY_INVALID             = 0,
-    SUIT_DEPENDENCIES                   = 1,
+    SUIT_DEPENDENCIES                   = 1, // $$SUIT_Common-extensions
     SUIT_COMPONENTS                     = 2,
     SUIT_SHARED_SEQUENCE                = 4,
 } suit_common_key_t;
 
 typedef enum suit_dependency_key {
     SUIT_DEPENDENCY_INVALID             = 0,
-    SUIT_DEPENDENCY_DIGEST              = 1,
-    SUIT_DEPENDENCY_PREFIX              = 2,
+    SUIT_DEPENDENCY_PREFIX              = 1,
 } suit_dependency_key_t;
 
 typedef enum suit_con_dir_key {
@@ -148,9 +146,9 @@ typedef enum suit_con_dir_key {
 
     /* draft-ietf-suit-trust-domains */
     SUIT_CONDITION_IS_DEPENDENCY        = 7,
+    SUIT_DIRECTIVE_PROCESS_DEPENDENCY   = 8,
     SUIT_DIRECTIVE_SET_PARAMETERS       = 19,
     SUIT_DIRECTIVE_UNLINK               = 33,
-    SUIT_DIRECTIVE_PROCESS_DEPENDENCY   = 34,
 
     /* draft-ietf-suit-update-management */
     SUIT_CONDITION_USE_BEFORE           = 4,
@@ -312,18 +310,25 @@ typedef struct suit_components {
 /*
  * SUIT_Dependency
  */
-typedef struct suit_dependency {
-    suit_digest_t                   digest;
+typedef struct suit_dependency_metadata {
     suit_component_identifier_t     prefix;
     //TODO:                         $$SUIT_Dependency-extensions
+} suit_dependency_metadata_t;
+
+/*
+ * SUIT_Dependency_Metadata
+ */
+typedef struct suit_dependency {
+    uint8_t                         index;
+    suit_dependency_metadata_t      dependency_metadata;
 } suit_dependency_t;
 
 /*
  * SUIT_Dependencies
  */
 typedef struct suit_dependencies {
-    size_t                          len;
-    suit_dependency_t               dependency[SUIT_MAX_ARRAY_LENGTH];
+    size_t              len;
+    suit_dependency_t   dependency[SUIT_MAX_ARRAY_LENGTH];
 } suit_dependencies_t;
 
 /*
