@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 
     result = suit_key_init_es256_key_pair(trust_anchor_prime256v1_private_key, trust_anchor_prime256v1_public_key, &mechanisms[0].key);
     if (result != SUIT_SUCCESS) {
-        printf("main : Failed to create putlic key. %s(%d)\n", suit_err_to_str(result), result);
+        printf("main : Failed to create public key. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
     mechanisms[0].cose_tag = CBOR_TAG_COSE_SIGN1;
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 
     result = suit_key_init_es256_key_pair(tam_es256_private_key, tam_es256_public_key, &mechanisms[1].key);
     if (result != SUIT_SUCCESS) {
-        printf("main : Failed to create putlic key. %s(%d)\n", suit_err_to_str(result), result);
+        printf("main : Failed to create public key. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
     mechanisms[1].cose_tag = CBOR_TAG_COSE_SIGN1;
