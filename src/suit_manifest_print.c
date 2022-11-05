@@ -685,22 +685,10 @@ int32_t suit_print_dependency(const suit_dependency_t *dependency, const uint32_
         return SUIT_ERR_FATAL;
     }
     int32_t result = SUIT_SUCCESS;
-    if (dependency->digest.algorithm_id == SUIT_ALGORITHM_ID_INVALID) {
-        return SUIT_ERR_FATAL;
-    }
-
-    printf("%*s/ dependency-digest / %d: ", indent_space, "", SUIT_DEPENDENCY_DIGEST);
-    result = suit_print_digest(&dependency->digest, indent_space, indent_delta);
+    printf("%*s,\n/ dependency-prefix / %d: ", indent_space, "", SUIT_DEPENDENCY_PREFIX);
+    result = suit_print_component_identifier(&dependency->dependency_metadata.prefix);
     if (result != SUIT_SUCCESS) {
         return result;
-    }
-
-    if (dependency->prefix.len > 0) {
-        printf("%*s,\n/ dependency-prefix / %d: ", indent_space, "", SUIT_DEPENDENCY_PREFIX);
-        result = suit_print_component_identifier(&dependency->prefix);
-        if (result != SUIT_SUCCESS) {
-            return result;
-        }
     }
 
     /* TODO: SUIT_Dependency-extensions */
@@ -1289,23 +1277,10 @@ suit_err_t suit_print_store(suit_store_args_t store_args)
 {
     suit_err_t ret = SUIT_SUCCESS;
     printf("store callback : {\n");
-    switch (store_args.key) {
-    case SUIT_DEPENDENCIES:
-        printf("  dst-dependnecy-digest : ");
-        suit_print_digest(&store_args.dst.dependency.digest, 2, 2);
-        printf("  dst-dependency-prefix : ");
-        suit_print_component_identifier(&store_args.dst.dependency.prefix);
-        printf("\n");
-        break;
-    case SUIT_COMPONENTS:
-        printf("  dst-component-identifier : ");
-        suit_print_component_identifier(&store_args.dst.component_identifier);
-        printf("\n");
-        break;
-    default:
-        printf("  dst-UNKNOWN(%d)\n", store_args.key);
-        ret = SUIT_ERR_INVALID_KEY;
-    }
+    printf("  dst-component-identifier : ");
+    suit_print_component_identifier(&store_args.dst_component_identifier);
+    printf("\n");
+
     printf("  ptr : %p (%ld)\n", store_args.ptr, store_args.buf_len);
     printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", store_args.report.record_on_success, store_args.report.record_on_failure, store_args.report.sysinfo_success, store_args.report.sysinfo_failure);
     printf("}\n\n");
@@ -1331,23 +1306,8 @@ suit_err_t suit_print_fetch(suit_fetch_args_t fetch_args,
         printf("...");
     }
     printf(" (%ld)\n", fetch_args.uri_len);
-    switch (fetch_args.key) {
-    case SUIT_DEPENDENCIES:
-        printf("  dst-dependnecy-digest : ");
-        suit_print_digest(&fetch_args.dst.dependency.digest, 2, 2);
-        printf("  dst-dependency-prefix : ");
-        suit_print_component_identifier(&fetch_args.dst.dependency.prefix);
-        printf("\n");
-        break;
-    case SUIT_COMPONENTS:
-        printf("  dst-component-identifier : ");
-        suit_print_component_identifier(&fetch_args.dst.component_identifier);
-        printf("\n");
-        break;
-    default:
-        printf("  dst-UNKNOWN(%d)\n", fetch_args.key);
-        ret = SUIT_ERR_INVALID_KEY;
-    }
+    printf("  dst-component-identifier : ");
+    suit_print_component_identifier(&fetch_args.dst_component_identifier);
 
     printf("  fetch buf : %p(%ld)\n", fetch_args.ptr, fetch_args.buf_len);
     printf("  suit_rep_policy_t : RecPass%x RecFail%x SysPass%x SysFail%x\n", fetch_args.report.record_on_success, fetch_args.report.record_on_failure, fetch_args.report.sysinfo_success, fetch_args.report.sysinfo_failure);

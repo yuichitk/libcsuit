@@ -320,10 +320,7 @@ suit_err_t suit_encode_common(const suit_common_t *suit_common, suit_encode_t *s
         for (size_t i = 0; i <suit_common->dependencies.len; i++) {
             const suit_dependency_t *dependency = &suit_common->dependencies.dependency[i];
             QCBOREncode_OpenMap(&context);
-            suit_encode_append_digest(&dependency->digest, SUIT_DEPENDENCY_DIGEST, &context);
-            if (dependency->prefix.len > 0) {
-                suit_encode_append_component_identifier(&dependency->prefix, SUIT_DEPENDENCY_PREFIX, &context);
-            }
+            suit_encode_append_component_identifier(&dependency->dependency_metadata.prefix, SUIT_DEPENDENCY_PREFIX, &context);
             //TODO: SUIT_Dependency-extensions
             QCBOREncode_CloseMap(&context);
         }
