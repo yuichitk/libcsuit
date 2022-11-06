@@ -510,7 +510,9 @@ suit_err_t suit_decode_dependencies_from_item(uint8_t mode, QCBORDecodeContext *
                 result = SUIT_ERR_NO_MEMORY;
                 break;
             }
-            result = suit_decode_dependency_metadata_from_item(mode, context, item, false, &dependencies->dependency[dependencies->len]);
+            suit_dependency_t *dependency = &dependencies->dependency[dependencies->len];
+            dependency->index = item->label.uint64;
+            result = suit_decode_dependency_metadata_from_item(mode, context, item, false, dependency);
             if (result == SUIT_SUCCESS) {
                 dependencies->len++;
             }
@@ -560,7 +562,7 @@ suit_err_t suit_decode_common_from_item(uint8_t mode, QCBORDecodeContext *contex
                 result = suit_decode_components_from_item(mode, context, item, false, &common->components);
                 break;
             case SUIT_SHARED_SEQUENCE:
-                result = suit_decode_shared_sequence_from_bstr(mode, context, item, false, &common->cmd_seq);
+                result = suit_decode_shared_sequence_from_bstr(mode, context, item, false, &common->shared_seq);
                 break;
             default:
                 // TODO
@@ -988,7 +990,7 @@ suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecod
             if (result == SUIT_SUCCESS) {
                 verified = true;
                 mechanisms[j].use = true;
-                continue;
+                break;
             }
             else if (result == SUIT_ERR_FAILED_TO_VERIFY) {
                 continue;

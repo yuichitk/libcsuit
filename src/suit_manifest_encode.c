@@ -209,6 +209,11 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
 }
 
 suit_err_t suit_encode_shared_sequence(suit_command_sequence_t *cmd_seq, suit_encode_t *suit_encode, UsefulBuf *buf) {
+    if (cmd_seq->len == 0) {
+        buf->len = 0;
+        return SUIT_SUCCESS;
+    }
+
     suit_err_t result = SUIT_SUCCESS;
     UsefulBuf tmp_buf;
     result = suit_use_suit_encode_buf(suit_encode, 0, &tmp_buf);
@@ -299,7 +304,7 @@ suit_err_t suit_encode_append_component_identifier(const suit_component_identifi
 
 suit_err_t suit_encode_common(const suit_common_t *suit_common, suit_encode_t *suit_encode, UsefulBuf *buf) {
     UsefulBuf suit_shared_sequence_buf;
-    suit_err_t result = suit_encode_shared_sequence((suit_command_sequence_t *)&suit_common->cmd_seq, suit_encode, &suit_shared_sequence_buf);
+    suit_err_t result = suit_encode_shared_sequence((suit_command_sequence_t *)&suit_common->shared_seq, suit_encode, &suit_shared_sequence_buf);
     if (result != SUIT_SUCCESS) {
         return result;
     }
@@ -316,15 +321,16 @@ suit_err_t suit_encode_common(const suit_common_t *suit_common, suit_encode_t *s
 
     // suit-dependencies
     if (suit_common->dependencies.len > 0) {
-        QCBOREncode_OpenArrayInMapN(&context, SUIT_DEPENDENCIES);
+        QCBOREncode_OpenMapInMapN(&context, SUIT_DEPENDENCIES);
         for (size_t i = 0; i <suit_common->dependencies.len; i++) {
             const suit_dependency_t *dependency = &suit_common->dependencies.dependency[i];
+            QCBOREncode_AddUInt64(&context, dependency->index);
             QCBOREncode_OpenMap(&context);
             suit_encode_append_component_identifier(&dependency->dependency_metadata.prefix, SUIT_DEPENDENCY_PREFIX, &context);
             //TODO: SUIT_Dependency-extensions
             QCBOREncode_CloseMap(&context);
         }
-        QCBOREncode_CloseArray(&context);
+        QCBOREncode_CloseMap(&context);
     }
 
     // suit-components
@@ -336,7 +342,7 @@ suit_err_t suit_encode_common(const suit_common_t *suit_common, suit_encode_t *s
         QCBOREncode_CloseArray(&context);
     }
 
-    // suit-common-sequence
+    // suit-shared-sequence
     if (suit_shared_sequence_buf.len > 0) {
         QCBOREncode_AddBytesToMapN(&context, SUIT_SHARED_SEQUENCE, UsefulBuf_Const(suit_shared_sequence_buf));
     }

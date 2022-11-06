@@ -467,8 +467,7 @@ typedef struct suit_unseverable_members {
 typedef struct suit_common {
     suit_dependencies_t             dependencies;
     suit_components_t               components;
-    // TODO :                       suit-dependency-components
-    suit_command_sequence_t         cmd_seq;
+    suit_command_sequence_t         shared_seq;
 } suit_common_t;
 
 /*

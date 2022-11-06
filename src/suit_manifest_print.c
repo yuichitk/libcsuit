@@ -685,13 +685,15 @@ int32_t suit_print_dependency(const suit_dependency_t *dependency, const uint32_
         return SUIT_ERR_FATAL;
     }
     int32_t result = SUIT_SUCCESS;
-    printf("%*s,\n/ dependency-prefix / %d: ", indent_space, "", SUIT_DEPENDENCY_PREFIX);
+    printf("%*s/ component-index / %d: {\n", indent_space, "", dependency->index);
+    printf("%*s/ dependency-prefix / %d: ", indent_space + indent_delta, "", SUIT_DEPENDENCY_PREFIX);
     result = suit_print_component_identifier(&dependency->dependency_metadata.prefix);
     if (result != SUIT_SUCCESS) {
         return result;
     }
-
     /* TODO: SUIT_Dependency-extensions */
+    printf("\n%*s}", indent_space, "");
+
     return SUIT_SUCCESS;
 }
 
@@ -897,7 +899,7 @@ suit_err_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, co
     printf("%*s/ common / 3: << {\n", indent_space + indent_delta, "");
     bool comma = false;
     if (manifest->common.dependencies.len > 0) {
-        printf("%*s/ dependencies / 1: [\n", indent_space + 2 * indent_delta, "");
+        printf("%*s/ dependencies / 1: {\n", indent_space + 2 * indent_delta, "");
         bool l1_comma = false;
         for (size_t i = 0; i < manifest->common.dependencies.len; i++) {
             if (l1_comma) {
@@ -910,7 +912,7 @@ suit_err_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, co
             printf("\n");
             l1_comma = true;
         }
-        printf("%*s]", indent_space + 2 * indent_delta, "");
+        printf("%*s}", indent_space + 2 * indent_delta, "");
         comma = true;
     }
 
@@ -932,12 +934,12 @@ suit_err_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, co
         printf("\n%*s]", indent_space + 2 * indent_delta, "");
         comma = true;
     }
-    if (manifest->common.cmd_seq.len > 0) {
+    if (manifest->common.shared_seq.len > 0) {
         if (comma) {
             printf(",\n");
         }
         printf("%*s/ common-sequence / 4: << [\n", indent_space + 2 * indent_delta, "");
-        result = suit_print_cmd_seq(mode, &manifest->common.cmd_seq, indent_space + 3 * indent_delta, indent_delta);
+        result = suit_print_cmd_seq(mode, &manifest->common.shared_seq, indent_space + 3 * indent_delta, indent_delta);
         if (result != SUIT_SUCCESS) {
             return result;
         }

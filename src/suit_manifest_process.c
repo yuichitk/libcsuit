@@ -355,14 +355,8 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
 
                     args.fetch = (suit_fetch_args_t){0};
                     args.fetch.report = report;
-                    if (index.is_dependency) {
-                        args.fetch.key = SUIT_DEPENDENCIES;
-                        args.fetch.dst.dependency = extracted->dependencies.dependency[index.index[j].val];
-                    }
-                    else {
-                        args.fetch.key = SUIT_COMPONENTS;
-                        args.fetch.dst.component_identifier = extracted->components.comp_id[index.index[j].val];
-                    }
+                    args.fetch.dst_component_identifier = extracted->components.comp_id[index.index[j].val];
+
                     memcpy(args.fetch.uri, parameters[tmp_index].uri_list[0].ptr, parameters[tmp_index].uri_list[0].len);
                     args.fetch.uri[parameters[tmp_index].uri_list[0].len] = '\0';
                     args.fetch.uri_len = parameters[tmp_index].uri_list[0].len;
@@ -404,14 +398,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                     /* already handled with integrated-payload or integrated-dependency */
                     args.store = (suit_store_args_t){0};
                     args.store.report = report;
-                    if (index.is_dependency) {
-                        args.store.key = SUIT_DEPENDENCIES;
-                        args.store.dst.dependency = extracted->dependencies.dependency[index.index[j].val];
-                    }
-                    else {
-                        args.store.key = SUIT_COMPONENTS;
-                        args.store.dst.component_identifier = extracted->components.comp_id[index.index[j].val];
-                    }
+                    args.store.dst_component_identifier = extracted->components.comp_id[index.index[j].val];
                     UsefulBuf buf = UsefulBuf_Unconst(payload->bytes);
                     args.store.ptr = buf.ptr;
                     args.store.buf_len = buf.len;
@@ -523,14 +510,7 @@ suit_err_t suit_process_command_sequence_buf(suit_extracted_t *extracted,
                 }
                 args.store = (suit_store_args_t){0};
                 args.store.report = report;
-                if (index.is_dependency) {
-                    args.store.key = SUIT_DEPENDENCIES;
-                    args.store.dst.dependency = extracted->dependencies.dependency[index.index[j].val];
-                }
-                else {
-                    args.store.key = SUIT_COMPONENTS;
-                    args.store.dst.component_identifier = extracted->components.comp_id[index.index[j].val];
-                }
+                args.store.dst_component_identifier = extracted->components.comp_id[index.index[j].val];
                 args.store.ptr = NULL;
                 args.store.buf_len = 0;
                 result = suit_store_callback(args.store);
@@ -1228,7 +1208,6 @@ suit_err_t suit_process_envelope(suit_inputs_t *suit_inputs) {
                 QCBORDecode_GetByteString(&context, &extracted.payload_fetch);
                 break;
 
-            case SUIT_SEVERED_WORKAROUND_TEXT:
             case SUIT_SEVERED_TEXT:
                 if (extracted.text.ptr != NULL) {
                     result = SUIT_ERR_REDUNDANT;
