@@ -101,11 +101,7 @@ typedef struct suit_copy_args {
  * The memory object is integrated into the manifest, so there is no need to fetch actually.
  */
 typedef struct suit_store_args {
-    suit_common_key_t key; // SUIT_DEPENDENCIES or SUIT_COMPONENTS
-    union {
-        suit_dependency_t dependency;
-        suit_component_identifier_t component_identifier;
-    } dst;
+    suit_component_identifier_t dst_component_identifier;
 
     /**
         Pointer to source memory object in the caller.
@@ -122,11 +118,7 @@ typedef struct suit_store_args {
 typedef struct suit_fetch_args {
     size_t uri_len;
     char uri[SUIT_MAX_URI_LENGTH];
-    suit_common_key_t key; // SUIT_DEPENDENCIES or SUIT_COMPONENTS
-    union {
-        suit_dependency_t dependency;
-        suit_component_identifier_t component_identifier;
-    } dst;
+    suit_component_identifier_t dst_component_identifier;
 
     /**
      *  Pointer to allocated memory in the caller.
