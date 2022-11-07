@@ -49,6 +49,14 @@ const char* suit_err_to_str(suit_err_t error) {
         return "SUIT_ERR_NO_ARGUMENT";
     case SUIT_ERR_TRY_OUT:
         return "SUIT_ERR_TRY_OUT";
+    case SUIT_ERR_NOT_FOUND:
+        return "SUIT_ERR_NOT_FOUND";
+    case SUIT_ERR_INVALID_VALUE:
+        return "SUIT_ERR_INVALID_VALUE";
+    case SUIT_ERR_FAILED_TO_SIGN:
+        return "SUIT_ERR_FAILED_TO_SIGN";
+    case SUIT_ERR_NOT_A_SUIT_MANIFEST:
+        return "SUIT_ERR_NOT_A_SUIT_MANIFEST";
     case SUIT_ERR_ABORT:
         return "SUIT_ERR_ABORT";
     default:

@@ -36,6 +36,7 @@ typedef enum {
     SUIT_ERR_NOT_FOUND                  = 15, /*! the specified content does not exists or unaccessible */
     SUIT_ERR_INVALID_VALUE              = 16, /*! the input value is invalid */
     SUIT_ERR_FAILED_TO_SIGN             = 17,
+    SUIT_ERR_NOT_A_SUIT_MANIFEST        = 18, /*! the input data is tagged but not SUIT_Manifest_Tagged */
     SUIT_ERR_ABORT                      = 31, /*! abort to execute, mainly for libcsuit internal */
 } suit_err_t;
 
