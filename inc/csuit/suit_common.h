@@ -508,6 +508,7 @@ typedef struct suit_payloads {
  * SUIT_Envelope
  */
 typedef struct suit_envelope {
+    bool                                tagged;
     // TODO :                           suit-delegation
     suit_authentication_wrapper_t       wrapper;
     suit_payloads_t                     payloads;

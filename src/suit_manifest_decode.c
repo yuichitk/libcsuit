@@ -1022,10 +1022,17 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
     uint64_t puTags[1];
     QCBORTagListOut Out = {0, 1, puTags};
     QCBORDecode_GetNextWithTags(context, item, &Out);
-    if (puTags[0] != SUIT_ENVELOPE_CBOR_TAG || item->uDataType != QCBOR_TYPE_MAP) {
+    if (Out.uNumUsed > 0) {
+        if (puTags[0] == SUIT_ENVELOPE_CBOR_TAG) {
+            envelope->tagged = true;
+        }
+        else {
+            return SUIT_ERR_NOT_A_SUIT_MANIFEST;
+        }
+    }
+    if (item->uDataType != QCBOR_TYPE_MAP) {
         return SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
     }
-
     size_t map_count = item->val.uCount;
     bool is_authentication_set = false;
     bool is_manifest_set = false;

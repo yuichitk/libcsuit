@@ -105,8 +105,9 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
     else if (memcmp(manifest_buf, ret_pos, manifest_len) != 0) {
-        if (memcmp(&manifest_buf[0], &ret_pos[0], 57) != 0 ||
-            memcmp(&manifest_buf[57 + 64], &ret_pos[57 + 64], manifest_len - (57 + 64))) {
+        size_t signature_pos = (envelope.tagged ? 2 : 0) + 55;
+        if (memcmp(&manifest_buf[0], &ret_pos[0], signature_pos) != 0 ||
+            memcmp(&manifest_buf[signature_pos + 64], &ret_pos[signature_pos + 64], manifest_len - (signature_pos + 64)) != 0) {
             printf("main : encoded binary is differ from original\n");
             printf("#### ORIGINAL ####\n");
             suit_print_hex_in_max(manifest_buf, manifest_len, manifest_len);
