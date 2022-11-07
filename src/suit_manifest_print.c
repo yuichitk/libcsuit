@@ -79,6 +79,8 @@ const char* suit_manifest_key_to_str(suit_manifest_key_t manifest_key) {
         return "common";
     case SUIT_REFERENCE_URI:
         return "reference-uri";
+    case SUIT_MANIFEST_COMPONENT_ID:
+        return "manifest-component-id";
     case SUIT_DEPENDENCY_RESOLUTION:
         return "dependency-resolution";
     case SUIT_PAYLOAD_FETCH:
@@ -947,6 +949,18 @@ suit_err_t suit_print_manifest(uint8_t mode, const suit_manifest_t *manifest, co
         comma = true;
     }
     printf("\n%*s} >>", indent_space + indent_delta, "");
+
+    if (manifest->manifest_component_id.len > 0) {
+        if (comma) {
+            printf(",\n");
+        }
+        printf("%*s/ manifest-component-id / 5: ", indent_space + indent_delta, "");
+        result = suit_print_component_identifier(&manifest->manifest_component_id);
+        if (result != SUIT_SUCCESS) {
+            return result;
+        }
+        comma = true;
+    }
 
     if (manifest->unsev_mem.validate.len > 0) {
         if (comma) {

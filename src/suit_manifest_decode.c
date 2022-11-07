@@ -801,6 +801,9 @@ suit_err_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *cont
             case SUIT_COMMON:
                 result = suit_decode_common_from_bstr(mode, context, item, false, &manifest->common);
                 break;
+            case SUIT_MANIFEST_COMPONENT_ID:
+                result = suit_decode_component_identifiers_from_item(mode, context, item, false, &manifest->manifest_component_id);
+                break;
             case SUIT_DEPENDENCY_RESOLUTION:
                 if (item->uDataType == QCBOR_TYPE_ARRAY) {
                     /* SUIT_Digest */

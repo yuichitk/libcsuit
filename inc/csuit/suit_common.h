@@ -91,6 +91,7 @@ typedef enum suit_manifest_key {
     SUIT_MANIFEST_SEQUENCE_NUMBER       = 2,
     SUIT_COMMON                         = 3,
     SUIT_REFERENCE_URI                  = 4,
+    SUIT_MANIFEST_COMPONENT_ID          = 5,
     SUIT_VALIDATE                       = 7,
     SUIT_LOAD                           = 8,
     SUIT_INVOKE                         = 9,
@@ -479,6 +480,7 @@ typedef struct suit_manifest {
     uint64_t                            sequence_number;
     suit_common_t                       common;
     suit_buf_t                          reference_uri;
+    suit_component_identifier_t         manifest_component_id;
     suit_severable_manifest_members_t   sev_man_mem;
     suit_severable_members_digests_t    sev_mem_dig;
     suit_unseverable_members_t          unsev_mem;

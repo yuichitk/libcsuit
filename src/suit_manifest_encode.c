@@ -624,6 +624,10 @@ suit_err_t suit_encode_manifest(const suit_envelope_t *envelope, suit_encode_t *
         QCBOREncode_AddBytesToMapN(&context, SUIT_REFERENCE_URI, (UsefulBufC){.ptr = manifest->reference_uri.ptr, .len = manifest->reference_uri.len});
     }
 
+    if (manifest->manifest_component_id.len > 0) {
+        suit_encode_append_component_identifier(&manifest->manifest_component_id, SUIT_MANIFEST_COMPONENT_ID, &context);
+    }
+
     if (!UsefulBuf_IsNULLOrEmpty(validate_buf)) {
         QCBOREncode_AddBytesToMapN(&context, SUIT_VALIDATE, UsefulBuf_Const(validate_buf));
     }
