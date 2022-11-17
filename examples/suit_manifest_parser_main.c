@@ -15,7 +15,9 @@
 #include "trust_anchor_prime256v1_pub.h"
 #include "tam_es256_private_key.h"
 #include "tam_es256_public_key.h"
+#include "trust_anchor_hmac256.h"
 #include "t_cose/t_cose_sign1_verify.h"
+#include "t_cose/t_cose_mac_validate.h"
 #include "t_cose/q_useful_buf.h"
 
 #define MAX_FILE_BUFFER_SIZE            4096
@@ -49,6 +51,14 @@ int main(int argc, char *argv[]) {
     }
     mechanisms[1].cose_tag = CBOR_TAG_COSE_SIGN1;
     mechanisms[1].use = false;
+
+    result = suit_key_init_hmac_256(trust_anchor_hmac256_secret_key, &mechanisms[2].key);
+    if (result != SUIT_SUCCESS) {
+        printf("main : Failed to create secret key. %s(%d)\n", suit_err_to_str(result), result);
+        return EXIT_FAILURE;
+    }
+    mechanisms[2].cose_tag = CBOR_TAG_COSE_MAC0;
+    mechanisms[2].use = false;
 
     // Read manifest file.
     printf("main : Read Manifest file.\n");

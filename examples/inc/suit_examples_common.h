@@ -36,8 +36,36 @@
 #define SECP521R1_PUBLIC_KEY_LENGTH         133
 #define SECP521R1_PUBLIC_KEY_CHAR_LENGTH    266
 
+#define HMAC_256_KEY_LENGTH                 32
+#define HMAC_384_KEY_LENGTH                 48
+#define HMAC_512_KEY_LENGTH                 64
+
 size_t read_from_file(const char *file_path, const size_t buf_len, uint8_t *buf);
 size_t write_to_file(const char *file_path, const size_t buf_len, const void *buf);
+
+/*!
+    \brief  Create HMAC256 secret key
+
+    \param[in]  secret_key      Pointer of unsigned char array type of secret key.
+    \param[out] cose_key        Pointer of suit_key_t type of key.
+
+    \return     This returns SUIT_SUCCESS or SUIT_ERR_FATAL.
+
+    The length of the unsigned char array secret key is estimated from the algorithm and library.
+ */
+suit_err_t suit_key_init_hmac_256(const unsigned char *secret_key, suit_key_t *cose_key);
+
+/*!
+    \brief  Create ES256 key pair
+
+    \param[in]  public_key          Pointer of char array type of public key.
+    \param[out] cose_public_key     Pointer of suit_key_t type of public key.
+
+    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
+
+    The length of the char array public key is estimated from the algorithm and library.
+ */
+suit_err_t suit_key_init_es256_public_key(const unsigned char *public_key, suit_key_t *cose_key_pair);
 
 /*!
     \brief  Create ES256 public key

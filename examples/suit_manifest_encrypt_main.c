@@ -10,8 +10,7 @@
 #include "csuit/suit_manifest_print.h"
 #include "csuit/suit_digest.h"
 #include "suit_examples_common.h"
-#include "trust_anchor_prime256v1.h"
-#include "trust_anchor_prime256v1_pub.h"
+#include "trust_anchor_hmac256.h"
 
 #define MAX_FILE_BUFFER_SIZE            2048
 
@@ -22,16 +21,18 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
     char *manifest_file = (argc >= 1) ? argv[1] : NULL;
-    suit_mechanism_t mechanism = {.cose_tag = CBOR_TAG_COSE_SIGN1};
-    const unsigned char *public_key = trust_anchor_prime256v1_public_key;
-    const unsigned char *private_key = trust_anchor_prime256v1_private_key;
+    suit_mechanism_t mechanisms[SUIT_MAX_KEY_NUM] = {0};
 
-    // Read key pair from der file.
-    suit_err_t result = suit_key_init_es256_key_pair(private_key, public_key, &mechanism.keys[0]);
+    const unsigned char *secret_key = trust_anchor_hmac256_secret_key;
+
+    // Set MAC0 key
+    suit_err_t result = suit_key_init_hmac_256(secret_key, &mechanisms[0].key);
     if (result != SUIT_SUCCESS) {
-        printf("main : Failed to create ES256 key pair. %s(%d)\n", suit_err_to_str(result), result);
+        printf("main : Failed to create HMAC256 secret key. %s(%d)\n", suit_err_to_str(result), result);
         return EXIT_FAILURE;
     }
+    mechanisms[0].cose_tag = CBOR_TAG_COSE_MAC0;
+    mechanisms[0].use = true;
 
     // Prepare
     char true_payload_buf[] = "This is a real firmware image.";
@@ -96,6 +97,7 @@ int main(int argc, char *argv[]) {
 
     // Generate manifest
     suit_envelope_t envelope = (suit_envelope_t){ 0 };
+    envelope.tagged = true;
     suit_manifest_t *manifest = &envelope.manifest;
     manifest->version = 1;
     manifest->sequence_number = 0;
@@ -119,7 +121,7 @@ int main(int argc, char *argv[]) {
 
     uint8_t vendor_id[] = {0xC0, 0xDD, 0xD5, 0xF1, 0x52, 0x43, 0x56, 0x60, 0x87, 0xDB, 0x4F, 0x5B, 0x0A, 0xA2, 0x6C, 0x2F};
     uint8_t class_id[] = {0xDB, 0x42, 0xF7, 0x09, 0x3D, 0x8C, 0x55, 0xBA, 0xA8, 0xC5, 0x26, 0x5F, 0xC5, 0x82, 0x0F, 0x4E};
-    suit_command_sequence_t *cmd_seq = &common->cmd_seq;
+    suit_command_sequence_t *cmd_seq = &common->shared_seq;
     cmd_seq->len = 4;
 
     suit_parameters_list_t *params_list;
@@ -215,7 +217,7 @@ int main(int argc, char *argv[]) {
     size_t encode_len = MAX_FILE_BUFFER_SIZE;
     uint8_t *ret_pos = encode_buf;
     printf("\nmain : Encode Manifest.\n");
-    result = suit_encode_envelope(mode, &envelope, &mechanism, &ret_pos, &encode_len);
+    result = suit_encode_envelope(mode, &envelope, mechanisms, &ret_pos, &encode_len);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to encode. %d\n", result);
         return EXIT_FAILURE;
@@ -231,6 +233,6 @@ int main(int argc, char *argv[]) {
         printf("main : Skip to write to a file (dry-run).\n");
     }
 
-    suit_free_key(&mechanism.keys[0]);
+    suit_free_key(&mechanisms[0].key);
     return EXIT_SUCCESS;
 }

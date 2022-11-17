@@ -46,8 +46,49 @@ cose_tag_key_t suit_judge_cose_tag_from_buf(const UsefulBufC signed_cose) {
     return result;
 }
 
+suit_err_t suit_verify_cose_mac0(const UsefulBufC signed_cose, const suit_key_t *secret_key, UsefulBufC returned_payload) {
+    struct t_cose_mac_validate_ctx verify_ctx;
+    struct t_cose_parameter parameter;
+    struct t_cose_parameter *p_parameter = &parameter;
+    enum t_cose_err_t cose_result;
+
+    if (secret_key == NULL) {
+        return SUIT_ERR_FAILED_TO_VERIFY;
+    }
+
+    t_cose_mac_validate_init(&verify_ctx, 0);
+    t_cose_mac_set_validate_key(&verify_ctx, secret_key->cose_key);
+    cose_result = t_cose_mac_validate_detached(&verify_ctx,
+                                              signed_cose,
+                                              &returned_payload,
+                                              &p_parameter);
+    if (cose_result != T_COSE_SUCCESS) {
+        return SUIT_ERR_FAILED_TO_VERIFY;
+    }
+    return SUIT_SUCCESS;
+}
+
+suit_err_t suit_sign_cose_mac0(const UsefulBufC raw_cbor, const suit_key_t *secret_key, UsefulBuf *returned_payload) {
+    struct t_cose_mac_calculate_ctx sign_ctx;
+    enum t_cose_err_t cose_result;
+    UsefulBufC tmp_signed_cose;
+
+    t_cose_mac_compute_init(&sign_ctx, 0, secret_key->cose_algorithm_id);
+    t_cose_mac_set_computing_key(&sign_ctx, secret_key->cose_key, NULL_Q_USEFUL_BUF_C);
+    cose_result = t_cose_mac_compute_detached(&sign_ctx,
+                                            NULL_Q_USEFUL_BUF_C,
+                                            raw_cbor,
+                                            *returned_payload,
+                                            &tmp_signed_cose);
+    if (cose_result != T_COSE_SUCCESS) {
+        returned_payload->len = 0;
+        return SUIT_ERR_FAILED_TO_SIGN;
+    }
+    returned_payload->len = tmp_signed_cose.len;
+    return SUIT_SUCCESS;
+}
+
 suit_err_t suit_verify_cose_sign1(const UsefulBufC signed_cose, const suit_key_t *public_key, UsefulBufC returned_payload) {
-    suit_err_t result = SUIT_SUCCESS;
     struct t_cose_sign1_verify_ctx verify_ctx;
     struct t_cose_parameters parameters;
     enum t_cose_err_t cose_result;
@@ -64,95 +105,27 @@ suit_err_t suit_verify_cose_sign1(const UsefulBufC signed_cose, const suit_key_t
                                                returned_payload,
                                                &parameters);
     if (cose_result != T_COSE_SUCCESS) {
-        result = SUIT_ERR_FAILED_TO_VERIFY;
-    }
-    return result;
-}
-
-/*!
-    \brief  Distinguish algorithm id from t_cose_key.
-
-    \param[in]  key                 Pointer of the key.
-    \param[out] cose_algorithm_id   Pointer of the resulting algorithm id.
-
-    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
-
-    COSE supports ES256, ES384 and ES512 as alrogithm of signature,
-    so T_COSE_ALGORITHM_ES256, T_COSE_ALGORITHM_ES384 or T_COSE_ALGORITHM_ES512 will be set to cose_algorithm_id argument if success.
- */
-#if 0
-suit_err_t suit_get_algorithm_from_cose_key(const suit_key_t *key, int32_t *cose_algorithm_id) {
-#if defined(LIBCSUIT_PSA_CRYPTO_C)
-    if (key->crypto_lib != T_COSE_CRYPTO_LIB_PSA) {
         return SUIT_ERR_FAILED_TO_VERIFY;
     }
-    psa_key_handle_t *key_handle = key->k.key_ptr;
-    psa_key_attributes_t key_attributes;
-    psa_status_t status = psa_get_key_attributes(*key_handle, &key_attributes);
-    if (status != PSA_SUCCESS) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-    psa_algorithm_t key_alg = psa_get_key_algorithm(&key_attributes);
-    switch (key_alg) {
-    case PSA_ALG_ECDSA(PSA_ALG_SHA_256):
-        *cose_algorithm_id = T_COSE_ALGORITHM_ES256;
-        break;
-    case PSA_ALG_ECDSA(PSA_ALG_SHA_384):
-        *cose_algorithm_id = T_COSE_ALGORITHM_ES384;
-        break;
-    case PSA_ALG_ECDSA(PSA_ALG_SHA_512):
-        *cose_algorithm_id = T_COSE_ALGORITHM_ES512;
-        break;
-    default:
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-#else /* !LIBCSUIT_PSA_CRYPTO_C */
-    if (key->crypto_lib != T_COSE_CRYPTO_LIB_OPENSSL) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-    const EVP_PKEY *key_ptr = key->k.key_ptr;
-    if (key_ptr == NULL) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-    OSSL_PARAM    *params;
-    const EC_GROUP *ec_group = EC_KEY_get0_group(key_ptr);
-    if (ec_group == NULL) {
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-    int nid = EC_GROUP_get_curve_name(ec_group);
-    switch (nid) {
-    case NID_X9_62_prime256v1:
-        *cose_algorithm_id = T_COSE_ALGORITHM_ES256;
-        break;
-    case NID_secp384r1:
-        *cose_algorithm_id = T_COSE_ALGORITHM_ES384;
-        break;
-    case NID_secp521r1:
-        *cose_algorithm_id = T_COSE_ALGORITHM_ES512;
-        break;
-    default:
-        return SUIT_ERR_FAILED_TO_VERIFY;
-    }
-#endif
     return SUIT_SUCCESS;
 }
-#endif
 
 suit_err_t suit_sign_cose_sign1(const UsefulBufC raw_cbor, const suit_key_t *key_pair, UsefulBuf *returned_payload) {
-    // Create cose signed buffer.
     struct t_cose_sign1_sign_ctx sign_ctx;
     enum t_cose_err_t cose_result;
     UsefulBufC tmp_signed_cose;
-    //UsefulBuf_MAKE_STACK_UB(signed_cose_buffer, 1024);
 
     t_cose_sign1_sign_init(&sign_ctx, 0, key_pair->cose_algorithm_id);
     t_cose_sign1_set_signing_key(&sign_ctx, key_pair->cose_key, NULL_Q_USEFUL_BUF_C);
-    cose_result = t_cose_sign1_sign_detached(&sign_ctx, NULL_Q_USEFUL_BUF_C, raw_cbor, *returned_payload, &tmp_signed_cose);
+    cose_result = t_cose_sign1_sign_detached(&sign_ctx,
+                                             NULL_Q_USEFUL_BUF_C,
+                                             raw_cbor,
+                                             *returned_payload,
+                                             &tmp_signed_cose);
     if (cose_result != T_COSE_SUCCESS) {
         returned_payload->len = 0;
         return SUIT_ERR_FAILED_TO_SIGN;
     }
-    //memcpy(returned_payload->ptr, tmp_signed_cose.ptr, tmp_signed_cose.len);
     returned_payload->len = tmp_signed_cose.len;
     return SUIT_SUCCESS;
 }

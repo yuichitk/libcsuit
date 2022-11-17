@@ -9,6 +9,8 @@
 #define SUIT_COSE_H
 
 #include "csuit/suit_common.h"
+#include "t_cose/t_cose_mac_validate.h"
+#include "t_cose/t_cose_mac_compute.h"
 #include "t_cose/t_cose_sign1_verify.h"
 #include "t_cose/t_cose_sign1_sign.h"
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
@@ -75,6 +77,28 @@ typedef struct suit_mechanism {
 } suit_mechanism_t;
 
 /*!
+    \brief  Generate COSE_Mac0 signed payload.
+
+    \param[in]  raw_cbor            Pointer and length of the target payload.
+    \param[in]  public_key          Pointer of secret key.
+    \param[in]  returned_payload    Pointer and length of the COSE_Mac0 signed target payload.
+
+    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
+ */
+suit_err_t suit_sign_cose_mac0(const UsefulBufC raw_cbor, const suit_key_t *secret_key, UsefulBuf *returned_payload);
+
+/*!
+    \brief  Generate COSE_Mac signed payload.
+
+    \param[in]  raw_cbor            Pointer and length of the target payload.
+    \param[in]  public_key          Pointer of secret key.
+    \param[in]  returned_payload    Pointer and length of the COSE_Mac0 signed target payload.
+
+    \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
+ */
+suit_err_t suit_sign_cose_mac(const UsefulBufC raw_cbor, const suit_key_t *secret_key, UsefulBuf *returned_payload);
+
+/*!
     \brief  Generate COSE_Sign1 sined payload.
 
     \param[in]  raw_cbor            Pointer and length of the target payload.
@@ -125,13 +149,13 @@ suit_err_t suit_verify_cose_sign1(const UsefulBufC signed_cose, const suit_key_t
     \brief  Verify COSE_Mac signed payload.
 
     \param[in]  signed_cose         Pointer and length of the target signed payload.
-    \param[in]  public_key          Pointer of public key.
+    \param[in]  secret_key          Pointer of secret key.
     \param[in]  returned_payload    Pointer and length of the COSE_Mac signed target payload.
 
     \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
  */
 
-suit_err_t suit_verify_cose_mac(const UsefulBufC signed_cose, const suit_key_t *public_key, UsefulBufC *returned_payload);
+suit_err_t suit_verify_cose_mac(const UsefulBufC signed_cose, const suit_key_t *secret_key, UsefulBufC *returned_payload);
 
 /*!
     \brief  Verify COSE_Mac0 signed payload.
@@ -142,7 +166,7 @@ suit_err_t suit_verify_cose_mac(const UsefulBufC signed_cose, const suit_key_t *
 
     \return     This returns SUIT_SUCCESS or SUIT_ERR_FAILED_TO_VERIFY.
  */
-suit_err_t suit_verify_cose_mac0(const UsefulBufC signed_cose, const suit_key_t *public_key, UsefulBufC *returned_payload);
+suit_err_t suit_verify_cose_mac0(const UsefulBufC signed_cose, const suit_key_t *secret_key, UsefulBufC returned_payload);
 
 #endif  /* SUIT_COSE_H */
 

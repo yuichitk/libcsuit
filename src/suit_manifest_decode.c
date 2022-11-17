@@ -537,6 +537,9 @@ suit_err_t suit_decode_authentication_block(uint8_t mode, suit_buf_t *buf, suit_
         case COSE_SIGN1_TAGGED:
             result = suit_verify_cose_sign1(signed_cose, public_key, returned_payload);
             break;
+        case COSE_MAC0_TAGGED:
+            result = suit_verify_cose_mac0(signed_cose, public_key, returned_payload);
+            break;
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
     }

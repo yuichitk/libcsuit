@@ -174,6 +174,7 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
                 break;
             case SUIT_PARAMETER_VENDOR_IDENTIFIER:
             case SUIT_PARAMETER_CLASS_IDENTIFIER:
+            case SUIT_PARAMETER_ENCRYPTION_INFO:
                 QCBOREncode_AddBytesToMapN(context, item->label, (UsefulBufC){.ptr = item->value.string.ptr, .len = item->value.string.len});
                 break;
             case SUIT_PARAMETER_IMAGE_DIGEST:
@@ -182,9 +183,6 @@ suit_err_t suit_append_directive_override_parameters(const suit_parameters_list_
                 QCBOREncode_CloseBstrWrap(context, NULL);
                 break;
 
-            case SUIT_PARAMETER_ENCRYPTION_INFO:
-                /* TODO */
-                break;
             case SUIT_PARAMETER_USE_BEFORE:
 
             case SUIT_PARAMETER_STRICT_ORDER:
@@ -742,17 +740,13 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
         }
         switch (mechanisms[i].key.cose_algorithm_id) {
         case T_COSE_ALGORITHM_ES256:
+        case T_COSE_ALGORITHM_HMAC256:
             result = SUIT_SUCCESS;
             break;
         default:
-            result = SUIT_ERR_ABORT;
+            result = SUIT_ERR_NOT_IMPLEMENTED;
         }
-        if (result == SUIT_SUCCESS) {
-        }
-        else if (result == SUIT_ERR_ABORT) {
-            break;
-        }
-        else {
+        if (!suit_continue(mode, result)) {
             return result;
         }
 
@@ -765,9 +759,11 @@ suit_err_t suit_encode_envelope(uint8_t mode, const suit_envelope_t *envelope, c
         case CBOR_TAG_COSE_SIGN1:
             result = suit_sign_cose_sign1(UsefulBuf_Const(digest), &mechanisms[i].key, &signatures[num_signatures]);
             break;
+        case CBOR_TAG_COSE_MAC0:
+            result = suit_sign_cose_mac0(UsefulBuf_Const(digest), &mechanisms[i].key, &signatures[num_signatures]);
+            break;
         case CBOR_TAG_SIGN:
         case CBOR_TAG_MAC:
-        case CBOR_TAG_COSE_MAC0:
         default:
             result = SUIT_ERR_NOT_IMPLEMENTED;
         }

@@ -1,10 +1,54 @@
 #include "suit_examples_common.h"
 
 #if defined(LIBCSUIT_PSA_CRYPTO_C)
+suit_err_t suit_create_hmac_key(suit_key_t *key) {
+    psa_key_attributes_t    key_attributes;
+    psa_key_handle_t        key_handle = 0;
+    psa_status_t            result;
+
+    int hash;
+    switch (key->cose_algorithm_id) {
+    case T_COSE_ALGORITHM_HMAC256:
+        hash = PSA_ALG_SHA_256;
+        break;
+    case T_COSE_ALGORITHM_HMAC384:
+        hash = PSA_ALG_SHA_384;
+        break;
+    case T_COSE_ALGORITHM_HMAC512:
+        hash = PSA_ALG_SHA_512;
+        break;
+    default:
+        return SUIT_ERR_INVALID_VALUE;
+    }
+
+    result = psa_crypto_init();
+    if (result != PSA_SUCCESS) {
+        return SUIT_ERR_FAILED_TO_VERIFY;
+    }
+
+    key_attributes = psa_key_attributes_init();
+    psa_set_key_type(&key_attributes, PSA_KEY_TYPE_HMAC);
+    psa_set_key_usage_flags(&key_attributes, PSA_KEY_USAGE_SIGN_HASH | PSA_KEY_USAGE_VERIFY_HASH);
+    psa_set_key_algorithm(&key_attributes, PSA_ALG_HMAC(hash));
+
+    result = psa_import_key(&key_attributes,
+                            (const unsigned char *)key->private_key,
+                            key->private_key_len,
+                            &key_handle);
+    if (result != PSA_SUCCESS) {
+        return SUIT_ERR_FAILED_TO_VERIFY;
+    }
+
+    key->cose_key.k.key_handle  = key_handle;
+    key->cose_key.crypto_lib    = T_COSE_CRYPTO_LIB_PSA;
+
+    return SUIT_SUCCESS;
+}
+
 suit_err_t suit_create_es_key(suit_key_t *key) {
-    psa_key_attributes_t key_attributes = PSA_KEY_ATTRIBUTES_INIT;
-    psa_key_handle_t     key_handle = 0;
-    psa_status_t         result;
+    psa_key_attributes_t    key_attributes;
+    psa_key_handle_t        key_handle = 0;
+    psa_status_t            result;
 
     int nid;
     int hash;
@@ -26,7 +70,6 @@ suit_err_t suit_create_es_key(suit_key_t *key) {
     }
 
     result = psa_crypto_init();
-
     if (result != PSA_SUCCESS) {
         return SUIT_ERR_FAILED_TO_VERIFY;
     }
@@ -35,7 +78,7 @@ suit_err_t suit_create_es_key(suit_key_t *key) {
     if (key->private_key != NULL) {
         usage |= PSA_KEY_USAGE_SIGN_HASH;
     }
-
+    key_attributes = psa_key_attributes_init();
     psa_set_key_usage_flags(&key_attributes, usage);
     psa_set_key_algorithm(&key_attributes, PSA_ALG_ECDSA(hash));
     if (key->private_key == NULL) {
@@ -64,6 +107,10 @@ suit_err_t suit_create_es_key(suit_key_t *key) {
 
 #else /* LIBCSUIT_PSA_CRYPTO_C */
 #if OPENSSL_VERSION_NUMBER >= OPENSSL_VERSION_300
+suit_err_t suit_create_hmac_key(suit_key_t *key) {
+    return SUIT_ERR_NOT_IMPLEMENTED;
+}
+
 /*
     \brief      Internal function calls OpenSSL functions to create public key.
 
@@ -146,6 +193,10 @@ out:
     return result;
 }
 #else /* OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_300 */
+suit_err_t suit_create_hmac_key(suit_key_t *key) {
+    return SUIT_ERR_NOT_IMPLEMENTED;
+}
+
 suit_err_t suit_create_es_key(suit_key_t *key) {
     /* ****************************************** */
     /* cose algorithm enum -> openssl group name  */
@@ -211,6 +262,33 @@ err:
 }
 #endif /* OPENSSL_VERSION_NUMBER */
 #endif /* LIBCSUIT_PSA_CRYPTO_C */
+
+suit_err_t suit_key_init_hmac_256(const unsigned char *secret_key, suit_key_t *cose_key) {
+    cose_key->private_key = secret_key;
+    cose_key->private_key_len = HMAC_256_KEY_LENGTH;
+    cose_key->public_key = NULL;
+    cose_key->public_key_len = 0;
+    cose_key->cose_algorithm_id = T_COSE_ALGORITHM_HMAC256;
+    return suit_create_hmac_key(cose_key);
+}
+
+suit_err_t suit_key_init_hmac_384(const unsigned char *secret_key, suit_key_t *cose_key) {
+    cose_key->private_key = secret_key;
+    cose_key->private_key_len = HMAC_384_KEY_LENGTH;
+    cose_key->public_key = NULL;
+    cose_key->public_key_len = 0;
+    cose_key->cose_algorithm_id = T_COSE_ALGORITHM_HMAC384;
+    return suit_create_hmac_key(cose_key);
+}
+
+suit_err_t suit_key_init_hmac_512(const unsigned char *secret_key, suit_key_t *cose_key) {
+    cose_key->private_key = secret_key;
+    cose_key->private_key_len = HMAC_512_KEY_LENGTH;
+    cose_key->public_key = NULL;
+    cose_key->public_key_len = 0;
+    cose_key->cose_algorithm_id = T_COSE_ALGORITHM_HMAC512;
+    return suit_create_hmac_key(cose_key);
+}
 
 suit_err_t suit_key_init_es256_key_pair(const unsigned char *private_key, const unsigned char *public_key, suit_key_t *cose_key_pair) {
     cose_key_pair->private_key = private_key;
