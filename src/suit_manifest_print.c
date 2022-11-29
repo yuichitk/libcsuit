@@ -249,7 +249,7 @@ const char* suit_info_key_to_str(const suit_info_key_t info_key) {
     }
 }
 
-const char* suit_cose_protected_key_to_str(int64_t key) {
+const char* suit_cose_header_map_key_to_str(int64_t key) {
     switch (key) {
     case 1:
         return "alg";
@@ -448,8 +448,20 @@ suit_err_t suit_print_cose_internal(QCBORDecodeContext *context, QCBORItem *item
         goto out;
     }
 
-    printf("%*s/ protected: / << {", indent_space + indent_delta, "");
+    printf("%*s/ protected: / ", indent_space + indent_delta, "");
+    result = suit_qcbor_peek_next(context, item, QCBOR_TYPE_BYTE_STRING);
+    if (result != SUIT_SUCCESS) {
+        return result;
+    }
+    if (item->val.string.len == 0) {
+        /* bstr .size 0 */
+        result = suit_qcbor_get_next(context, item, QCBOR_TYPE_BYTE_STRING);
+        printf("h''");
+        goto skip_protected;
+    }
+    printf("<< {");
     QCBORDecode_EnterBstrWrapped(context, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, NULL);
+
     QCBORDecode_EnterMap(context, item);
     size_t len = item->val.uCount;
     for (size_t i = 0; i < len; i++) {
@@ -457,7 +469,7 @@ suit_err_t suit_print_cose_internal(QCBORDecodeContext *context, QCBORItem *item
         if (result != SUIT_SUCCESS) {
             return result;
         }
-        printf("\n%*s/ %s / %ld: %ld / %s /", indent_space + 2 * indent_delta, "", suit_cose_protected_key_to_str(item->label.int64), item->label.int64, item->val.int64, suit_cose_protected_key_and_value_to_str(item->label.int64, item->val.int64));
+        printf("\n%*s/ %s / %ld: %ld / %s /", indent_space + 2 * indent_delta, "", suit_cose_header_map_key_to_str(item->label.int64), item->label.int64, item->val.int64, suit_cose_protected_key_and_value_to_str(item->label.int64, item->val.int64));
         if (i + 1 != len) {
             printf(",\n");
         }
@@ -465,6 +477,7 @@ suit_err_t suit_print_cose_internal(QCBORDecodeContext *context, QCBORItem *item
     printf("\n%*s} >>", indent_space + indent_delta, "");
     QCBORDecode_ExitMap(context);
     QCBORDecode_ExitBstrWrapped(context);
+skip_protected:
 
     if (array_len <= 1) {
         goto out;
@@ -478,7 +491,7 @@ suit_err_t suit_print_cose_internal(QCBORDecodeContext *context, QCBORItem *item
         if (result != SUIT_SUCCESS) {
             return result;
         }
-        printf("%*s/ %s / %ld: ", indent_space + 2 * indent_delta, "", suit_cose_protected_key_to_str(item->label.int64), item->label.int64);
+        printf("%*s/ %s / %ld: ", indent_space + 2 * indent_delta, "", suit_cose_header_map_key_to_str(item->label.int64), item->label.int64);
         switch (item->uDataType) {
         case QCBOR_TYPE_INT64:
             printf("%ld / %s /", item->val.int64, suit_cose_protected_key_and_value_to_str(item->label.int64, item->val.int64));
@@ -542,6 +555,7 @@ suit_err_t suit_print_cose_internal(QCBORDecodeContext *context, QCBORItem *item
             return SUIT_ERR_NOT_IMPLEMENTED;
         }
         suit_print_hex(item->val.string.ptr, item->val.string.len);
+        break;
     case QCBOR_TYPE_ARRAY:
         printf(",\n%*s/ recipients: / ", indent_space + indent_delta, "");
         suit_print_cose_internal(context, item, tag, indent_space + indent_delta, indent_delta);
@@ -752,7 +766,7 @@ suit_err_t suit_print_signature(const suit_buf_t *signature, const uint32_t inde
     }
     suit_err_t result = SUIT_SUCCESS;
     if (signature->ptr != NULL && signature->len > 0) {
-        suit_print_cose((UsefulBufC){signature->ptr, signature->len}, indent_space + indent_delta, indent_delta);
+        suit_print_cose((UsefulBufC){signature->ptr, signature->len}, indent_space, indent_delta);
     }
     return result;
 }

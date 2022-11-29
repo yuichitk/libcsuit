@@ -126,6 +126,11 @@ suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContex
                 result = suit_decode_digest_from_bstr(mode, context, item, false, &params_list->params[i].value.digest);
                 break;
 
+            /* draft-ietf-suit-firmware-encryption */
+            case SUIT_PARAMETER_ENCRYPTION_INFO:
+                params_list->params[i].value.string.ptr = item->val.string.ptr;
+                params_list->params[i].value.string.len = item->val.string.len;
+                break;
 
             case SUIT_PARAMETER_STRICT_ORDER:
             case SUIT_PARAMETER_SOFT_FAILURE:
@@ -138,9 +143,6 @@ suit_err_t suit_decode_parameters_list_from_item(uint8_t mode, QCBORDecodeContex
             case SUIT_PARAMETER_VERSION:
             case SUIT_PARAMETER_WAIT_INFO:
 
-            /* draft-ietf-suit-firmware-encryption */
-            case SUIT_PARAMETER_ENCRYPTION_INFO:
-            //case SUIT_PARAMETER_URI_LIST:
 
             default:
                 result = SUIT_ERR_NOT_IMPLEMENTED;

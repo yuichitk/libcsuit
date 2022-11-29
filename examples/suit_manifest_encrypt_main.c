@@ -35,19 +35,6 @@ int main(int argc, char *argv[]) {
     mechanisms[0].use = true;
 
     // Prepare
-    char true_payload_buf[] = "This is a real firmware image.";
-    UsefulBufC true_payload = {.ptr = true_payload_buf, .len = strlen(true_payload_buf)};
-    uint8_t true_payload_hash[SHA256_DIGEST_WORK_SPACE_LENGTH];
-    suit_digest_t true_payload_digest;
-    true_payload_digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
-    result = suit_generate_sha256(true_payload.ptr, true_payload.len, true_payload_hash, sizeof(true_payload_hash));
-    if (result != SUIT_SUCCESS) {
-        printf("main : Failed to generate sha256 hash. %s(%d)\n", suit_err_to_str(result), result);
-        return EXIT_FAILURE;
-    }
-    true_payload_digest.bytes.ptr = true_payload_hash;
-    true_payload_digest.bytes.len = SHA256_DIGEST_LENGTH;
-
     uint8_t encrypted_payload_buf[] = {
         0x4A, 0x22, 0x9F, 0x5C, 0x3B, 0xE5, 0xBF, 0x7B,
         0x72, 0x3C, 0x78, 0x35, 0x89, 0xA6, 0x22, 0x5C,
@@ -57,38 +44,39 @@ int main(int argc, char *argv[]) {
         0x9C, 0xE4
     };
     UsefulBufC encrypted_payload = {.ptr = encrypted_payload_buf, .len = sizeof(encrypted_payload_buf)};
-    uint8_t encrypted_payload_hash[SHA256_DIGEST_WORK_SPACE_LENGTH];
-    suit_digest_t encrypted_payload_digest;
-    encrypted_payload_digest.algorithm_id = SUIT_ALGORITHM_ID_SHA256;
-    result = suit_generate_sha256(encrypted_payload.ptr, encrypted_payload.len, encrypted_payload_hash, sizeof(encrypted_payload_hash));
-    if (result != SUIT_SUCCESS) {
-        printf("main : Failed to generate sha256 hash. %s(%d)\n", suit_err_to_str(result), result);
-        return EXIT_FAILURE;
-    }
-    encrypted_payload_digest.bytes.ptr = encrypted_payload_hash;
-    encrypted_payload_digest.bytes.len = SHA256_DIGEST_LENGTH;
 
+    /*
+    96(
+        [
+            / protected field with alg=AES-GCM-128 /
+            h'A10101',
+            {
+               / unprotected field with iv /
+               5: h'26682306D4FB28CA01B43B80'
+            },
+            / null because of detached ciphertext /
+            null,
+            [ / recipients array /
+               h'', / protected field /
+               {    / unprotected field /
+                  1: -3,            / alg=A128KW /
+                  4: h'6B69642D31'  / key id /
+               },
+               / CEK encrypted with KEK /
+               h'AF09622B4F40F17930129D18D0CEA46F159C49E7F68B644D'
+            ]
+        ]
+    )
+    */
     uint8_t encryption_info_buf[] = {
         0xD8, 0x60, 0x84, 0x43, 0xA1, 0x01, 0x01, 0xA1,
-        0x05, 0x50, 0xE0, 0x16, 0xC2, 0x8F, 0xF8, 0x35,
-        0x0E, 0xF0, 0xAD, 0x9A, 0xD0, 0x02, 0x85, 0x35,
-        0xEF, 0x01, 0xF6, 0x83, 0x44, 0xA1, 0x01, 0x38,
-        0x63, 0xA2, 0x20, 0x58, 0x4B, 0xA4, 0x01, 0x02,
-        0x20, 0x01, 0x21, 0x58, 0x20, 0xE9, 0x80, 0x86,
-        0xD0, 0x70, 0x84, 0x1A, 0x55, 0xDC, 0x4C, 0xA2,
-        0x9E, 0xD7, 0x39, 0x86, 0xBD, 0x4D, 0x8A, 0xF4,
-        0x5F, 0x0A, 0xA5, 0x5A, 0xF9, 0x22, 0xE6, 0x21,
-        0x12, 0xE7, 0x3D, 0xD0, 0x51, 0x22, 0x58, 0x20,
-        0xC7, 0x2B, 0xEF, 0x9D, 0xD5, 0xF3, 0x88, 0xA9,
-        0x0F, 0x9F, 0x02, 0xDF, 0x48, 0x4F, 0x7E, 0xD8,
-        0x17, 0x44, 0x97, 0xAC, 0x6E, 0x83, 0x04, 0x2C,
-        0x24, 0x08, 0x48, 0x48, 0x3B, 0x7F, 0xA8, 0xD0,
-        0x04, 0x45, 0x6B, 0x69, 0x64, 0x2D, 0x32, 0x58,
-        0x20, 0x37, 0x42, 0xF8, 0x4B, 0x10, 0xA6, 0xE5,
-        0x6B, 0xE9, 0x2F, 0xDB, 0xEE, 0xF2, 0x65, 0x0D,
-        0x2A, 0x63, 0x61, 0x7D, 0xA4, 0x12, 0xF2, 0xA7,
-        0xA7, 0xE8, 0xE7, 0x82, 0x7F, 0xC0, 0x46, 0xFA,
-        0x50
+        0x05, 0x4C, 0x26, 0x68, 0x23, 0x06, 0xD4, 0xFB,
+        0x28, 0xCA, 0x01, 0xB4, 0x3B, 0x80, 0xF6, 0x83,
+        0x40, 0xA2, 0x01, 0x22, 0x04, 0x45, 0x6B, 0x69,
+        0x64, 0x2D, 0x31, 0x58, 0x18, 0xAF, 0x09, 0x62,
+        0x2B, 0x4F, 0x40, 0xF1, 0x79, 0x30, 0x12, 0x9D,
+        0x18, 0xD0, 0xCE, 0xA4, 0x6F, 0x15, 0x9C, 0x49,
+        0xE7, 0xF6, 0x8B, 0x64, 0x4D
     };
     UsefulBufC encryption_info = {
         .ptr = encryption_info_buf,
@@ -102,10 +90,7 @@ int main(int argc, char *argv[]) {
     manifest->version = 1;
     manifest->sequence_number = 0;
 
-    envelope.payloads.len = 1;
-    char uri[] = "#encrypted-firmware";
-    envelope.payloads.payload[0].key = (UsefulBufC){.ptr = (const void *)uri, .len = strlen(uri)};
-    envelope.payloads.payload[0].bytes = encrypted_payload;
+    char uri[] = "https://author.example.com/encrypted-firmware.bin";
 
     /* Encrypted firmware */
     uint8_t component_id_0[] = {0x00};
@@ -129,7 +114,7 @@ int main(int argc, char *argv[]) {
     cmd_seq->commands[0].value.int64 = 0;
     cmd_seq->commands[1].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
     params_list = &cmd_seq->commands[1].value.params_list;
-    params_list->len = 4;
+    params_list->len = 3;
 
     params_list->params[0].label = SUIT_CONDITION_VENDOR_IDENTIFIER;
     params_list->params[0].value.string.ptr = vendor_id;
@@ -139,11 +124,8 @@ int main(int argc, char *argv[]) {
     params_list->params[1].value.string.ptr = class_id;
     params_list->params[1].value.string.len = sizeof(class_id);
 
-    params_list->params[2].label = SUIT_PARAMETER_IMAGE_DIGEST,
-    params_list->params[2].value.digest = encrypted_payload_digest;
-
-    params_list->params[3].label = SUIT_PARAMETER_IMAGE_SIZE;
-    params_list->params[3].value.uint64 = encrypted_payload.len;
+    params_list->params[2].label = SUIT_PARAMETER_IMAGE_SIZE;
+    params_list->params[2].value.uint64 = encrypted_payload.len;
 
     cmd_seq->commands[2].label = SUIT_CONDITION_VENDOR_IDENTIFIER;
     cmd_seq->commands[2].value.uint64 = 15; // report all
@@ -151,18 +133,10 @@ int main(int argc, char *argv[]) {
     cmd_seq->commands[3].label = SUIT_CONDITION_CLASS_IDENTIFIER;
     cmd_seq->commands[3].value.uint64 = 15; // report all
 
-    /* validate */
-    suit_command_sequence_t *validate = &manifest->unsev_mem.validate;
-    validate->len = 2;
-    validate->commands[0].label = SUIT_DIRECTIVE_SET_COMPONENT_INDEX;
-    validate->commands[0].value.int64 = 0;
-    validate->commands[1].label = SUIT_CONDITION_IMAGE_MATCH;
-    validate->commands[1].value.uint64 = 15; // report all
-
     /* install */
     manifest->sev_man_mem.install_status = SUIT_SEVERABLE_IN_MANIFEST;
     suit_command_sequence_t *install = &manifest->sev_man_mem.install;
-    install->len = 4;
+    install->len = 6;
     install->commands[0].label = SUIT_DIRECTIVE_SET_COMPONENT_INDEX;
     install->commands[0].value.int64 = 1; /* Encrypted firmware */
     install->commands[1].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
@@ -176,37 +150,25 @@ int main(int argc, char *argv[]) {
     install->commands[2].label = SUIT_DIRECTIVE_FETCH;
     install->commands[2].value.uint64 = 15;
 
-    install->commands[3].label = SUIT_CONDITION_IMAGE_MATCH;
-    install->commands[3].value.uint64 = 15;
+    install->commands[3].label = SUIT_DIRECTIVE_SET_COMPONENT_INDEX;
+    install->commands[3].value.int64 = 0; /* Decrypted firmware */
+    install->commands[4].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
+    params_list = &install->commands[4].value.params_list;
+    params_list->len = 2;
 
-    /* load */
-    suit_command_sequence_t *load = &manifest->unsev_mem.load;
-    load->len = 4;
-    load->commands[0].label = SUIT_DIRECTIVE_SET_COMPONENT_INDEX;
-    load->commands[0].value.int64 = 0; /* Decrypted firmware */
-    load->commands[1].label = SUIT_DIRECTIVE_OVERRIDE_PARAMETERS;
-    params_list = &load->commands[1].value.params_list;
-    params_list->len = 4;
+    params_list->params[0].label = SUIT_PARAMETER_SOURCE_COMPONENT;
+    params_list->params[0].value.uint64 = 1; /* Encrypted firmware */
+    params_list->params[1].label = SUIT_PARAMETER_ENCRYPTION_INFO;
+    params_list->params[1].value.string.ptr = encryption_info.ptr;
+    params_list->params[1].value.string.len = encryption_info.len;
 
-    params_list->params[0].label = SUIT_PARAMETER_IMAGE_DIGEST;
-    params_list->params[0].value.digest = true_payload_digest;
-    params_list->params[1].label = SUIT_PARAMETER_IMAGE_SIZE;
-    params_list->params[1].value.uint64 = true_payload.len;
-    params_list->params[2].label = SUIT_PARAMETER_SOURCE_COMPONENT;
-    params_list->params[2].value.uint64 = 1; /* Encrypted firmware */
-    params_list->params[3].label = SUIT_PARAMETER_ENCRYPTION_INFO;
-    params_list->params[3].value.string.ptr = encryption_info.ptr;
-    params_list->params[3].value.string.len = encryption_info.len;
-
-    load->commands[2].label = SUIT_DIRECTIVE_COPY;
-    load->commands[2].value.uint64 = 2;
-    load->commands[3].label = SUIT_CONDITION_IMAGE_MATCH;
-    load->commands[3].value.uint64 = 15;
+    install->commands[5].label = SUIT_DIRECTIVE_COPY;
+    install->commands[5].value.uint64 = 15;
 
     // Print manifest.
     printf("\nmain : Print Manifest.\n");
     uint8_t mode = SUIT_DECODE_MODE_STRICT;
-    result = suit_print_envelope(mode, &envelope, 4, 4);
+    result = suit_print_envelope(mode, &envelope, 4, 2);
     if (result != SUIT_SUCCESS) {
         printf("main : Failed to print Manifest file.\n");
         return EXIT_FAILURE;
