@@ -36,6 +36,7 @@ typedef enum {
     SUIT_ERR_NOT_FOUND                  = 15, /*! the specified content does not exists or unaccessible */
     SUIT_ERR_INVALID_VALUE              = 16, /*! the input value is invalid */
     SUIT_ERR_FAILED_TO_SIGN             = 17,
+    SUIT_ERR_NOT_A_SUIT_MANIFEST        = 18, /*! the input data is tagged but not SUIT_Manifest_Tagged */
     SUIT_ERR_ABORT                      = 31, /*! abort to execute, mainly for libcsuit internal */
 } suit_err_t;
 
@@ -66,10 +67,9 @@ typedef enum suit_envelope_key {
     SUIT_DELEGATION                     = 1,
     SUIT_AUTHENTICATION                 = 2,
     SUIT_MANIFEST                       = 3,
-    SUIT_SEVERED_DEPENDENCY_RESOLUTION  = 15, // TODO: conflicted with SUIT_VALIDATE
+    SUIT_SEVERED_DEPENDENCY_RESOLUTION  = 15,
     SUIT_SEVERED_PAYLOAD_FETCH          = 16,
     SUIT_SEVERED_INSTALL                = 17,
-    SUIT_SEVERED_WORKAROUND_TEXT        = 13, // TODO: remove
     SUIT_SEVERED_TEXT                   = 23,
     SUIT_SEVERED_COSWID                 = 24,
     SUIT_INTEGRATED_PAYLOAD             = 25,
@@ -92,6 +92,7 @@ typedef enum suit_manifest_key {
     SUIT_MANIFEST_SEQUENCE_NUMBER       = 2,
     SUIT_COMMON                         = 3,
     SUIT_REFERENCE_URI                  = 4,
+    SUIT_MANIFEST_COMPONENT_ID          = 5,
     SUIT_VALIDATE                       = 7,
     SUIT_LOAD                           = 8,
     SUIT_INVOKE                         = 9,
@@ -111,15 +112,14 @@ typedef enum suit_manifest_key {
 
 typedef enum suit_common_key {
     SUIT_COMMON_KEY_INVALID             = 0,
-    SUIT_DEPENDENCIES                   = 1,
+    SUIT_DEPENDENCIES                   = 1, // $$SUIT_Common-extensions
     SUIT_COMPONENTS                     = 2,
     SUIT_SHARED_SEQUENCE                = 4,
 } suit_common_key_t;
 
 typedef enum suit_dependency_key {
     SUIT_DEPENDENCY_INVALID             = 0,
-    SUIT_DEPENDENCY_DIGEST              = 1,
-    SUIT_DEPENDENCY_PREFIX              = 2,
+    SUIT_DEPENDENCY_PREFIX              = 1,
 } suit_dependency_key_t;
 
 typedef enum suit_con_dir_key {
@@ -148,9 +148,9 @@ typedef enum suit_con_dir_key {
 
     /* draft-ietf-suit-trust-domains */
     SUIT_CONDITION_IS_DEPENDENCY        = 7,
+    SUIT_DIRECTIVE_PROCESS_DEPENDENCY   = 8,
     SUIT_DIRECTIVE_SET_PARAMETERS       = 19,
     SUIT_DIRECTIVE_UNLINK               = 33,
-    SUIT_DIRECTIVE_PROCESS_DEPENDENCY   = 34,
 
     /* draft-ietf-suit-update-management */
     SUIT_CONDITION_USE_BEFORE           = 4,
@@ -312,18 +312,25 @@ typedef struct suit_components {
 /*
  * SUIT_Dependency
  */
-typedef struct suit_dependency {
-    suit_digest_t                   digest;
+typedef struct suit_dependency_metadata {
     suit_component_identifier_t     prefix;
     //TODO:                         $$SUIT_Dependency-extensions
+} suit_dependency_metadata_t;
+
+/*
+ * SUIT_Dependency_Metadata
+ */
+typedef struct suit_dependency {
+    uint8_t                         index;
+    suit_dependency_metadata_t      dependency_metadata;
 } suit_dependency_t;
 
 /*
  * SUIT_Dependencies
  */
 typedef struct suit_dependencies {
-    size_t                          len;
-    suit_dependency_t               dependency[SUIT_MAX_ARRAY_LENGTH];
+    size_t              len;
+    suit_dependency_t   dependency[SUIT_MAX_ARRAY_LENGTH];
 } suit_dependencies_t;
 
 /*
@@ -462,8 +469,7 @@ typedef struct suit_unseverable_members {
 typedef struct suit_common {
     suit_dependencies_t             dependencies;
     suit_components_t               components;
-    // TODO :                       suit-dependency-components
-    suit_command_sequence_t         cmd_seq;
+    suit_command_sequence_t         shared_seq;
 } suit_common_t;
 
 /*
@@ -475,6 +481,7 @@ typedef struct suit_manifest {
     uint64_t                            sequence_number;
     suit_common_t                       common;
     suit_buf_t                          reference_uri;
+    suit_component_identifier_t         manifest_component_id;
     suit_severable_manifest_members_t   sev_man_mem;
     suit_severable_members_digests_t    sev_mem_dig;
     suit_unseverable_members_t          unsev_mem;
@@ -504,6 +511,7 @@ typedef struct suit_payloads {
  * SUIT_Envelope
  */
 typedef struct suit_envelope {
+    bool                                tagged;
     // TODO :                           suit-delegation
     suit_authentication_wrapper_t       wrapper;
     suit_payloads_t                     payloads;

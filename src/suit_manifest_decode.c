@@ -464,7 +464,7 @@ suit_err_t suit_decode_components_from_item(uint8_t mode, QCBORDecodeContext *co
     return result;
 }
 
-suit_err_t suit_decode_dependency_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_dependency_t *dependency) {
+suit_err_t suit_decode_dependency_metadata_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_dependency_t *dependency) {
     suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
     if (result != SUIT_SUCCESS) {
         return result;
@@ -474,29 +474,19 @@ suit_err_t suit_decode_dependency_from_item(uint8_t mode, QCBORDecodeContext *co
     for (size_t i = 0; i < len; i++) {
         result = suit_qcbor_get_next(context, item, QCBOR_TYPE_ANY);
         if (!suit_continue(mode, result)) {
-            goto out;
+            break;
         }
 
         switch (item->label.uint64) {
-            case SUIT_DEPENDENCY_DIGEST:
-                result = suit_decode_digest_from_item(mode, context, item, false, &dependency->digest);
-                break;
-            case SUIT_DEPENDENCY_PREFIX:
-                result = suit_decode_component_identifiers_from_item(mode, context, item, false, &dependency->prefix);
-                break;
-            default:
-                result = SUIT_ERR_NOT_IMPLEMENTED;
-                if (!suit_qcbor_skip_any(context, item)) {
-                    result = SUIT_ERR_FATAL;
-                }
-                break;
-        }
-out:
-        if (!suit_continue(mode, result)) {
-            if (!(mode & SUIT_DECODE_MODE_PRESERVE_ON_ERROR)) {
-                dependency->digest.algorithm_id = SUIT_ALGORITHM_ID_INVALID;
-                dependency->prefix.len = 0;
+        case SUIT_DEPENDENCY_PREFIX:
+            result = suit_decode_component_identifiers_from_item(mode, context, item, false, &dependency->dependency_metadata.prefix);
+            break;
+        default:
+            result = SUIT_ERR_NOT_IMPLEMENTED;
+            if (!suit_qcbor_skip_any(context, item)) {
+                result = SUIT_ERR_FATAL;
             }
+            break;
         }
     }
     return result;
@@ -505,12 +495,12 @@ out:
 suit_err_t suit_decode_dependencies_from_item(uint8_t mode, QCBORDecodeContext *context, QCBORItem *item, bool next, suit_dependencies_t *dependencies) {
     dependencies->len = 0;
 
-    suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_ARRAY);
+    suit_err_t result = suit_qcbor_get(context, item, next, QCBOR_TYPE_MAP);
     if (result != SUIT_SUCCESS) {
         return result;
     }
-    size_t len = item->val.uCount;
-    for (size_t i = 0; i < len; i++) {
+    size_t map_count = item->val.uCount;
+    for (size_t i = 0; i < map_count; i++) {
         result = suit_qcbor_get(context, item, true, QCBOR_TYPE_MAP);
         if (!suit_continue(mode, result)) {
             break;
@@ -520,7 +510,9 @@ suit_err_t suit_decode_dependencies_from_item(uint8_t mode, QCBORDecodeContext *
                 result = SUIT_ERR_NO_MEMORY;
                 break;
             }
-            result = suit_decode_dependency_from_item(mode, context, item, false, &dependencies->dependency[dependencies->len]);
+            suit_dependency_t *dependency = &dependencies->dependency[dependencies->len];
+            dependency->index = item->label.uint64;
+            result = suit_decode_dependency_metadata_from_item(mode, context, item, false, dependency);
             if (result == SUIT_SUCCESS) {
                 dependencies->len++;
             }
@@ -570,7 +562,7 @@ suit_err_t suit_decode_common_from_item(uint8_t mode, QCBORDecodeContext *contex
                 result = suit_decode_components_from_item(mode, context, item, false, &common->components);
                 break;
             case SUIT_SHARED_SEQUENCE:
-                result = suit_decode_shared_sequence_from_bstr(mode, context, item, false, &common->cmd_seq);
+                result = suit_decode_shared_sequence_from_bstr(mode, context, item, false, &common->shared_seq);
                 break;
             default:
                 // TODO
@@ -809,6 +801,9 @@ suit_err_t suit_decode_manifest_from_item(uint8_t mode, QCBORDecodeContext *cont
             case SUIT_COMMON:
                 result = suit_decode_common_from_bstr(mode, context, item, false, &manifest->common);
                 break;
+            case SUIT_MANIFEST_COMPONENT_ID:
+                result = suit_decode_component_identifiers_from_item(mode, context, item, false, &manifest->manifest_component_id);
+                break;
             case SUIT_DEPENDENCY_RESOLUTION:
                 if (item->uDataType == QCBOR_TYPE_ARRAY) {
                     /* SUIT_Digest */
@@ -998,7 +993,7 @@ suit_err_t suit_decode_authentication_wrapper_from_item(uint8_t mode, QCBORDecod
             if (result == SUIT_SUCCESS) {
                 verified = true;
                 mechanisms[j].use = true;
-                continue;
+                break;
             }
             else if (result == SUIT_ERR_FAILED_TO_VERIFY) {
                 continue;
@@ -1030,10 +1025,17 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
     uint64_t puTags[1];
     QCBORTagListOut Out = {0, 1, puTags};
     QCBORDecode_GetNextWithTags(context, item, &Out);
-    if (puTags[0] != SUIT_ENVELOPE_CBOR_TAG || item->uDataType != QCBOR_TYPE_MAP) {
+    if (Out.uNumUsed > 0) {
+        if (puTags[0] == SUIT_ENVELOPE_CBOR_TAG) {
+            envelope->tagged = true;
+        }
+        else {
+            return SUIT_ERR_NOT_A_SUIT_MANIFEST;
+        }
+    }
+    if (item->uDataType != QCBOR_TYPE_MAP) {
         return SUIT_ERR_INVALID_TYPE_OF_ARGUMENT;
     }
-
     size_t map_count = item->val.uCount;
     bool is_authentication_set = false;
     bool is_manifest_set = false;
@@ -1119,7 +1121,6 @@ suit_err_t suit_decode_envelope_from_item(uint8_t mode, QCBORDecodeContext *cont
                         envelope->manifest.sev_man_mem.install_status |= SUIT_SEVERABLE_IN_ENVELOPE;
                     }
                     break;
-                case SUIT_SEVERED_WORKAROUND_TEXT:
                 case SUIT_SEVERED_TEXT:
                     if (!is_authentication_set || !is_manifest_set) {
                         result = SUIT_ERR_FAILED_TO_VERIFY;
