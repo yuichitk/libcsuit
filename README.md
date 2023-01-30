@@ -111,6 +111,9 @@ Here are the commands:
 git clone https://github.com/laurencelundblade/QCBOR.git
 git clone https://github.com/laurencelundblade/t_cose.git
 git clone https://github.com/ARMmbed/mbedtls.git
+cd mbedtls
+make generated_files
+cd ..
 git clone https://github.com/yuichitk/libcsuit.git
 cd libcsuit
 ```
